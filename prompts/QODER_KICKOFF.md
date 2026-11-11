@@ -1,24 +1,84 @@
-# 交给 Qoder 的第一轮执行指令
+# 交给 Qoder 的第一轮指令
 
-请将下面内容粘贴给 Qoder；本文件不是项目实现本身。
+> 把下面横线之间的内容整段粘贴给 Qoder。**一次只让它做 T0，不要一次给全部。**
 
 ---
 
-你现在接手位于 C:\Users\Wang\Desktop\QODER 的 Cognitive Atlas 项目，GitHub 仓库 Thalya4138/Cognitive-Atlas_Qoder。先完整阅读 README.md、AGENTS.md、docs/PRODUCT_SPEC.md、docs/ARCHITECTURE.md、docs/DOMAIN_MODEL.md、docs/UX_AND_FLOWS.md、docs/IMPLEMENTATION_PLAN.md、docs/QUALITY_GATES.md 和 prompts/NOTE_GENERATION.md。
+你现在接手 `C:\Users\Wang\Desktop\QODER`（GitHub: `Thalya4138/Cognitive-Atlas_Qoder`），
+一个 2026 Qoder 高校创造力大赛 StudyHack 项目。
 
-这是一个 2026 Qoder 高校创造力大赛 StudyHack 项目，2026-11-30 18:00（北京时间）前需通过 Qoder Sites 公开部署，且论坛展示真实 Qoder 开发过程。当前仅有规划文档，**没有已实现的网页**；不要宣称已经实现功能，也不要把全部长期愿景塞进首版。
+## 先读（按此顺序，不要跳）
 
-任务第一阶段：
-1. 用 1 页内的技术选型决策（ADR）说明框架、Markdown 编辑器、图谱/存储/数学可视化库，兼顾 Qoder Sites、无 Key 演示和本地优先；
-2. 设计并创建应用脚手架、四个一级导航、可折叠 AI 侧栏、基础可访问性与视觉系统（高对比、自然学术美感，拒绝小字淡导航和无意义装饰）；
-3. 建立经过 schema 校验的本地知识实体、IndexedDB 持久化、可导入/导出的基础；
-4. 创建**真实可读**、原创且适合公开演示的“线性代数：最小二乘与正交投影”笔记，不要读取或公开用户上传的第三方课程笔记 PDF；
-5. 将完整的纵向流程拆成小任务，按 P0 优先级迭代，明确每个任务的验收条款和实际测试。
+1. `README.md` — 产品在做什么、仓库为什么这样组织
+2. `AGENTS.md` — 七条不可协商 + 每轮开工协议
+3. `docs/PRODUCT_SPEC.md` — 产品唯一真源
+4. `docs/GLOSSARY.md` — 命名唯一真源（**写代码时严格用它**）
+5. `docs/DOMAIN_MODEL.md` + `content/demo/linear-algebra/` 下的真实 JSON — 数据结构
+6. `docs/ARCHITECTURE.md` + `docs/UX_AND_FLOWS.md` — 技术边界与界面
+7. `prompts/NOTE_GENERATION.md` — 讲义质量判据（你在实现阅读器时要理解它）
 
-先向我反馈：技术选型、目录结构、拟执行的前 3 个最小任务、预计验证方式，再开始写代码。每轮提供真实改动、测试与截图，不要把“已生成代码”等同于“已验证交付”。请在 docs/DEVELOPMENT_LOG.md 留存 Qoder 过程记录，用于比赛帖子，附真实测试与部署证据。
+## 现状（必须知道，避免误判）
 
-关键体验必须走通：资源/可读讲义 → 搜索定位 → 关联说明（附条件/边界）→ 用户确认图谱联系 → 三视图可编辑且持久化 → 导出/重新导入。可视化实验至少做一个数学正确、参数可操作的线代例子。
+- **仓库里没有任何应用代码。** 只有契约文档、JSON Schema、样例数据和校验脚本。
+- `README.md` 里的 `npm install && npm run dev` 是**目标状态**，现在还跑不起来。
+- 样例数据已通过 `node scripts/verify-content.mjs`。
+- 不要宣称任何功能"已实现"，直到你能给出测试或截图。
 
-未明确授权前不要：上传私人课程资料、把 API key 入库、自动推送远端/公网部署、默默覆盖用户文件。部署时遵守 Qoder Sites 条件并记录真实步骤。
+## 本轮任务：T0 地基（只做这些）
 
-最终不是做四页介绍 PPT，而是评委点开能完成 5 步演示的产品。
+**T0-1 脚手架**
+- Vite + React + TypeScript
+- 四个一级路由（`/workspace` `/lab` `/connection` `/atlas`）
+- 三栏布局外壳（左导航 / 主区 / 可收起 AI 侧栏）+ 底部状态条
+- 错误边界；所有首屏按钮有动作
+
+**T0-2 ADR-0002**
+- 填写 `docs/DECISIONS.md` 的 ADR-0002：框架、Markdown 解析器、编辑器、图谱库、存储
+- **先验证 Qoder Sites 的能力**（SPA 深链、包体限制、iframe），把结果填进那张表
+- 每个选择写"被排除的方案及原因"
+
+**T0-3 领域类型**
+- 用 zod 把 `content/demo/linear-algebra/*.json` 的类型写出来
+- 类型名与字段名**必须**与 `docs/GLOSSARY.md` 和 JSON 完全一致
+- 写一个加载器，开发时从 `content/demo` 读，构建后能静态提供
+
+**T0-4 内容校验接入**
+- 把 `scripts/verify-content.mjs` 挂到 `npm run verify:content`
+- （可选）用 ajv 加载 `schemas/*.json` 做真正的 schema 校验
+
+## 完成判据
+
+```bash
+npm install
+npm run dev        # 四个路由都能点，看到外壳和已加载的课程标题
+npm run typecheck  # 通过
+npm run verify:content  # 通过
+npm run build      # 通过
+```
+
+并且：`docs/DEVELOPMENT_LOG.md` 新增一条记录，附上**真实命令输出**与至少 1 张截图。
+
+## 不要做（本轮）
+
+- 不要写阅读器、图谱、检索、实验（那是 T1–T5）
+- 不要接 LLM
+- 不要 push 远端、不要部署公网（等我确认）
+- 不要改 `content/demo` 的数学内容与 `prompts/*.md` 的 rubric
+
+## 开始前先回复我
+
+用不超过 15 行说清：
+1. 你选的栈与**最关键的一个取舍**（不要罗列所有备选）
+2. 目录结构
+3. 你打算怎么验证"外壳真的能用"（而不只是"build 通过"）
+4. 你发现的本仓库任何**矛盾或不明确之处**（这条很重要，不要客气）
+
+然后开始写代码。每完成一个任务就在日志里记一条。
+---
+
+## 给用户的话（不要粘贴给 Qoder）
+
+- 它开始跑了以后，**你只负责三件事**：验收讲义能不能读、图谱能不能编辑、链接能不能打开。
+- 它说"已完成"时，要求它贴**命令输出**或**截图**。没有就不要采信。
+- 每天结束看一眼 `docs/IMPLEMENTATION_PLAN.md` 的时间表，落后就按 §3 砍功能，
+  但**不要砍"带理由的边"和"可编辑的个人视图"**——那是这个项目的全部。

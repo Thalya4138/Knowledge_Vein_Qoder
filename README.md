@@ -1,59 +1,146 @@
 # Cognitive Atlas · 认知图谱
 
-> 从课程材料到可读讲义，从交互式理解到知识关联，再到可编辑、可回忆的个人认知网络。
+把课程材料变成**人愿意读、能长期维护**的讲义；把抽象概念变成**能动手验证**的实验；
+把已学知识之间**有依据的联系**发现出来；把这些沉淀成**自己能编辑、能回忆**的知识网络。
 
-**项目状态：需求与工程交接骨架（尚无应用实现）。** 这是 2026 Qoder 高校创造力大赛 StudyHack 方向的开发仓库，同时面向赛后的长期维护。不要把规划文档误当成已完成功能。
+> **状态：骨架 + 契约 + 样例数据，业务功能未实现。**
+> 本仓库当前不含可用的学习产品。它的作用是让 Qoder 在无歧义的前提下开始写第一行功能代码。
+> 任何“已完成”的说法必须以 `docs/DEVELOPMENT_LOG.md` 中的测试证据为准。
 
-## 产品主张
+---
 
-Cognitive Atlas 不只是 PDF 摘要器、AI 聊天框或自动思维导图。它让学习者：
-1. 从本地材料与系统主动发现的可靠资源中，生成**人真正愿意读、能持续维护的讲义/笔记**；
-2. 用交互式可视化与多种计算工具理解抽象知识；
-3. 从具体题型、整门学科的元结构和跨学科视角中发现**有依据、可检验的联系**；
-4. 把知识、逻辑关系、个人联想路径与复习表现整合进**可编辑的认知网络**。
+## 现在能跑什么
 
-## 四个一级板块
+```bash
+node scripts/verify-content.mjs
+# ✓ 内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接）
+```
 
-| 板块 | 用户核心动作 | 典型输出 |
+这是**目前唯一能跑的东西**：它校验样例数据的引用完整性，并强制"每条边必须有
+理由、条件、认知状态"这条硬约束。
+
+```bash
+npm run dev
+# ✗ 还没有。apps/web 尚不存在。
+```
+
+**仓库里没有任何应用代码。** 文档里的界面、流程、验收标准都是**目标契约**，
+不是现状。Qoder 的 T0 任务（见 `prompts/QODER_KICKOFF.md`）才把它变成能跑的东西。
+
+> 之所以先把契约和数据写完再写代码，是因为本项目最容易崩的地方不是技术，
+> 是"生成的图没有理由"。这条约束必须写在 schema 里，不能写在产品文档里靠自觉。
+
+---
+
+## 先读哪一页
+
+| 你是 | 读这个 | 为什么 |
 | --- | --- | --- |
-| 学习工作台 Learning Workspace | 建课程库、导入/发现资源、生成与维护讲义、跨笔记智能检索、追问 | 可读 Markdown 讲义、资源索引、定位结果、可编辑补丁 |
-| 可视化实验室 Visual Learning Lab | 选择交互模块、改变参数、比较模型、调用工具 | 可复现的可视化实验、参数/结论 |
-| 知识关联探索 Connection Explorer | 甩入几个知识/题型寻找本质联系；探索学科元结构；跨学科迁移 | 可追问的解释、证据卡、可视化、报告、候选图谱边 |
-| 认知与记忆图谱 Cognitive & Memory Atlas | 编辑结构/逻辑/个人记忆三种视图，构造路径、主动回忆 | 可编辑知识网络、个人布局、复习记录 |
+| **Qoder（实现者）** | [AGENTS.md](AGENTS.md) → [prompts/QODER_KICKOFF.md](prompts/QODER_KICKOFF.md) | 规则 + 第一轮可粘贴指令 |
+| **评委 / 第一次打开仓库的人** | 本页 → [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) §2 | 3 分钟理解产品在做什么 |
+| **要改产品定义的人（作者）** | [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) | 唯一产品真源，其他文档只引用不重述 |
+| **要改数据结构的人** | [docs/DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md) → [content/demo/](content/demo/) | 类型表 + 真实 JSON 实例 |
+| **要写讲义 / 改写作风格的人** | [prompts/NOTE_GENERATION.md](prompts/NOTE_GENERATION.md) → [docs/NOTE_SAMPLE_ANALYSIS.md](docs/NOTE_SAMPLE_ANALYSIS.md) | 生成契约 + 人读得懂的可检查标准 |
+| **要提交比赛的人** | [docs/CONTEST_SUBMISSION.md](docs/CONTEST_SUBMISSION.md) | 帖子模板、证据清单、倒计时 |
 
-四板块共用一个带来源、版本和学习状态的底层知识模型。**关系候选必须经过用户判断，不自动把 AI 猜测变成事实。**
+---
 
-## 比赛边界与产品边界
+## 第一原理：仓库按数据流组织，不按功能页组织
 
-- 比赛：2026 Qoder 高校创造力大赛，建议 StudyHack；2026-11-30 18:00（北京时间）前公开部署至 **Qoder Sites** 并在天池赛题页论坛发帖。须记录实际 Qoder 开发过程。详见 [比赛交付](docs/CONTEST_SUBMISSION.md)。
-- 比赛版优先：**导入资源 → 可读讲义 → 全文/语义定位 → 关联候选 → 手动编辑图谱 → 导出/重新导入** 的真实闭环，附至少一个可交互线代实验。无 API key 也应能体验真实样例。
-- 长期版：多模态资源爬取、广泛工具平台集成、真实 Git 双向同步、多学科可视化库、长期记忆模型。
-- 网站优先；昂贵计算经由用户自带 API（BYOK）或可选本地运行时。**普通网页没有未经授权写任意本地文件夹的能力**。离线导入/导出与可选本地同步桥接分阶段实现。
-- 个人笔记、私人教材、API key 和 PDF 样本默认不提交到公开 Git 仓库。
+四个板块是**用户意图的入口**，不是**系统的划分**。系统只有一条流水线：
 
-## 交给 Qoder 的入口
+```text
+Resource ──► SourceSpan ──► NoteDocument ──► KnowledgeNode
+（教材/PDF/     （页码、段落、     （Markdown，          （概念/定理/方法/
+  课件/网页）      时间戳）          唯一真源）            例题/疑问）
+                                                        │
+                                          KnowledgeRelation（带理由、条件、证据）
+                                                        │
+                                    ┌───────────────────┼───────────────────┐
+                                    ▼                   ▼                   ▼
+                              StructureView       LogicView        PersonalView
+                              （客观结构）        （推导结构）      （你自己的记忆路径）
+```
 
-1. 阅读 [AGENTS.md](AGENTS.md) 了解工作规范。
-2. 阅读 [产品规格](docs/PRODUCT_SPEC.md)、[架构](docs/ARCHITECTURE.md)、[领域模型](docs/DOMAIN_MODEL.md)。
-3. 阅读 [界面与流程](docs/UX_AND_FLOWS.md)、[实施路线](docs/IMPLEMENTATION_PLAN.md)、[验收](docs/QUALITY_GATES.md)。
-4. 对内容生成使用 [讲义生成规范](prompts/NOTE_GENERATION.md)；对知识联系使用 [关联引擎规范](prompts/CONNECTION_EXPLORER.md)；对图谱编辑使用 [图谱助手规范](prompts/GRAPH_ASSISTANT.md)。
-5. 从 [Qoder 开工指令](prompts/QODER_KICKOFF.md) 开始，每个阶段完成后在 [开发日志](docs/DEVELOPMENT_LOG.md) 留证据。
+四个板块只是这条流水线上的**四个视口**：
 
-## 约定目录（随实施创建）
+- **01 学习工作台** 操作 `Resource → NoteDocument`
+- **02 可视化实验室** 消费 `KnowledgeNode`，产出 `VisualizationRun`（回链到笔记）
+- **03 知识关联探索** 生产 `KnowledgeRelation` 的**候选**
+- **04 认知与记忆图谱** 消费并编辑 `KnowledgeNode/Relation` 的**三种布局**
 
-- apps/web/：前端应用，阅读器、编辑器、交互图谱与实验室。
-- packages/domain/：领域类型、校验、导入/导出与版本规则。
-- packages/learning/：检索、讲义、关联提议与回忆逻辑。
-- packages/visualizations/：经过验证的可视化实验模块和工具适配。
-- content/demo/：**自有或获授权**的公开演示材料。
-- docs/：需求、技术决策、验收与比赛证据。
-- prompts/：供 AI 和开发代理执行的明确规范。
-- workspace/：本机私人工作区，不进入 Git。
+⚠️ **03 与 04 不是同一个功能。** 03 负责“发现并验证关系”，04 负责“组织、保存、重新提取关系”。
+把它们合并成“自动生成思维导图”，就是本项目要反对的那个东西。
 
-## 重要链接
+---
 
-- [天池比赛](https://tianchi.aliyun.com/competition/entrance/532536)
-- [比赛论坛](https://tianchi.aliyun.com/competition/entrance/532536/forum)
-- [GitHub 仓库](https://github.com/Thalya4138/Cognitive-Atlas_Qoder)
+## 为什么现有的 AI 思维导图很鸡肋（设计约束，写给实现者）
 
-技术方案与范围可能在 Qoder 实作时更新；每次变更记录动机、取舍和验证证据。
+不是因为布局算法不好，是因为**边不携带理由**。一张图告诉你 A 连着 B，却不告诉你
+“凭什么连、在什么条件下成立、什么时候不成立”，于是它既不能用于回忆，也不能用于迁移。
+
+因此本仓库有一处**不可协商的 schema 约束**：
+
+> 任何 `KnowledgeRelation` 的 `explanation`（为什么）与 `assumptions`（在什么条件下）
+> 都是**必填且非空**，并且 `epistemic` 必须标明它是
+> `source-backed`（有出处）/ `logically-derived`（可推导）/ `pedagogical-inference`（教学推论）
+> / `analogy`（类比启发）/ `hypothesis`（猜想）/ `user-personal`（个人联想）。
+
+达不到这条的边，宁可不存在。见 [docs/DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md) §3。
+
+---
+
+## 本仓库同时是三个东西（注意它们的边界）
+
+| 身份 | 职责 | 不该做的事 |
+| --- | --- | --- |
+| **源码仓库** | 应用代码、schema、prompt、公开 demo | 不装私人课程资料、不装 API key |
+| **内容仓库** | `content/demo/` 下的 Markdown 讲义、图谱 JSON | 不装第三方版权材料 |
+| **本地知识库（长期）** | 用户自己的 `workspace/`，Obsidian 可直接打开，Git 管理 | **不进本仓库**（`.gitignore` 已排除） |
+
+网页端的定位是 **阅读器 + 编译器 + 编辑器**：Markdown 是唯一真源，网页负责渲染、检索、
+编辑和图谱视图。**不要设计只有数据库能读懂的私有格式**——那会毁掉“落盘成本地、可 Git、可换工具”
+这个前提。导出必须是标准 `.md` + sidecar `.json`。
+
+> 运维提醒：本机曾把一个 Obsidian vault 当作构建临时目录，探针写出 15 GB 文件把 Obsidian 打瘫。
+> 本目录就是一个 vault + git 仓库，**不要把构建产物、日志、大批临时输出写在这里**。
+> `.gitignore` 只能挡住 Git，挡不住 Obsidian。
+
+---
+
+## 比赛
+
+- 赛题：<https://tianchi.aliyun.com/competition/entrance/532536>（2026 Qoder 高校创造力大赛）
+- 赛道：**StudyHack**
+- 硬截止：**2026-11-30 18:00（北京时间）** — 报名 + 作品帖 + 公网可用，三者都不能晚
+- 交付形态：Qoder 开发 → 部署到 Qoder Sites → 天池赛题页论坛发帖
+- 评分：创意与洞察 / 完成度 / 体验与设计 / Qoder 使用深度（**技术复杂度本身不计分**）
+
+比赛版只承诺一条**纵向闭环**：
+
+> 打开示例课程 → 读讲义（可折叠例题、可跳锚点）→ 搜到具体段落 → 提出一条关联并看到理由与边界
+> → 用户确认后进入图谱 → 在个人记忆视图里改布局 → 导出，再导入，一切还在。
+
+细节与帖子模板见 [docs/CONTEST_SUBMISSION.md](docs/CONTEST_SUBMISSION.md)。
+
+---
+
+## 目录
+
+```text
+apps/                 应用代码（Qoder 在其下实现）
+  web/                React + Vite 前端
+content/demo/         公开样例：课程、讲义、图谱、资源清单（唯一可提交的内容）
+docs/                 产品、数据、架构、验收、比赛（一文件一职责，不互相重述）
+prompts/              给模型的契约（带版本与 I/O schema）
+schemas/              JSON Schema，CI 用它校验样例数据
+workspace/            ← 本地私人知识库，.gitignore 排除，永不提交
+```
+
+---
+
+## 链接
+
+- GitHub：<https://github.com/Thalya4138/Cognitive-Atlas_Qoder>
+- 天池赛题页 / 论坛：见上
+- 产品定义：[docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)

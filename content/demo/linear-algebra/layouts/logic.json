@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "id": "layout.logic",
+  "kbId": "kb.linear-algebra",
+  "viewType": "logic",
+  "note": "逻辑视图 = 结论如何被推出。方向即推理方向（自下而上），多前提用 relationGroup 的超边，不压成两条独立边。边样式必须区分 epistemic。",
+  "relationFilter": ["derives-from", "equivalent-under", "defined-by", "shared-mechanism", "analogy-to", "contrasts-with"],
+  "layers": [
+    { "layer": 0, "label": "前提 / 条件", "nodeIds": ["n.full-column-rank", "n.orthogonality"] },
+    { "layer": 1, "label": "推导", "nodeIds": ["n.normal-eq"] },
+    { "layer": 2, "label": "结论", "nodeIds": ["n.unique-solution"] }
+  ],
+  "positions": {
+    "n.orthogonality": { "x": 200, "y": 420, "layer": 0 },
+    "n.full-column-rank": { "x": 520, "y": 420, "layer": 0 },
+    "n.normal-eq": { "x": 360, "y": 240, "layer": 1 },
+    "n.unique-solution": { "x": 360, "y": 80, "layer": 2 },
+    "n.least-squares": { "x": 40, "y": 240, "layer": 1 },
+    "n.point-plane": { "x": 760, "y": 240, "layer": 1 },
+    "n.skew-lines": { "x": 760, "y": 420, "layer": 1 },
+    "n.first-order-cond": { "x": 620, "y": 80, "layer": 2 }
+  },
+  "hyperEdges": [
+    {
+      "id": "g.unique",
+      "premiseIds": ["n.orthogonality", "n.full-column-rank"],
+      "conclusionIds": ["n.unique-solution"],
+      "label": "两条前提同时成立",
+      "renderAs": "junction"
+    }
+  ],
+  "edgeStyle": {
+    "source-backed": { "stroke": "solid", "width": 2.0 },
+    "logically-derived": { "stroke": "solid", "width": 1.6 },
+    "pedagogical-inference": { "stroke": "dashed", "width": 1.4 },
+    "analogy": { "stroke": "dotted", "width": 1.2, "label": "类比" },
+    "hypothesis": { "stroke": "dotted", "width": 1.2, "label": "待验证" },
+    "user-personal": { "stroke": "double", "width": 1.6, "label": "我的" }
+  },
+  "style": { "direction": "bottom-up" }
+}

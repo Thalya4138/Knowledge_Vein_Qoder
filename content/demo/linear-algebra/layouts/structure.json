@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "id": "layout.structure",
+  "kbId": "kb.linear-algebra",
+  "viewType": "structure",
+  "note": "结构视图 = 学科客观上如何组织。分层由 course.outline 决定，不由算法决定。用户可拖动，但层级标签不可随意改动。",
+  "relationFilter": ["contains", "prerequisite"],
+  "layers": [
+    { "layer": 0, "label": "预备概念", "nodeIds": ["n.colspace"] },
+    { "layer": 1, "label": "核心方法", "nodeIds": ["n.least-squares", "n.orthogonality"] },
+    { "layer": 2, "label": "结论与条件", "nodeIds": ["n.normal-eq", "n.full-column-rank", "n.unique-solution"] },
+    { "layer": 3, "label": "迁移与应用", "nodeIds": ["n.point-plane", "n.skew-lines", "n.first-order-cond"] }
+  ],
+  "positions": {
+    "n.colspace": { "x": 120, "y": 80, "layer": 0 },
+    "n.least-squares": { "x": 360, "y": 80, "layer": 1 },
+    "n.orthogonality": { "x": 360, "y": 220, "layer": 1 },
+    "n.normal-eq": { "x": 620, "y": 150, "layer": 2 },
+    "n.full-column-rank": { "x": 620, "y": 300, "layer": 2 },
+    "n.unique-solution": { "x": 860, "y": 220, "layer": 2 },
+    "n.point-plane": { "x": 620, "y": 440, "layer": 3 },
+    "n.skew-lines": { "x": 860, "y": 440, "layer": 3 },
+    "n.first-order-cond": { "x": 1100, "y": 150, "layer": 3 }
+  },
+  "groups": [],
+  "style": {
+    "importance": {
+      "core": { "size": 1.4, "weight": 700 },
+      "supporting": { "size": 1.0, "weight": 500 },
+      "extension": { "size": 0.9, "weight": 400, "opacity": 0.75 }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "kbId": "kb.linear-algebra",
+  "resources": [
+    {
+      "id": "res.demo-authoring-note",
+      "origin": "generated",
+      "kind": "note",
+      "title": "本项目原创讲义（无外部依赖）",
+      "author": "Cognitive Atlas Project",
+      "license": "MIT",
+      "uri": null,
+      "hash": null,
+      "retrievedAt": "2026-11-11",
+      "note": "本演示课程不依赖任何外部教材。讲义中的数学内容均为本项目撰写；如后续接入真实教材，须在此登记来源、许可与页码锚点。"
+    }
+  ],
+  "spans": [
+    {
+      "id": "s.notes-01-orthogonality",
+      "resourceId": "res.demo-authoring-note",
+      "locator": { "type": "section", "value": "notes/01-列空间与最近点.md#为什么残差必须正交" },
+      "quote": "若残差沿列空间某一方向还有分量，沿该方向移动 p 就能让距离更小，与「最近」矛盾。",
+      "hash": "sha256:pending-ci"
+    },
+    {
+      "id": "s.notes-02-rank",
+      "resourceId": "res.demo-authoring-note",
+      "locator": { "type": "section", "value": "notes/02-法方程.md#点唯一不等于参数唯一" },
+      "quote": "最近点 p 总是唯一，但表达它的参数 s 未必唯一；AᵀA 可逆当且仅当 A 满列秩。",
+      "hash": "sha256:pending-ci"
+    }
+  ],
+  "note": "locator 的 type 可为 page / section / time / range / unavailable。未知时用 unavailable 并说明，禁止猜测页码。"
+}

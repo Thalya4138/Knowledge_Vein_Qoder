@@ -1,0 +1,19 @@
+name: verify
+
+# 现在只有内容校验能跑。应用出现后，Qoder 应把 typecheck / test / build 加进来，
+# 并把 npm ci 换成 npm install。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  content:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 校验样例知识库
+        run: node scripts/verify-content.mjs

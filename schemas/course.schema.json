@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cognitive-atlas.local/schemas/course.schema.json",
+  "title": "KnowledgeBase",
+  "description": "一个课程/专题知识库。落盘即一个目录，可被 Obsidian / Git / 纯文本编辑器直接使用。",
+  "type": "object",
+  "required": ["schemaVersion", "id", "title", "outline"],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "id": { "type": "string", "pattern": "^kb\\.[a-z0-9-]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "subtitle": { "type": "string" },
+    "locale": { "type": "string" },
+    "level": { "type": "string" },
+    "license": { "type": "string" },
+    "createdAt": { "type": "string" },
+    "updatedAt": { "type": "string" },
+    "outline": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "notePath"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string", "pattern": "^ch\\.[0-9a-z-]+$" },
+          "title": { "type": "string", "minLength": 1 },
+          "notePath": { "type": "string", "pattern": "\\.md$" },
+          "goal": { "type": "string" },
+          "prereqIds": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "learningPath": { "type": "object", "additionalProperties": true },
+    "resourceIds": { "type": "array", "items": { "type": "string" } },
+    "nodeIds": { "type": "array", "items": { "type": "string" } }
+  }
+}

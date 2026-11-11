@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "kbId": "kb.linear-algebra",
+  "note": "学习证据示例。掌握状态只来自练习或用户自评，不来自阅读次数。",
+  "evidence": [
+    {
+      "id": "ev.1",
+      "targetIds": ["n.orthogonality"],
+      "task": "不看讲义，说明为什么最近点的残差必须与列空间正交",
+      "response": "用户回答：'因为如果还有分量，沿那个方向挪一下就更近了。'",
+      "rubric": ["指出反证思路：否则可继续减小", "说明是「最近」的直接后果，不是额外规定"],
+      "score": { "recall": true, "understand": true, "apply": false },
+      "date": "2026-11-11",
+      "note": "能解释原因，但换成加权内积时不会推。apply 仍为 false。"
+    }
+  ],
+  "userSelfReport": {
+    "note": "用户可覆盖任何自动推断。此字段优先级最高。",
+    "n.least-squares": "understand",
+    "n.unique-solution": "recall"
+  }
+}

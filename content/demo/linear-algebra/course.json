@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "id": "kb.linear-algebra",
+  "title": "线性代数：最小二乘与正交投影",
+  "subtitle": "从「方程无解」到「最近点」——一个概念的诞生过程",
+  "locale": "zh-CN",
+  "level": "本科一年级",
+  "license": "本项目原创演示材料（MIT），供功能测试与公开展示",
+  "createdAt": "2026-11-11",
+  "updatedAt": "2026-11-11",
+
+  "outline": [
+    {
+      "id": "ch.01",
+      "title": "列空间与最近点",
+      "notePath": "notes/01-列空间与最近点.md",
+      "goal": "理解「无解」为何可以改写为「最近」，以及最近点的几何判据",
+      "prereqIds": []
+    },
+    {
+      "id": "ch.02",
+      "title": "法方程：把几何条件变成代数方程",
+      "notePath": "notes/02-法方程.md",
+      "goal": "从正交条件推出法方程，并区分「点唯一」与「参数唯一」",
+      "prereqIds": ["ch.01"]
+    },
+    {
+      "id": "ch.03",
+      "title": "三种「最近」是同一个问题吗",
+      "notePath": "notes/03-三种最近.md",
+      "goal": "对照最小二乘、点到平面距离、异面直线距离的共性与差异",
+      "prereqIds": ["ch.02"]
+    }
+  ],
+
+  "learningPath": {
+    "note": "体系式学习沿 outline 顺序；问题式学习可从任意节点进入，系统提示缺哪条先修。",
+    "startHere": "ch.01"
+  },
+
+  "resourceIds": ["res.demo-authoring-note"],
+  "nodeIds": [
+    "n.colspace", "n.least-squares", "n.orthogonality", "n.normal-eq",
+    "n.full-column-rank", "n.unique-solution", "n.point-plane",
+    "n.skew-lines", "n.first-order-cond"
+  ],
+
+  "integrity": {
+    "note": "讲义中每一条 [[wiki link]] 都必须能在 graph.json 找到对应 nodeId；缺失视为缺陷。"
+  }
+}

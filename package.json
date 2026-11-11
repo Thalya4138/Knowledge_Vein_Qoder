@@ -1,0 +1,18 @@
+{
+  "name": "cognitive-atlas",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI 驱动的学习工作台：可读讲义、可验证关联、可编辑的个人认知图谱",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "verify:content": "node scripts/verify-content.mjs",
+    "dev": "echo \"[未实现] apps/web 尚未创建，见 prompts/QODER_KICKOFF.md 的 T0 任务\" && exit 1",
+    "build": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
+    "typecheck": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
+    "test": "echo \"[未实现] apps/web 尚未创建\" && exit 1"
+  }
+}

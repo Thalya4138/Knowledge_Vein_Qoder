@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cognitive-atlas.local/schemas/graph.schema.json",
+  "title": "KnowledgeGraph",
+  "description": "知识图谱契约。核心约束：每条关系必须有 explanation、assumptions、epistemic。这是本产品与「AI 思维导图」的分界线，不可放宽。",
+  "type": "object",
+  "required": ["schemaVersion", "kbId", "nodes", "relations"],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "type": "string", "pattern": "^\\d+\\.\\d+$" },
+    "kbId": { "type": "string" },
+    "note": { "type": "string" },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "relations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relation" }
+    },
+    "relationGroups": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relationGroup" }
+    },
+    "memoryCues": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/memoryCue" }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id", "kind", "title", "importance"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "pattern": "^n\\.[a-z0-9-]+$" },
+        "kind": {
+          "type": "string",
+          "enum": ["concept", "theorem", "method", "example", "question", "idea"]
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "importance": { "type": "string", "enum": ["core", "supporting", "extension"] },
+        "noteAnchor": { "type": ["string", "null"] },
+        "sourceSpanIds": { "type": "array", "items": { "type": "string" } },
+        "origin": { "type": "string", "enum": ["user", "ai", "import"] },
+        "schemaVersion": { "type": "string" }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "required": [
+        "id", "from", "to", "type", "explanation", "assumptions", "epistemic", "status"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "pattern": "^r\\.[a-z0-9-]+$" },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": [
+            "contains", "prerequisite", "defined-by", "derives-from",
+            "equivalent-under", "generalizes", "applies-to", "contrasts-with",
+            "shared-mechanism", "analogy-to", "counterexample-to"
+          ],
+          "not": { "enum": ["related", "关联", "有关"] }
+        },
+        "direction": { "type": "string", "enum": ["forward", "reverse", "both"], "default": "forward" },
+        "explanation": {
+          "type": "string",
+          "minLength": 12,
+          "description": "为什么这条关系成立。禁止写「两者相关」这类空话。"
+        },
+        "assumptions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "成立条件。没有条件的结论无法判断何时失效。"
+        },
+        "epistemic": {
+          "type": "string",
+          "enum": [
+            "source-backed", "logically-derived", "pedagogical-inference",
+            "analogy", "hypothesis", "user-personal"
+          ]
+        },
+        "status": { "type": "string", "enum": ["proposed", "accepted", "rejected", "archived"] },
+        "evidenceIds": { "type": "array", "items": { "type": "string" } },
+        "boundaryOrCounterexample": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "description": "类比与猜想必须写明失效处或反例，否则无法与事实区分。",
+          "if": { "properties": { "epistemic": { "enum": ["analogy", "hypothesis"] } }, "required": ["epistemic"] },
+          "then": { "required": ["boundaryOrCounterexample"] }
+        }
+      ]
+    },
+    "relationGroup": {
+      "type": "object",
+      "required": ["id", "premiseIds", "conclusionIds", "logicType", "explanation"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "premiseIds": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+        "conclusionIds": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "logicType": { "type": "string", "enum": ["conjunction→conclusion", "disjunction→conclusion"] },
+        "explanation": { "type": "string", "minLength": 12 },
+        "epistemic": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "memoryCue": {
+      "type": "object",
+      "required": ["id", "text", "linkedNodeIds"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string", "minLength": 1 },
+        "linkedNodeIds": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "layoutId": { "type": "string" },
+        "origin": { "type": "string", "enum": ["user", "ai"] }
+      }
+    }
+  }
+}

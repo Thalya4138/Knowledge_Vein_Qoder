@@ -1,57 +1,131 @@
 # 领域模型 · 知识不是一张随意连线的图
 
-状态：设计契约，具体 TypeScript schema 由实现阶段落地并测试。
+**状态：v1.0 契约。** TypeScript 类型由 Qoder 落地；本文件与 `schemas/*.json` 是权威。
+真实实例见 `content/demo/linear-algebra/`——**写代码前先读那几份 JSON，它们比本表更精确。**
 
-## 1. 核心实体
+术语统一见 [GLOSSARY.md](GLOSSARY.md)。产品约束的来源见 [PRODUCT_SPEC.md](PRODUCT_SPEC.md) §6.3。
 
-| 对象 | 关键字段 | 不变量 |
+---
+
+## 1. 实体总表
+
+| 实体 | 关键字段 | 不变量（违反即为 bug） |
 | --- | --- | --- |
-| Workspace | id, name, locale, storageMode, schemaVersion | 私人工作区与公开演示数据严格区分 |
-| Course/Topic | id, title, outline, prerequisites, resourceIds | 课程章节顺序与自由探索并存 |
-| Resource | id, title, kind, uri/localRef, author, license, hash, fetchedAt | 不编造来源；原始内容不可被 LLM 静默覆盖 |
-| SourceSpan | id, resourceId, locator(page/section/time/range), quote/hash | 定位器必须可验证；未知时标记 unavailable |
-| NoteDocument | id, courseId, md, blocks, sourceSpanIds, revision | 可读 Markdown 是稳定可导出的内容主体 |
-| KnowledgeNode | id, kind, title, aliases, noteAnchor, sourceSpanIds | concept/theorem/method/example/question/idea 等类型 |
-| KnowledgeRelation | id, from, to, type, direction, explanation, assumptions, evidenceIds, status | 不允许只有“有关”两字；建议关系与确认关系分开 |
-| RelationGroup | id, premiseNodeIds[], conclusionNodeIds[], logicType, proofRef | 多前提推导/合取条件，不强压成二元边 |
-| ViewLayout | id, viewType, nodePositions, groups, collapsed, style | 三视图分别编辑和持久化，不复制知识节点 |
-| LearningEvidence | id, nodeOrRelationIds, task, response, criteria, evaluation, date | 掌握状态从证据推断而非任意涂色 |
-| MemoryCue | id, userText, linkedNodeIds, pathIds, layoutId | 用户自己的联想线索不等同于客观定理 |
-| ProposedChange | id, target, before, after, rationale, evidence, status | AI 更改统一走预览 → 确认/拒绝 → 撤销 |
-| VisualizationRun | id, tool, inputRef, parameters, resultRef, status | 区分真实运行、预置示例和失败 |
-| ExportBundle | schemaVersion, manifest, documents, graph, layouts, assets | 导出后导入须保真，不丢布局/来源/用户修改 |
+| `Workspace` | id, name, locale, storageMode | 私人工作区与公开 demo 严格隔离 |
+| `KnowledgeBase` | id, title, outline[], prereqIds[], resourceIds[] | 课程主干顺序与自由探索并存 |
+| `Resource` | id, kind, origin, title, uri?, author?, license, hash, retrievedAt | `origin` 必为 `user-import`/`discovered`/`generated`；**无许可不得标 discovered** |
+| `SourceSpan` | id, resourceId, locator{page/section/time/range}, quote?, hash | 定位器必须可验证；不知道就写 `unavailable`，**不许猜页码** |
+| `NoteDocument` | id, kbId, path, md, revision, sourceSpanIds[] | Markdown 是内容真源；AI 不得覆盖 user-authored 段落 |
+| `KnowledgeNode` | id, kind, title, aliases[], noteAnchor?, sourceSpanIds[], importance | `kind` ∈ concept/theorem/method/example/question/idea |
+| `KnowledgeRelation` | id, from, to, type, direction, explanation, assumptions[], epistemic, status, evidenceIds[] | **`explanation` 与 `assumptions` 非空**；`epistemic` 必填 |
+| `RelationGroup` | id, premiseIds[], conclusionIds[], logicType, proofRef? | 多前提推导不得压成二元边 |
+| `ViewLayout` | id, viewType, positions{nodeId:{x,y,layer?,collapsed?}}, groups[], style | 三视图独立；**AI 不得自动重排 personal** |
+| `LearningEvidence` | id, targetIds[], task, response, rubric, score, date | 掌握状态从证据推断，不来自阅读次数 |
+| `MemoryCue` | id, text, linkedNodeIds[], layoutId | 用户私有；不得被描述为客观事实 |
+| `ProposedChange` | id, op, target, before, after, rationale, evidence, status, undoToken? | 必须经用户确认；`undoToken` 由应用层生成 |
+| `VisualizationRun` | id, tool, inputRef, params, resultRef, status, noteAnchor? | `status` ∈ real/pre-rendered/example/failed，**不许伪装** |
+| `ExportBundle` | schemaVersion, manifest, docs[], graph, layouts[], assets[] | 导出→导入必须保真（节点/关系/三布局/来源） |
 
-## 2. 关系类型与辨析
+---
 
-最小集合：
-- contains/is-a（包含/分类；注意方向）
-- prerequisite（先修）
-- defined-by（定义）
-- derives-from（推导）
-- equivalent-under（在条件下等价）
-- generalizes/specializes（推广/特例）
-- applies-to（应用）
-- contrasts-with（对比）
-- analogy-to（启发性类比，非证明）
-- challenges/counterexample-to（冲突/反例）
+## 2. 关系类型（最小集合）
 
-每条关系必须标记 evidenceStatus: source-backed | logically-derived | pedagogical-inference | hypothesis | user-personal。status: proposed | accepted | rejected。**推导、类比、个人记忆联想不能共用一种“真关系”颜色或语义。**
+| type | 语义 | 方向 |
+| --- | --- | --- |
+| `contains` | 包含 / 分类 | 父 → 子 |
+| `prerequisite` | 先修 | 先 → 后 |
+| `defined-by` | 由……定义 | 被定义者 → 定义 |
+| `derives-from` | 由……推出 | 结论 → 前提 |
+| `equivalent-under` | 在给定条件下等价 | 双向 |
+| `generalizes` | 推广（后者是前者的推广） | 特例 → 一般 |
+| `applies-to` | 应用于 | 方法 → 场景 |
+| `contrasts-with` | 对照/对立 | 双向 |
+| `shared-mechanism` | 共用同一底层机制 | 双向 |
+| `analogy-to` | 启发性类比（**非证明**） | 双向 |
+| `counterexample-to` | 反例 / 冲突 | 反例 → 被反驳者 |
 
-## 3. 示例：最小二乘
+`epistemic` 的六个取值见 [GLOSSARY.md](GLOSSARY.md) §认知状态。
 
-- 节点：列空间 Col(A)、正交投影、最小二乘、残差、法方程、AᵀA、满列秩。
-- 在实数欧氏空间，最小二乘解 s 的残差 r=b−As 与 Col(A) 正交（Aᵀr=0），由此得 AᵀAs=Aᵀb。
-- AᵀA 可逆当且仅当 A 满列秩；它不是无条件可逆。
-- RelationGroup 可以表达“欧氏内积 + A 满列秩”到“唯一最小二乘解”的条件结构。
-- 自定义记忆线索例如“先找投影，再看残差”可存 MemoryCue，**不得被描述为唯一客观证明路径**。
+**禁止**：用 `related` / `关联` / `有关` 作为关系类型。它是"我不知道有什么关系"的伪装。
 
-## 4. 数据流与同步
+---
 
-Resource → SourceSpan → NoteDocument → KnowledgeNode/Relation proposals；经用户确认进入 accepted graph；ViewLayout 引用这些稳定 id；LearningEvidence 更新个人掌握估计。再次导入/生成笔记时保留已有用户布局，待合并变更以冲突卡处理。
+## 3. 为什么这些约束是硬的（不是风格问题）
 
-## 5. 版本和兼容
+一条只有两端、没有解释的边，会产生三个具体后果：
 
-- schemaVersion 每次结构变更递增，迁移必须有回归样例。
-- user-authored 与 AI-generated 字段区分 origin；生成更新不可擦除 user-authored 内容。
-- 通过 JSON Schema 或 Zod 校验节点/边合法性与引用完整性。
-- 导出后重新导入测试：节点数、关系类型、文档 hash、三个布局、个人线索一致。
+1. **不可回忆**：回忆靠路径重建，路径需要"为什么这一步"。没有理由的边只能被"看"，不能被"想"。
+2. **不可迁移**：不知道成立条件，就无法判断新问题是否落在同类里——这正是"学过但不会用"的机制。
+3. **不可纠错**：没有 `epistemic`，用户无法区分"教材这么说"与"AI 觉得像"，
+   于是错误会以事实的身份进入知识库，且无法定位来源。
+
+所以 `explanation` + `assumptions` + `epistemic` 三者是**schema 级必填**，
+校验失败的关系**不得写入 accepted**。这是本产品与"AI 思维导图"的分界线。
+
+---
+
+## 4. 实例：最小二乘（完整数据见 `content/demo/linear-algebra/graph.json`）
+
+```jsonc
+// 节点
+{ "id": "n.colspace", "kind": "concept", "title": "列空间 Col(A)",
+  "importance": "core", "noteAnchor": "notes/01-列空间与最近点.md#列空间" }
+
+{ "id": "n.normal-eq", "kind": "theorem", "title": "法方程 AᵀAs=Aᵀb",
+  "importance": "core" }
+
+// 关系：注意四个必填项
+{ "id": "r.normaleq",
+  "from": "n.orthogonality", "to": "n.normal-eq",
+  "type": "derives-from", "direction": "forward",
+  "explanation": "残差 r=b−As 与列空间正交，即 Aᵀr=0；代入 r=b−As 整理得 AᵀAs=Aᵀb。这不是从 Ax=b 变形而来，而是从最优性条件推出。",
+  "assumptions": ["实数域上的标准欧氏内积", "最小化的是二范数平方"],
+  "epistemic": "logically-derived", "status": "accepted",
+  "evidenceIds": ["s.notes-01-orthogonality"] }
+
+// 多前提推导：不能压成二元边
+{ "id": "g.unique",
+  "premiseIds": ["n.orthogonality", "n.full-column-rank"],
+  "conclusionIds": ["n.unique-solution"],
+  "logicType": "conjunction→conclusion",
+  "note": "欧氏内积 + A 满列秩 ⇒ 最小二乘参数解唯一。缺任一前提都不成立。" }
+```
+
+**注意 `r.normaleq` 的 `assumptions`**：去掉"实数域"这个条件，在复空间里要换成共轭转置。
+这种条件如果不在数据里，图谱就是错的——而"看起来一样"的图会让人以为它无条件成立。
+
+---
+
+## 5. 数据流
+
+```text
+Resource → SourceSpan → NoteDocument → KnowledgeNode ──► KnowledgeRelation (proposed)
+                                                              │ 用户确认
+                                                              ▼
+                                                       accepted graph
+                                                              │
+                            ┌─────────────────────────────────┼──────────────────┐
+                            ▼                                 ▼                  ▼
+                     ViewLayout(structure)          ViewLayout(logic)   ViewLayout(personal)
+                                                              │
+                                                     LearningEvidence（练习/回忆）
+                                                              │
+                                                     MemoryCue（用户私有线索）
+```
+
+- 生成新讲义或重新导入时：**保留用户已有布局**，待合并的差异以"冲突卡"呈现，不静默覆盖。
+- 索引、图谱、布局都是 `NoteDocument` 的衍生物，**不得反向覆盖原文**。
+
+---
+
+## 6. 版本与迁移
+
+- 每个实体带 `schemaVersion`、`createdAt`、`updatedAt`、`origin`(`user` / `ai` / `import`)。
+- 结构变更 → `schemaVersion` 递增 → 必须配迁移器与回归样例（导出→导入后字段不丢）。
+- 用户自写字段与 AI 生成字段分开存，AI 更新**不得擦除 user-authored 内容**。
+- 未知字段在导入时**保留**，不静默丢弃（前向兼容）。
+
+### 导出保真测试（必须写成自动化测试）
+
+导出 → 清库 → 导入，然后断言：节点数、关系数与类型分布、三份布局的坐标、
+`MemoryCue`、`SourceSpan` 引用完整性、讲义 Markdown 的 hash 全部一致。

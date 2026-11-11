@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "id": "layout.personal",
+  "kbId": "kb.linear-algebra",
+  "viewType": "personal",
+  "note": "个人记忆视图 = 我自己怎么记。位置和连线是用户意图，AI 不得自动重排。下面的布局只是初始示例，用户拖过一次就以用户的为准。",
+  "relationFilter": [],
+  "positions": {
+    "n.colspace": { "x": 80, "y": 320, "label": "先把「无解」想成「点在房间外」" },
+    "n.orthogonality": { "x": 340, "y": 200, "label": "影子最短是因为光垂直" },
+    "n.normal-eq": { "x": 600, "y": 200, "label": "写成方程才解得动" },
+    "n.full-column-rank": { "x": 600, "y": 420, "label": "方向别重复" },
+    "n.unique-solution": { "x": 860, "y": 310, "label": "点唯一 ≠ 参数唯一" }
+  },
+  "groups": [
+    {
+      "id": "grp.story",
+      "label": "我的记忆顺序",
+      "nodeIds": ["n.colspace", "n.orthogonality", "n.normal-eq", "n.unique-solution"],
+      "render": "numbered-path",
+      "note": "照「先找影子 → 再看残差 → 才写方程」走。顺序反过来会去解那个本来就无解的方程。"
+    }
+  ],
+  "personalEdges": [
+    {
+      "id": "pe.1",
+      "from": "n.colspace",
+      "to": "n.orthogonality",
+      "label": "房间外一点 → 墙上最近点",
+      "meaning": "这是我的空间比喻，不是数学命题"
+    },
+    {
+      "id": "pe.2",
+      "from": "n.orthogonality",
+      "to": "n.normal-eq",
+      "label": "几何条件 → 代数方程",
+      "meaning": "记住顺序：先几何后代数"
+    }
+  ],
+  "style": {
+    "showOnly": ["n.colspace", "n.orthogonality", "n.normal-eq", "n.full-column-rank", "n.unique-solution"],
+    "note": "个人视图默认收起「应用/扩展」节点，避免一屏全是点。用户可以随时展开。"
+  }
+}
