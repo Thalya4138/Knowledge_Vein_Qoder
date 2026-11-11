@@ -1,0 +1,64 @@
+# dependencies / build
+node_modules/
+.pnpm-store/
+dist/
+build/
+.next/
+.nuxt/
+out/
+coverage/
+.cache/
+.turbo/
+.vite/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# editors / system
+.DS_Store
+Thumbs.db
+.idea/
+.obsidian/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# local-only knowledge vault and private imports
+workspace/
+vault/
+private/
+data/local/
+imports/private/
+exports/private/
+*.local.md
+*.private.md
+*.private.pdf
+
+# secrets / runtime state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.credentials/
+secrets/
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+
+# execution artifacts / recordings
+tmp/
+temp/
+logs/
+*.log
+playwright-report/
+test-results/
+screenshots/private/
+.DS_Store
