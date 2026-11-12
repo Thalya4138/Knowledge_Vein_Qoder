@@ -22,7 +22,7 @@
 
 ---
 
-## ADR-0002 · 应用框架 / 编辑器 / 图谱 / 存储选型（**待 T0-0 探针结果填写**）
+## ADR-0002 · 应用框架 / 编辑器 / 图谱 / 存储选型（**能力表已实测，选型结论仍待填**）
 
 **背景修正**（2026-11-12）：`ARCHITECTURE.md` 原写"必须先写完本 ADR 再开工"，那句做不到——
 下面的能力表只能靠部署一次实测得到，先写 ADR 就是让 ADR 猜。因此顺序改为
@@ -30,6 +30,10 @@
 
 探针结论出来之前的临时决定：**路由用 HashRouter**。它在任何静态托管上都能跑深链，
 日后实测确认支持 SPA 回退再换 BrowserRouter，改动只有一行。这是临时措施，不是选型结论。
+
+**2026-11-12 实测后的更新**：托管站在 `spa: true` 下确实把文档请求回退到 `index.html`
+（从 `/atlas` 整页导航能启动应用），所以 **T0-1 外壳可以直接用 BrowserRouter**，不必保留 HashRouter。
+探针页自身维持 HashRouter 不动——它已经发布可用，而换路由不会影响上面测出的任何一格结论。
 
 必须回答：
 
@@ -41,15 +45,46 @@
 - 存储：IndexedDB 封装、事务、迁移方案。
 - 被排除的方案及原因。
 
-**同时记录 Qoder Sites 能力验证结果**（由 T0-0 探针逐项实测；未测的保持"待验证"，不写推测）：
+**Qoder Sites 能力实测结果**
+
+实测条件：探针页（深链测法修正版）发布到**个人版账号**下的站点
+`https://vein-probe-personal-dx7phlm8g8e.qoder.zone`，`access_mode: public`、
+`auth_integration_status: not_required`。构建自干净工作树的 commit `0dd380b`，
+`prepare_site` 新 action + `createNewSite: true`、`spa: true` 主动开启。
+**匿名性由不带 cookie 的 curl 证明**，四项自检在浏览器里跑（浏览器恰好登录，但站点已不需要登录）。
 
 | 问题 | 探针里怎么测 | 结果 |
 | --- | --- | --- |
-| SPA 深链是否 404 | 直接访问 `/atlas` 刷新 | 待验证 |
-| 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | 待验证 |
-| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | 待验证 |
-| IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | 待验证 |
-| 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | 待验证（大概率无 → 走 IndexedDB） |
+| SPA 深链是否 404 | 从 `/atlas` 整页导航，看应用是否启动 | **通过（匿名）**：`/atlas` 与任意不存在路径在 `Accept: text/html` 下都返回 200 + 应用外壳 → **BrowserRouter 可行**。`Accept: */*` 是 404，见下方测法说明 |
+| 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | **通过（下界）**：整包 523.9 KB 上传与校验通过；`probe/large.txt` 256 KB 匿名下载完整（262144 B，439 ms）。**上限未测**——没探到边界就不能写上限 |
+| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | **通过**：`load` 事件 3.2–6.0 s（首次较慢），网络面板 `calculator?lang=zh-CN` → 200 `text/html`。肉眼截图仍缺（见剩余问题） |
+| IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | **通过**：写 200,000 字符，重载后首次时间戳不变、累计次数递增、内容完整。**"不会被清理"没测到**——那需要隔天再访问 |
+| 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | **未启用**：探针刻意不带 Function/数据库。平台确有 `functionDirectory` / `databaseAccess` / Storage 入口，是否允许由后续 ADR 决定 |
+
+**测法本身踩过一个坑，值得记进决策依据**：第一版探针用 `fetch('/no-such-route')` 判回退，
+在同一个 `/atlas` 上得到 404，而浏览器导航得到应用外壳——**回退只给文档请求**
+（`Sec-Fetch-Dest: document`），资源请求一律 404。据此差点写下"必须用 HashRouter"的错误结论。
+判据改成"应用是从哪个 `pathname` 启动的"之后才测对。这条已写进 `HANDOFF.md` §6。
+
+**访问模式由订阅套餐决定（已解决，但留作决策依据）**：团队版账号下 `available_modes` 里没有
+`public`，站点只能 `organization`/`selected`（评委打不开）。用户账号套餐是「团队版 · 成员」，
+官方文档原文："Individual plans offer 'Anyone can access' (public) or 'Only invited users'.
+**Teams/Enterprise only allow organization members.**"
+换到个人版账号重新发布（新 action + `createNewSite: true` + 新 slug、不带 `projectId`）后
+`public` 立刻可选，`update_access_policy` 置为 `public` 后 `auth_integration_status` 变 `not_required`，
+匿名 curl 全部通过。**结论：比赛用的公网链接必须出自个人版账号**，团队版那份只能内部预览。
+
+两份站点并存，别混：
+
+| 账号 | 地址 | 访问 | 用途 |
+| --- | --- | --- | --- |
+| 个人版 | `vein-probe-personal-dx7phlm8g8e.qoder.zone` | `public`，匿名可开 | 比赛口径的公网入口，ADR 结论以它为准 |
+| 团队版 | `vein-t0-probe-4588bqc00js.qoder.zone` | `organization`，需登录 | 内部预览；它的 action/描述符不属于当前账号，换回来要重新登录 |
+
+**顺带测到一件会影响 T1 的事**：托管站会把我们的 `index.html`（418 B）扩成约 57 KB 再吐出来，
+注入的是 `<qoder-sites-badge>`（`id="qoder-sites-watermark"`，独立 shadow root，`:host { all: initial }`，
+`position: fixed`）。影子 DOM 意味着它**不会污染我们的排版与样式**，但它是页面上的一层固定浮标——
+阅读器验收截图里会出现它，视觉底线里的"不出现装饰性元素"不能算到平台头上，写验收说明时要讲清楚。
 
 ---
 

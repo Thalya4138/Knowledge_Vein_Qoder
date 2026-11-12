@@ -5,6 +5,279 @@
 
 ---
 
+---
+
+---
+
+---
+
+## 2026-11-12（晚 6）· QoderWang1 · 复查推送状态时发现 PR #1 已合并
+
+**目标**：回答"都 push 过了吧"——不靠记忆，用 `git fetch` + 比对本地/远端。
+**明确不做**：不 rebase（分支已 push，重写历史会影响别人）、不动 `main`、不再部署。
+
+**发现（我上一条卡写错了）**
+
+```text
+$ git branch -vv
+  main   883ea7a [origin/main: behind 5]        ← 本地 main 落后，说明远端动过
+$ git log --oneline origin/main -1
+08af8e8 Merge pull request #1 from Thalya4138/task/T0-0-QoderWang1
+$ git log --oneline HEAD..origin/main
+08af8e8                                        ← 本分支缺那个 merge commit
+```
+
+**PR #1 已经被合并**：晚 5 之前的四个提交（8 条裁决 + schema/校验器 + 探针代码 + 日志）已进 `main`。
+而我在 §4.0 与 ④ 里写的是"`main` 还停在 `883ea7a`、整条分支待合并"——**过期结论写进了权威文件**。
+
+**处理**
+
+1. `git merge origin/main` 进本分支（merge 而非 rebase：分支已 push，不能重写别人可能拉走的历史）。
+2. §4.0 指针更正为"部分已合并，剩第二个 PR（部署与实测 13 个提交）"。
+3. §4.2 ④ 按接龙规则**追加更正**，原文不删；并提醒 CI 首跑结果没人确认过，别默认它是绿的。
+4. §4.5 追加 **#5 更正 #3/#4**，把这次的错判写成一条历史记录而不是抹掉。
+
+**教训（接上一条）**：卡里凡是"远端现在处于什么状态"这类断言，必须是**刚 fetch 过的**结果；
+`main` 是共享分支，别人（或用户）随时会推进它。写"停在某个 commit"就等于埋了一颗过期雷——
+更好的做法是像 ④ 那样给出取法命令。
+
+**验证**
+
+```text
+$ git merge origin/main → Merge made by the 'ort' strategy（无内容冲突）
+$ git status --short --branch → ahead 2
+$ npm run verify:content / typecheck / test / build → 通过（18 tests）
+$ git log --oneline HEAD..origin/main → 空（不再分叉）
+```
+
+**剩余问题**：④ 变成"开第二个 PR + 确认 CI 首跑"；②⑤⑦ 不变。
+
+---
+
+## 2026-11-12（晚 5）· QoderWang1 · ⑥ 结案；交接卡改为接龙结构
+
+**目标**：把用户确认的"⑥ 那个个人账号就是我"落进卡里；按用户指出的方式把交接卡从
+"逐轮改写同一行"改成 **append-only 接龙**。**明确不做**：不改代码、不再部署、不动 `main`。
+
+**实际改动**
+
+- `docs/HANDOFF.md`：新增 §4.0 当前指针 + §4.5 接龙表（#1–#4，详情一律指向日志/ADR/§，不复述）；
+  §4.2 ⑥ 结案（保留原判断，标注"换账号再发布时要重新确认"）；§4.4 第 4 步改为"已确认，不用再做"；
+  §2 第 6 步与 §5 写入接龙规则（**只加行；更正写成"更正 #N"，不删别人条目**）；
+  §4.0 里顺手把 ④ 抄来的 commit 数换成命令现取
+- 旧版逐轮改写的表格保留在 §4.0 末尾作存档，不删
+
+**人工判断（对我的批评）**
+
+我前面三轮每次都在**重写自己那一行**——状态从"阻塞"改成"待合并"、HEAD 一路换、待人拍板一格反复改写。
+这正是"覆盖式交接"：非本地的合作者看不到中间状态，也就无法追溯"哪一轮从阻塞变成待合并"。
+用户指出后改成接龙：历史条目不动，当前状态由 §4.0 指针 + 最后一条接龙给出。
+另外本轮我第三次犯同一个错——用 Edit 插入新条目时把相邻的标题吞了两次
+（`## 5. 交接卡填写规则`、上一轮是 `## 2026-11-12（晚 3）` 条目标题），每次都靠 `grep '^## '` 复查补回。
+**教训：往 Markdown 里插章节后必须立刻跑一次标题结构检查**，别相信编辑成功的返回。
+
+**验证**
+
+```text
+$ grep -n "^## \|^### 4\." docs/HANDOFF.md   → §1–§6 与 §4.0–§4.5 齐全，无标题丢失
+$ awk 检查 §4.2 表格列数 → ①–⑦ 每行 4 列一致
+$ npm run verify:content / typecheck / test / build → 通过（18 tests，JS 271 KB / gzip 88 KB）
+```
+
+**剩余问题**：与 §4.2 未结案项一致——② D-2、④ 合并与 CI 首跑、⑤ 团队版站点处置、
+⑦ 补截图 + Obsidian 排除目录。代码与文档无新增欠账。
+
+---
+
+## 2026-11-12（晚 4）· QoderWang1 · 个人版账号发布，匿名公网实测四项通过
+
+**目标**：执行路径 ①——换个人版账号重新发布探针，把 `access_mode` 放开成 `public`，
+用**匿名**请求复测四项能力并回填 ADR-0002。
+**明确不做**：不改探针源码（上一轮的测法修正已够用）、不删团队版那份站点、不动 `main`。
+
+**授权记录**：用户明确要求"1 你现在试一下"，路径 ① 的目的就是匿名可访问；
+`update_access_policy` 的 `mode: public` 带 `confirmPublic: true` 是在该授权下执行的。
+
+**实际改动**
+
+- 新站点（个人版账号）：`prepare_site` 新 action + `createNewSite: true` + slug `vein-probe-personal`
+  + `spa: true`，不带 `projectId` → `publish_site` → `update_access_policy(public)`
+- `docs/DECISIONS.md`：ADR-0002 能力表全部换成**匿名**实测结果；访问模式一节改为已解决，
+  并记下"比赛链接必须出自个人版账号"这条结论 + 两份站点对照表 + 平台注入水印的事实
+- `docs/HANDOFF.md`：③ 标为已解决；卡行状态/接手第一步换成新地址；看板 T0-0；
+  §6 新增三条（换账号的规定动作、匿名性要用不带 cookie 的 curl 证明、水印注入）
+
+**人工判断**
+
+- 换账号后先做**身份判定**再动手：`list_sites(owned)` 返回 0 个项目 + 旧 action 报 `sites_forbidden`
+  ⇒ 确认是账号切换而不是 Sites 服务故障（服务正常才会两者同时成立）。
+  这一步不能跳——在团队版账号上 `createNewSite` 只会再产出一个不能匿名的站点。
+- `public` 一可选我就放开，但**匿名结论只用 curl 作证**。浏览器恰好带着 Qoder 会话，
+  它"能打开"证明不了 `public` 生效，所以四项自检与匿名性是两组独立证据，文档里分开写。
+
+**验证**
+
+```text
+# 身份判定
+list_sites(owned) → total_size 0            # 当前账号名下没有站点
+get_publish_status(旧 action) → sites_forbidden
+get_site_access(新 siteId) → available_modes 含 public（requires_confirmation: true）
+                              selected 不再要求同组织  ⇒ 个人版
+
+# 发布与放开
+prepare_site → artifactReady true、canPublish true、blockers []
+publish_site → succeeded、committed true、published true
+update_access_policy(public, confirmPublic) → mode: public、auth_integration_status: not_required
+
+# 匿名 curl（不带 cookie，Accept 两种各测一遍）
+/                       text/html → 200 text/html 57460B 含 #root      | */* → 200
+/atlas                  text/html → 200 含 #root                       | */* → 404
+/no-such-route-abc123   text/html → 200 含 #root                       | */* → 404
+/probe/large.txt        → 200 text/plain 262144B（两种 Accept 一致）
+/probe/build-info.json  → 200 application/json 394B
+
+# 浏览器四项自检（https://vein-probe-personal-dx7phlm8g8e.qoder.zone/atlas）
+1 深链      通过  应用从 /atlas 直接启动
+2 静态资源  通过  整包 523.9 KB；256 KB 下载完整 439 ms
+3 iframe    通过  Desmos load 3.2–6.0 s
+4 IndexedDB 通过  首次 04:31:00 不变，重载后累计 2 次、内容完整
+```
+
+**顺带测到的新事实**：托管站把 418 B 的 `index.html` 扩成约 57 KB 输出，多出来的是
+`<qoder-sites-badge>`（`id="qoder-sites-watermark"`，独立 shadow root、`:host{all:initial}`、`position:fixed`）。
+样式不会串进来，但它是页面上的固定浮标——T1 的视觉验收要把它算进画面，也别去删它。
+
+**剩余问题**
+
+- [ ] 截图 `docs/evidence/t0-0-sites-*.png` 仍缺：in-app Browser 面板隐藏
+      （`take_screenshot` 报 `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`，viewport 0x0 / attached false）。
+      本轮证据是 curl 原文 + 探针文本 + 网络面板，图像证据待面板打开后补。
+- [ ] 包体/单资源**上限**仍未测；IndexedDB"会不会被清理"要隔天再访问才知道。
+- [ ] ADR-0002 的**选型本身**（框架 / Markdown / 编辑器 / 图谱 / 存储 + 被排除方案）仍未填 —— 现在能力表齐了，可以填。
+- [ ] ② D-2 待拍板。团队版那份站点保留但不再是公网入口。
+- [ ] **本会话到此结束**（用户 2026-11-12 收线）。下一位从 `HANDOFF.md` §4.4 上手清单开始；
+      待拍板项集中在 §4.2 的 ②④⑤⑥⑦，其中 **⑥ 公网链接的账号归属**要先确认——
+      那份 `public` 站点挂在"当时登录的个人版账号"下，不一定是参赛者本人的。
+
+---
+
+## 2026-11-12（晚 3）· QoderWang1 · 探针修正与登录态实测四项
+
+**目标**：用户登录后重跑四项能力，把 ADR-0002 的能力表填成真结果。
+**明确不做**：不改选型结论本身（框架/编辑器/图谱/存储仍待填）、不动访问策略（`public` 不在可选档里）、
+不 push `main`、不换托管平台。
+
+**实际改动**
+
+- `apps/web/src/probe/checks.ts`：`probeSpaFallback` → `probeDeepLink`。判据从"fetch 一个不存在的路径"
+  换成"应用是从哪个 `pathname` 启动的"，并保留一条 fetch 对照证据，标明它**不决定**深链
+- `apps/web/src/probe/ProbePage.tsx`：该项卡片加「从 /atlas 重新加载（整页导航）」按钮
+- `docs/DECISIONS.md`：ADR-0002 能力表全部改为实测结果 + 测法踩坑记录 + HashRouter 临时决定的更新
+  （**T0-1 外壳可以直接用 BrowserRouter**；探针页保持 HashRouter 不动）
+- `docs/HANDOFF.md`：卡行状态改「待合并」、③ 更新（a 已执行完、b/c 待办）、部署须知执行结果、
+  看板 T0-0/T0-2、§6 新增"深链只能用导航测"
+
+**人工判断（本轮最重要的一条）**
+
+第一版探针在部署站上把深链判成 **失败**（`fetch('/atlas') → 404`），而浏览器导航 `/atlas`
+拿到的是应用外壳。查明差异是**回退只给文档请求**（`Sec-Fetch-Dest: document`），资源请求一律 404。
+也就是说：**如果照第一版的自动结论填 ADR，我们会写下"必须用 HashRouter"，那是错的**。
+修正判据后重发一版（新 action，`spa: true` 不变）才测出通过。这条已进 §6 已知坑。
+
+**验证**
+
+```text
+$ npm run typecheck → 通过   $ npm run test → 2 files / 18 tests   $ npm run build → 271.42 kB │ gzip 88.10 kB
+
+# 发布（修正版）
+prepare_site（新 action，projectId 复用，spa: true）→ artifactReady true、canPublish true、blockers []
+publish_site → operation succeeded、committed true、published true
+site.access_mode → organization（用户登录后从 private 变了；available_modes 仍无 public）
+
+# 公网地址实测：https://vein-t0-probe-4588bqc00js.qoder.zone/atlas
+1 深链        通过  location.pathname = /atlas，应用直接启动
+              对照：fetch 不存在路径 → HTTP 404 不含 #root（资源请求行为，不决定深链）
+2 静态资源    通过  整包 523.9 KB / 4 文件；probe/large.txt 256 KB → HTTP 200 实收 262144 B，456 ms
+3 iframe      通过  Desmos load 437 ms；网络面板 https://www.desmos.com/calculator?lang=zh-CN → 200 text/html
+4 IndexedDB   通过  写 200,000 字符；跨 4 次加载首次时间戳 04:04:51 不变、内容完整；配额显示 ~162 GB
+```
+
+**剩余问题**
+
+- [ ] 截图 `docs/evidence/t0-0-sites-*.png` **没有**：in-app Browser 面板隐藏，`take_screenshot` 报
+      `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`。上面是结构与网络证据，不是图像证据。面板打开后补拍即可。
+- [ ] ③ 匿名可访问仍未解决：`access_mode: organization`，评委需要 Qoder 登录才能打开。
+- [ ] ADR-0002 的**选型本身**（框架 / Markdown 解析器 / 编辑器 / 图谱库 / 存储 + 被排除方案）还没填。
+- [ ] IndexedDB 的"会不会被清理"要隔天再访问才知道；大小上限没探到边界就不能写。
+
+---
+
+
+## 2026-11-12（晚 2）· QoderWang1 · T0-0 探针部署到 Qoder Sites
+
+**目标**：按 `HANDOFF.md` §4.2「部署须知」把探针发布出去，用公网地址实测四项能力，结果回填 ADR-0002。
+**明确不做**：不改选型结论（四项没测到就不填）、不开 Function/数据库、不动访问策略（`public` 不在可选档里，
+放开匿名访问需要用户单独授权）、不 push `main`。
+
+**开发输入**：用户授权部署 + QoderJudge1 的「部署须知」五条与提交拆分建议。
+
+**实际改动**
+
+- `docs/DECISIONS.md` ADR-0002：能力表由"待验证"改为实测结果 + 实测条件（commit、地址、`spa: true`）；
+  表外记下这次真正的收获 —— 访问模式只有 `private`/`selected`/`organization`，**没有 `public`**
+- `docs/HANDOFF.md`：我的卡行改状态与接手第一步；待人拍板新增 **③ 探针能否匿名可访问**（三条路 a/b/c）；
+  部署须知写明 #1 #2 #4 已照做、**#3 未做到**及原因；看板 T0-0 / T0-2 状态更新；
+  §6 新增三条坑（登录墙在路由之前、`.qoder.site` 是 host-local、`descriptorStatus: pending` 的正确处理）
+- `.gitignore`：新增 `*.qoder.site`
+
+**人工判断**
+
+- 探针页发布时 `spa: true` 是我主动开的（这个开关本身就是待测能力），并在 ADR 里写明"主动开启"，
+  不让它看起来像默认行为。
+- 没有把本地 preview 的四项通过结果搬进 ADR。须知 #4 要求"测不出的格子写未验证（原因）"，
+  四项就照这么写，只把"整包 523 KB 上传通过"记成**部分**结论。
+
+**验证**
+
+```text
+# 从已提交 commit 构建（须知 #1）
+$ git rev-parse --short HEAD
+942412e
+$ npm run build → 271.33 kB │ gzip 88.05 kB，✓ built in 163ms
+$ dist 清单：index.html / assets/*.css / assets/*.js / probe/large.txt / probe/build-info.json（5 个文件）
+
+# 发布链路（工具返回，逐条核对）
+prepare_site → artifactReady true、dependenciesReady true、blockers []、canPublish true
+publish_site → operation succeeded、committed true、published true
+readiness    → publication_completed
+地址         → https://vein-t0-probe-4588bqc00js.qoder.zone（access_mode: private）
+descriptor   → descriptorStatus: written（重试同一 action + 同入参后写出）
+
+# 公网实测（须知 #3）—— 五项全部被登录墙挡住
+$ for p in / /atlas /no-such-route-abc123 /probe/large.txt /probe/build-info.json; do curl …; done
+/                        HTTP 401 | application/json | 69 bytes
+/atlas                   HTTP 401 | application/json | 69 bytes
+/no-such-route-abc123    HTTP 401 | application/json | 69 bytes
+/probe/large.txt         HTTP 401 | application/json | 69 bytes
+/probe/build-info.json   HTTP 401 | application/json | 69 bytes
+body: {"code":"sites_gateway_login_required","message":"login is r…
+
+# 浏览器同一地址：标题「登录后即可访问」，跳转 qoder.cn/users/sign-in（未代用户登录）
+# get_site_access → available_modes: private / selected(≤50, 同组织) / organization   ← 无 public
+```
+
+**证据缺口**：`docs/evidence/t0-0-sites-*.png` **没有**。探针四项在公网地址上一次都没跑起来，
+截图只会是登录页，那不是能力证据。按须知 #5 的状态处理：卡里写"阻塞"，不绕路换托管平台。
+
+**剩余问题**
+
+- [ ] ③ 未拍板：`public` 档能否开。比赛要求"公网可用、匿名可访问"，这条不解决就不是"部署完成"。
+- [ ] ADR-0002 四项能力仍"未验证（原因）"。若用户先在浏览器登录一次，我可以在登录态下重跑并回填（那是 a 路）。
+- [ ] CI 仍未经远端验证（本轮只 push 分支，`ci.yml` 的 job 只在 push main / PR 时跑）。
+
+---
+
+
 ## 2026-11-12（晚）· QoderWang1 · T0-0 探针 + 8 条裁决落地
 
 **范围**：把用户对 8 条矛盾的裁决写进契约、schema 与数据；补上没人守的布局 schema；搭 T0-0 部署探针。

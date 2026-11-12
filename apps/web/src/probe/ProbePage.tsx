@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  probeDeepLink,
   probeIframe,
   probeIndexedDb,
-  probeSpaFallback,
   probeStaticAsset,
   type ProbeResult,
   type ProbeState,
@@ -24,15 +24,18 @@ interface Check {
   adrCell: string;
   run: () => Promise<ProbeResult>;
   manual: string;
+  /** 需要整页导航才能测的项，给出重载目标路径。 */
+  reloadPath?: string;
 }
 
 const CHECKS: Check[] = [
   {
-    key: 'spa',
-    question: '未知路径会不会回退到 index.html（深链是否 404）',
+    key: 'deeplink',
+    question: '深链（如 /atlas）能否到达应用外壳',
     adrCell: 'SPA 深链是否 404',
-    run: probeSpaFallback,
-    manual: '地址栏直访下面四个视口链接，再手动把 # 去掉访问一次 /workspace，看到什么就记什么。',
+    run: probeDeepLink,
+    manual: '点「从 /atlas 重新加载」：看到本探针页 = 文档请求被回退；看到 404 页 = 这台来源不回退。',
+    reloadPath: '/atlas',
   },
   {
     key: 'asset',
@@ -162,6 +165,17 @@ export function ProbePage() {
             <button type="button" className="action secondary" onClick={() => void runOne(c)}>
               只重跑这一项
             </button>
+            {c.reloadPath && (
+              <button
+                type="button"
+                className="action"
+                onClick={() => {
+                  window.location.assign(c.reloadPath!);
+                }}
+              >
+                从 {c.reloadPath} 重新加载（整页导航）
+              </button>
+            )}
           </section>
         );
       })}
