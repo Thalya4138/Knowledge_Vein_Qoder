@@ -121,7 +121,7 @@ CI 改写未经远端验证。
 | --- | --- | --- | --- |
 | ① | ~~是否授权把 T0-0 探针部署到 Qoder Sites~~ | — | **已授权 部署 T0-0 探针到 Qoder Sites**（用户 2026-11-12 确认）。授权范围只限探针页，不含后续任何版本；执行要求见下方「部署须知」 |
 | ② | **D-2**：用户在逻辑视图手写的推导，`epistemic` 默认值（`PRODUCT_SPEC.md` §6.1 末尾） | T3 图谱编辑要用；T0 不受影响 | 规格里的倾向是默认 `logically-derived`。反对理由：`epistemic` 回答的是"谁为这条边担保"，用户刚写下、没人核对的推导默认标"逻辑推出"，正是本项目要反对的"没理由的断言"换了个方向。倾向默认 `user-personal` 并标待核对，核对通过再升级。不急，T3 之前定即可 |
-| ③ | **探针站点能不能匿名可访问**：`available_modes` 只有 `private` / `selected`（≤50 人，需同组织）/ `organization`，**没有 `public`**；用户登录后 `access_mode` 变成 `organization` | 比赛要求"公网可用、匿名可访问"（`CONTEST_SUBMISSION.md`），现在评委需要 Qoder 账号才打得开 | **a) 已执行完毕**：用户登录后我重跑了四项，全部通过，ADR-0002 已回填（结论：`spa: true` 下文档请求会回退，BrowserRouter 可行）。**b) 仍待查**：`public` 能否在 Sites 设置里或另一账号/环境下开启。**c) 仍待决**：若确实只能登录访问，比赛交付方式要重想（评委愿不愿意登录？帖子链接能否接受"需 Qoder 账号"）——这条越晚决定越贵，建议本周内定 |
+| ③ | **探针站点能不能匿名可访问**：`available_modes` 只有 `private` / `selected`（≤50 人，需同组织）/ `organization`，**没有 `public`** | 比赛要求"公网可用、匿名可访问"（`CONTEST_SUBMISSION.md`），现在评委需要 Qoder 账号才打得开 | **根因已确认（用户 2026-11-12 截图）**：账号套餐是「**团队版 · 成员**」，官方文档规定 Teams/Enterprise 只允许组织成员访问 → `public` 是**套餐层面不给**，不是站点配置错、不是平台 bug。a 路已执行完（登录态四项通过，见 ADR-0002）。剩下三选一：**① 用个人版账号再发布一份**（推荐，交付形态不变：新 action + `createNewSite: true` + 新 slug、不带 `projectId`）；**② 向组委会确认"评委登录 Qoder 账号"算不算公网可用**；**③ 换托管平台**——与交付形态冲突且被部署须知 #5 禁止，默认不走。组织管理员能否放开公开站点：文档未提，**未知，别当路径依赖** |
 
 **部署须知（① 的执行要求）**
 
@@ -192,6 +192,10 @@ CI 改写未经远端验证。
   一律 `401 sites_gateway_login_required`，返回的是 JSON 而不是应用外壳。
   所以"深链是否 404"这类问题在放开访问前**测不出来**，别把 401 读成"不支持回退"，
   也别拿本地 preview 的 200 顶替。
+- **可用访问档由订阅套餐决定，别在站点上找开关**。团队版/企业版**不提供** `public`
+  （官方文档：Teams/Enterprise only allow organization members），所以 `update_access_policy`
+  传 `public` 一定被拒——工具文档也要求只传 `available_modes` 返回的档位。
+  要匿名可访问就换个人版账号发布，别反复试写。
 - **`.qoder.site` 描述符是 host-local 的**，里面带冻结的 `index.html` 与内部 ID，已加进 `.gitignore`。
   换机器或换 agent 必须 `prepare_site` 新 action，不要复用别人机器上的 actionId。
 - **`prepare_site` 返回 `descriptorStatus: pending` 不是失败**：等 readiness 完成后用
