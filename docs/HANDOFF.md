@@ -89,11 +89,11 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #6（QoderWang1，2026-11-12 晚 7） |
+| 最新接龙条目 | §4.5 #7（QoderWang1，2026-11-12 晚 8） |
 | 分支 | `task/T0-0-QoderWang1`，HEAD 取 `git log --oneline origin/task/T0-0-QoderWang1 -1` |
-| 合并状态 | **已全部合并**：PR #1（`08af8e8`）+ PR #2（`bff7892`）都进了 `main`；`git diff main task/T0-0-QoderWang1` 为空 → 两条分支内容逐字节相同。工作分支可删，删之前先确认 CI |
+| 合并状态 | PR #1（`08af8e8`）+ PR #2（`bff7892`）已进 `main`，`main` 上的 CI 首跑已验证（#7）。合并之后又产生了几条**文档提交**（接龙 #6/#7），差多少用 `git log --oneline origin/main..origin/task/T0-0-QoderWang1` 现取；要同步就开第三个 PR，别在文档里写条数 |
 | 下一位的入口 | §4.4 上手清单，从第 2 步的四道门开始（先 `git fetch`，基于 `main` 开新分支） |
-| 还欠谁的 | ② D-2、④ 只剩 **CI 首跑结果确认**、⑤ 团队版站点处置、⑦ 两件人类专属收尾 |
+| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑦ 两件人类专属收尾（④ 已结案，见 #7） |
 
 （旧版表格存档如下，保留原样以便追溯。）
 
@@ -140,7 +140,7 @@ CI 改写未经远端验证。
 | ① | ~~是否授权把 T0-0 探针部署到 Qoder Sites~~ | — | **已授权 部署 T0-0 探针到 Qoder Sites**（用户 2026-11-12 确认）。授权范围只限探针页，不含后续任何版本；执行要求见下方「部署须知」 |
 | ② | **D-2**：用户在逻辑视图手写的推导，`epistemic` 默认值（`PRODUCT_SPEC.md` §6.1 末尾） | T3 图谱编辑要用；T0 不受影响 | 规格里的倾向是默认 `logically-derived`。反对理由：`epistemic` 回答的是"谁为这条边担保"，用户刚写下、没人核对的推导默认标"逻辑推出"，正是本项目要反对的"没理由的断言"换了个方向。倾向默认 `user-personal` 并标待核对，核对通过再升级。不急，T3 之前定即可 |
 | ③ | ~~探针站点能不能匿名可访问~~ | — | **已解决（2026-11-12，路径 ①）**：换个人版账号重新发布 → `public` 可选 → `update_access_policy` 置 public（`confirmPublic: true`）→ 匿名 curl 五个路径全对，四项自检全过。公网入口 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`。**根因留在 ADR-0002**：团队版根本不提供 `public`，所以比赛链接必须出自个人版账号。剩 ② D-2 待拍板 |
-| ④ | **谁把 `task/T0-0-QoderWang1` 合进 `main`** | agent 不许 push `main`（§3 红线），合并只有仓库所有者能做。待合的范围用 `git log --oneline origin/main..task/T0-0-QoderWang1` 现取（别在文档里抄 commit 数，它每轮都在变） | 合并后 CI 才会**第一次**真正跑起来——`.github/workflows/ci.yml` 已改写成 `npm ci → verify:content → typecheck → test → build`，但从未在远端执行过，这是 T0-4 唯一的未验证项。建议先开 PR 看 CI 绿再合，别直接 merge。**更正（晚 6）**：PR #1 已被合并（`08af8e8`），所以这条现在只剩**第二个 PR**（部署与实测那批提交）。CI 首跑仍未验证——如果 PR #1 的 Actions 结果你没看到，去仓库 Actions 页确认，别默认它是绿的 |
+| ④ | ~~谁把 `task/T0-0-QoderWang1` 合进 `main`，以及 CI 首跑是否通过~~ | — | **已结案（2026-11-12 晚 8，见 #7）**：仓库所有者已自行合并 PR #1（`08af8e8`）与 PR #2（`bff7892`）；用户截图显示 `main` 上的 `bff7892` 触发 `verify` 第 9 次运行，15 s 全绿，即 CI 首跑通过。**证据来源要说清**：这是用户截图，不是 agent 亲手跑的——仓库私有，未登录的 `api.github.com` 返回 404，本机也没有 `gh`。后续若需要自己确认，办法是 `git fetch` 后看 `main` 顶部 commit，或在 Actions 页按 commit 查。仍待做的只剩：合并之后的文档提交要开第三个 PR 才能同步（条数用 `git log --oneline origin/main..origin/task/T0-0-QoderWang1` 现取） |
 | ⑤ | **团队版那份站点怎么处置**：`vein-t0-probe-4588bqc00js.qoder.zone`（`organization`，需登录） | 它现在和公网那份内容重复，留着可能让人误贴错链接；删掉是不可逆的资源删除 | 默认**保留**作内部预览，ADR-0002 的两份站点对照表已经写清各自用途。要删需要所有者明确授权（`delete_project`，工具会先讲清影响），**不要顺手清理** |
 | ⑥ | ~~公网链接绑定在哪个个人版账号上~~ | — | **已结案（用户 2026-11-12 确认）**：刚才发布用的个人版账号**就是参赛者本人**，账号归属没问题，公网链接可以直接进帖子。原判断留在这里供追溯：那份 `public` 站点属于"当时登录 Qoder 的账号"，所以**换人接手时必须重新确认一次**——如果下一位用别的账号登录再发布，链接的归属就跟着变了（做法见 §6"换账号发布的规定动作"） |
 | ⑦ | **两件只有人类能做的收尾** | agent 打不开面板、改不了 Obsidian 设置 | ① 打开右侧 in-app Browser 面板，让 agent 补拍 `docs/evidence/t0-0-sites-*.png`（探针四项 + Desmos 实嵌）；② 按 §6 的 Obsidian 提示，在"设置 → 文件与链接 → 排除的文件"里排除 `node_modules` 与 `apps/web/dist`——这个 vault 里现在装着整个依赖树 |
@@ -171,9 +171,9 @@ CI 改写未经远端验证。
 | T0-2 ADR-0002 | 能力表已回填；**选型本身仍未填**（框架 / Markdown / 编辑器 / 图谱 / 存储 + 被排除方案） | 深链结论已可用：BrowserRouter 不被托管站阻挡 |
 | T0-1 外壳 | 未认领，阻塞 | T0-2 |
 | T0-3 zod 领域类型 | 未认领 | T0-1（`TASK_T0.md` §3 的顺序） |
-| T0-4 内容校验接入 | 大部分已由 QoderWang1 完成（`verify:content` 覆盖布局与证据、Vitest、ajv schema 测试）；**剩 CI 未经远端验证** | 合并后首次 push 触发 CI |
+| T0-4 内容校验接入 | 大部分已由 QoderWang1 完成（`verify:content` 覆盖布局与证据、Vitest、ajv schema 测试）；**CI 已在 `main` 上首跑通过**（#7） | — |
 | T1–T7 | 未认领 | T0 全部合并 |
-| 合并 + CI 首跑 | 未做 | ④（只有仓库所有者能合） |
+| 合并 + CI 首跑 | **已完成**（PR #1/#2 + `verify` 15 s 绿，见 #7）；只剩把之后的文档提交并入 `main` | 谁能 push `main` 谁开第三个 PR |
 
 范围与验收看 `IMPLEMENTATION_PLAN.md` §2 与 `TASK_T0.md`，别在这里抄。
 
@@ -210,8 +210,9 @@ CI 改写未经远端验证。
 | 4 | 2026-11-12 晚 5 | QoderWang1 | ⑥ 结案（发布用的个人版账号就是参赛者本人）；本文件改成 append-only 接龙，旧表存档不再改写；④ 里抄的 commit 数换成命令现取 | 已提交 | 余量：②④⑤⑦ | 本文件 §4.0 / §4.2 ⑥ |
 | 5 | 2026-11-12 晚 6 | QoderWang1 | **更正 #3/#4 的合并状态**：用户问"都 push 过了吧"，`git fetch` 后查出 PR #1 已合并进 `main`（`08af8e8`），而 §4.0 还写着"`main` 停在 `883ea7a`"。本分支已 merge 回 `origin/main`（用 merge 不用 rebase：分支已 push，不能重写别人可能拉走的历史） | 已提交并 push | ④ 缩为"第二个 PR + CI 首跑确认" | `git log --oneline origin/main -1` |
 | 6 | 2026-11-12 晚 7 | QoderWang1 | 用户合了 **PR #2**（`bff7892`）后担心"最新的没了"。查证：**什么都没丢**——`93af27a` 是 `origin/main` 的祖先、`git diff main task/T0-0-QoderWang1` 为空、main 上的 HANDOFF 有接龙 #5。他看到的"上一版"是**本地 `main` 指针落后 22 个提交**（还停在合并前的 `883ea7a`）；已用 `git fetch origin main:main` 快进（只动指针，不碰工作目录，非快进会自动拒绝） | 已提交并 push | ④ 只剩 CI 首跑结果确认；工作分支可删——删除不可逆，归用户执行，且建议先看 CI 再删 | `git branch -vv` |
+| 7 | 2026-11-12 晚 8 | QoderWang1 | **④ 结案**：用户截图显示 `main` 上的 `bff7892` 触发 `verify` 第 9 次运行、15 s 全绿 → CI 首跑通过（`npm ci → verify:content → typecheck → test → build`）。诚实标注：证据是用户截图，agent 未独立复核（仓库私有 → 未登录 API 404，本机无 `gh`）。同时纠正 §4.0 的"分支与 main 完全一致"：合并后又产生文档提交，已改为"用命令现取条数 + 第三个 PR 同步" | 已提交并 push | 余量：② D-2、⑤ 团队版站点处置、⑦ 截图与 Obsidian 排除；另需仓库所有者开第三个 PR 同步文档提交 | 本文件 §4.0 / §4.2 ④ / §4.3 |
 
-**下一位从这里接第 7 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+**下一位从这里接第 8 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
