@@ -81,7 +81,7 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | agentId | 任务 | 分支 / commit | 状态 | 接手第一步 | 待人拍板 |
 | --- | --- | --- | --- | --- | --- |
-| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针部署 + 匿名公网实测**（改了真源：`DECISIONS.md` ADR-0002 能力表与访问模式结论、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD `69bad2a`（`e2d4575` ADR 匿名实测回填 / `69bad2a` 卡与日志；其下 `0481f7e` 是登录态三连） | **待合并：四项已在**匿名可达**的公网地址实测通过（个人版账号，`access_mode: public`）；剩截图** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；探针页 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone/atlas`（**不用登录**；从 `/atlas` 进入时第一格应显示「应用从 /atlas 直接启动」） | ② D-2（见下表）。注意：团队版那份 `vein-t0-probe-4588bqc00js` 需登录，别再当公网入口 |
+| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针部署 + 匿名公网实测**（改了真源：`DECISIONS.md` ADR-0002 能力表与访问模式结论、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD 取 `git log --oneline origin/task/T0-0-QoderWang1 -1`（本轮起点 `c54fad5`；`e2d4575`/`69bad2a` 匿名实测回填、`0481f7e` 登录态三连、`5092fd9` 测法修正） | **待合并；本会话到此结束，已交接给下一位**（上手清单见 §4.4） | 按 §4.4 第 2 步跑四道门，再打开 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone/atlas` 做校准 | ② D-2；④ 合并与 CI 首跑；⑤ 团队版站点处置；⑥ 公网链接的账号归属；⑦ 截图与 Obsidian 排除。注意：团队版那份 `vein-t0-probe-4588bqc00js` 需登录，别再当公网入口 |
 | QoderJudge1 | 审查 QoderWang1 的 T0-0 交付 | 无分支（只改本文件与 `AGENTS.md` §2 第 6 条，随上面的提交带走） | 已完成 | — | 见下表 |
 
 状态只有四种：**进行中 / 待合并 / 已合并 / 阻塞**。选"阻塞"必须写清等谁。
@@ -122,16 +122,20 @@ CI 改写未经远端验证。
 | ① | ~~是否授权把 T0-0 探针部署到 Qoder Sites~~ | — | **已授权 部署 T0-0 探针到 Qoder Sites**（用户 2026-11-12 确认）。授权范围只限探针页，不含后续任何版本；执行要求见下方「部署须知」 |
 | ② | **D-2**：用户在逻辑视图手写的推导，`epistemic` 默认值（`PRODUCT_SPEC.md` §6.1 末尾） | T3 图谱编辑要用；T0 不受影响 | 规格里的倾向是默认 `logically-derived`。反对理由：`epistemic` 回答的是"谁为这条边担保"，用户刚写下、没人核对的推导默认标"逻辑推出"，正是本项目要反对的"没理由的断言"换了个方向。倾向默认 `user-personal` 并标待核对，核对通过再升级。不急，T3 之前定即可 |
 | ③ | ~~探针站点能不能匿名可访问~~ | — | **已解决（2026-11-12，路径 ①）**：换个人版账号重新发布 → `public` 可选 → `update_access_policy` 置 public（`confirmPublic: true`）→ 匿名 curl 五个路径全对，四项自检全过。公网入口 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`。**根因留在 ADR-0002**：团队版根本不提供 `public`，所以比赛链接必须出自个人版账号。剩 ② D-2 待拍板 |
+| ④ | **谁把 `task/T0-0-QoderWang1` 合进 `main`** | agent 不许 push `main`（§3 红线），合并只有仓库所有者能做。待合的范围用 `git log --oneline origin/main..task/T0-0-QoderWang1` 现取（别在文档里抄 commit 数，它每轮都在变） | 合并后 CI 才会**第一次**真正跑起来——`.github/workflows/ci.yml` 已改写成 `npm ci → verify:content → typecheck → test → build`，但从未在远端执行过，这是 T0-4 唯一的未验证项。建议先开 PR 看 CI 绿再合，别直接 merge |
+| ⑤ | **团队版那份站点怎么处置**：`vein-t0-probe-4588bqc00js.qoder.zone`（`organization`，需登录） | 它现在和公网那份内容重复，留着可能让人误贴错链接；删掉是不可逆的资源删除 | 默认**保留**作内部预览，ADR-0002 的两份站点对照表已经写清各自用途。要删需要所有者明确授权（`delete_project`，工具会先讲清影响），**不要顺手清理** |
+| ⑥ | **公网链接绑定在哪个个人版账号上** | 那份 `public` 站点属于"当时登录 Qoder 的账号"，不是属于仓库所有者本人确认过的账号。比赛帖子要写 Qoder 账号（`CONTEST_SUBMISSION.md`），账号与参赛者不一致会在提交时出问题 | 下一位第一件事：确认当前登录的个人版账号就是参赛者本人。若不是，用参赛者自己的个人版账号重新发布一份（做法见 §6"换账号发布的规定动作"），并把 ADR-0002 的地址与交接卡一起换掉 |
+| ⑦ | **两件只有人类能做的收尾** | agent 打不开面板、改不了 Obsidian 设置 | ① 打开右侧 in-app Browser 面板，让 agent 补拍 `docs/evidence/t0-0-sites-*.png`（探针四项 + Desmos 实嵌）；② 按 §6 的 Obsidian 提示，在"设置 → 文件与链接 → 排除的文件"里排除 `node_modules` 与 `apps/web/dist`——这个 vault 里现在装着整个依赖树 |
 
 **部署须知（① 的执行要求）**
 
-> **执行结果（QoderWang1，2026-11-12 两轮）**：#1 #2 #4 已照做；#3 **第二轮已完成**——
-> 用户登录后探针重新发布（`spa: true`），四项都在公网地址上跑通，其中深链一项推翻了第一版
-> 的测法（fetch 不回退、导航才回退，见 §6）。**唯一没交的是截图**：`docs/evidence/t0-0-sites-*.png`
-> 缺，in-app Browser 面板处于隐藏状态，`take_screenshot` 报
-> `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`；结构证据（探针文本 + 网络面板 desmos 200）已在 ADR-0002 里。
-> 面板打开后补拍即可，不需要再发一版。
-> 仍未解决的是**匿名可访问**：`access_mode` 现在是 `organization`，`available_modes` 里还是没有 `public`（③）。
+> **执行结果（QoderWang1，2026-11-12 三轮）**：#1 #2 #4 已照做；#3 **第三轮已完成**——
+> 换个人版账号重新发布并置 `public` 后，四项在**匿名可达**的公网地址上全部跑通，
+> 其中深链一项推翻了第一版的测法（fetch 不回退、导航才回退，见 §6）。
+> **唯一没交的是截图**：`docs/evidence/t0-0-sites-*.png` 缺，in-app Browser 面板处于隐藏状态，
+> `take_screenshot` 报 `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`（viewport 0x0）；
+> 结构证据（curl 原文 + 探针文本 + 网络面板 desmos 200）已在 ADR-0002 与该日志条目里。
+> 面板打开后补拍即可，**不需要再发一版**。
 
 1. **先提交，再部署。** 从已提交的 commit 构建，并在 ADR-0002 记下该 commit 号——
    能力表的结论必须能追溯到"测的是哪一版"。
@@ -151,8 +155,28 @@ CI 改写未经远端验证。
 | T0-3 zod 领域类型 | 未认领 | T0-1（`TASK_T0.md` §3 的顺序） |
 | T0-4 内容校验接入 | 大部分已由 QoderWang1 完成（`verify:content` 覆盖布局与证据、Vitest、ajv schema 测试）；**剩 CI 未经远端验证** | 合并后首次 push 触发 CI |
 | T1–T7 | 未认领 | T0 全部合并 |
+| 合并 + CI 首跑 | 未做 | ④（只有仓库所有者能合） |
 
 范围与验收看 `IMPLEMENTATION_PLAN.md` §2 与 `TASK_T0.md`，别在这里抄。
+
+### 4.4 下一位的上手清单（按顺序做，别跳步）
+
+1. **读**：`TASK_T0.md` §1 的阅读顺序（那份清单是真源，这里不重述），然后回到本文件 §4。
+2. **验**：`git fetch && git checkout task/T0-0-QoderWang1`，跑
+   `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`。
+   预期：校验通过、`tsc` 无输出、**18 条测试全过**、JS 产物约 271 KB（gzip 88 KB）。
+   跑不出这些数字就先别动工——说明你拉的分支或依赖状态和卡上写的不一致。
+3. **看**：浏览器打开公网探针页（地址在 §4.2 ③），从 `/atlas` 进入，第一格应显示
+   「应用从 /atlas 直接启动」。**这一步是校准，不是验收**——它证明你手上的站点和文档描述的是同一个。
+4. **确认 ⑥**：当前登录的个人版账号是不是参赛者本人。不是就按 §6 换账号重发，再往下做。
+5. **下一件该做的**：**T0-2 选型填写**。能力表现在四项齐了（ADR-0002），
+   可以正面回答框架 / Markdown 解析器 / 编辑器 / 图谱库 / 存储，并写清被排除方案的代价。
+   选完才轮到 T0-1 外壳——`ARCHITECTURE.md` 顶部那句"选型漂移会让领域模型作废"仍然有效。
+6. **不要做**：不 push `main`；不删团队版站点（⑤）；不改 `content/demo` 的数学内容与 `prompts/*.md`
+   的 rubric；不在仓库里堆构建产物（§6 第一条）；不拿 `fetch` 判深链（§6）；
+   不把团队版链接当公网入口贴进帖子。
+7. **时间**：截止 **2026-11-30 18:00（北京时间）**。落后就按 `IMPLEMENTATION_PLAN.md` §3 削功能，
+   但"带理由的边"和"可编辑的个人视图"不削——那是这个项目的全部主张。
 
 ---
 
