@@ -91,7 +91,7 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 | --- | --- |
 | 最新接龙条目 | §4.5 #5（QoderWang1，2026-11-12 晚 6） |
 | 分支 | `task/T0-0-QoderWang1`，HEAD 取 `git log --oneline origin/task/T0-0-QoderWang1 -1` |
-| 合并状态 | **部分已合并**：PR #1 已进 `main`（`08af8e8`，含 8 条裁决 + 探针代码 + schema/校验器）；部署与实测那 13 个提交仍在本分支等**第二个 PR**。本分支已 merge 回 `origin/main`，不再分叉 |
+| 合并状态 | **部分已合并**：PR #1 已进 `main`（`08af8e8`，含 8 条裁决 + 探针代码 + schema/校验器）；部署与实测那批提交仍在本分支等**第二个 PR**（数量现取：`git rev-list --count origin/main..task/T0-0-QoderWang1`）。本分支已 merge 回 `origin/main`，不再分叉 |
 | 下一位的入口 | §4.4 上手清单，从第 2 步的四道门开始 |
 | 还欠谁的 | ② D-2、④ 第二个 PR 与 CI 首跑、⑤ 团队版站点处置、⑦ 两件人类专属收尾 |
 
