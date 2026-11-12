@@ -81,7 +81,7 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | agentId | 任务 | 分支 / commit | 状态 | 接手第一步 | 待人拍板 |
 | --- | --- | --- | --- | --- | --- |
-| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针已部署到 Qoder Sites**（改了真源：`DECISIONS.md` ADR-0002 能力表、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD `0481f7e`（实测回填三连提交：`5092fd9` 测法修正 / `574a662` ADR 回填 / `0481f7e` 卡与日志） | **待合并：四项已在公网地址实测通过（登录态）；剩 ③ 匿名访问 + 截图** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；探针页 `https://vein-t0-probe-4588bqc00js.qoder.zone/atlas`（需 Qoder 登录；从 `/atlas` 进入时第一格应显示「应用从 /atlas 直接启动」） | ② D-2；③ 匿名可访问（见下表） |
+| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针部署 + 匿名公网实测**（改了真源：`DECISIONS.md` ADR-0002 能力表与访问模式结论、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD 见 `git log --oneline -1`（其下 `0481f7e` 是登录态实测三连） | **待合并：四项已在**匿名可达**的公网地址实测通过（个人版账号，`access_mode: public`）；剩截图** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；探针页 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone/atlas`（**不用登录**；从 `/atlas` 进入时第一格应显示「应用从 /atlas 直接启动」） | ② D-2（见下表）。注意：团队版那份 `vein-t0-probe-4588bqc00js` 需登录，别再当公网入口 |
 | QoderJudge1 | 审查 QoderWang1 的 T0-0 交付 | 无分支（只改本文件与 `AGENTS.md` §2 第 6 条，随上面的提交带走） | 已完成 | — | 见下表 |
 
 状态只有四种：**进行中 / 待合并 / 已合并 / 阻塞**。选"阻塞"必须写清等谁。
@@ -121,7 +121,7 @@ CI 改写未经远端验证。
 | --- | --- | --- | --- |
 | ① | ~~是否授权把 T0-0 探针部署到 Qoder Sites~~ | — | **已授权 部署 T0-0 探针到 Qoder Sites**（用户 2026-11-12 确认）。授权范围只限探针页，不含后续任何版本；执行要求见下方「部署须知」 |
 | ② | **D-2**：用户在逻辑视图手写的推导，`epistemic` 默认值（`PRODUCT_SPEC.md` §6.1 末尾） | T3 图谱编辑要用；T0 不受影响 | 规格里的倾向是默认 `logically-derived`。反对理由：`epistemic` 回答的是"谁为这条边担保"，用户刚写下、没人核对的推导默认标"逻辑推出"，正是本项目要反对的"没理由的断言"换了个方向。倾向默认 `user-personal` 并标待核对，核对通过再升级。不急，T3 之前定即可 |
-| ③ | **探针站点能不能匿名可访问**：`available_modes` 只有 `private` / `selected`（≤50 人，需同组织）/ `organization`，**没有 `public`** | 比赛要求"公网可用、匿名可访问"（`CONTEST_SUBMISSION.md`），现在评委需要 Qoder 账号才打得开 | **根因已确认（用户 2026-11-12 截图）**：账号套餐是「**团队版 · 成员**」，官方文档规定 Teams/Enterprise 只允许组织成员访问 → `public` 是**套餐层面不给**，不是站点配置错、不是平台 bug。a 路已执行完（登录态四项通过，见 ADR-0002）。剩下三选一：**① 用个人版账号再发布一份**（推荐，交付形态不变：新 action + `createNewSite: true` + 新 slug、不带 `projectId`）；**② 向组委会确认"评委登录 Qoder 账号"算不算公网可用**；**③ 换托管平台**——与交付形态冲突且被部署须知 #5 禁止，默认不走。组织管理员能否放开公开站点：文档未提，**未知，别当路径依赖** |
+| ③ | ~~探针站点能不能匿名可访问~~ | — | **已解决（2026-11-12，路径 ①）**：换个人版账号重新发布 → `public` 可选 → `update_access_policy` 置 public（`confirmPublic: true`）→ 匿名 curl 五个路径全对，四项自检全过。公网入口 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`。**根因留在 ADR-0002**：团队版根本不提供 `public`，所以比赛链接必须出自个人版账号。剩 ② D-2 待拍板 |
 
 **部署须知（① 的执行要求）**
 
@@ -145,7 +145,7 @@ CI 改写未经远端验证。
 
 | 任务 | 状态 | 前置 |
 | --- | --- | --- |
-| T0-0 部署探针 | **四项已在公网地址实测通过**（登录态）；探针修正版已发布；缺截图 | 补拍 `t0-0-sites-*.png`（需打开 in-app Browser 面板） |
+| T0-0 部署探针 | **四项在匿名可达的公网地址实测通过**（个人版账号，`public`）；探针修正版已发布 | 补拍 `t0-0-sites-*.png`（需打开 in-app Browser 面板） |
 | T0-2 ADR-0002 | 能力表已回填；**选型本身仍未填**（框架 / Markdown / 编辑器 / 图谱 / 存储 + 被排除方案） | 深链结论已可用：BrowserRouter 不被托管站阻挡 |
 | T0-1 外壳 | 未认领，阻塞 | T0-2 |
 | T0-3 zod 领域类型 | 未认领 | T0-1（`TASK_T0.md` §3 的顺序） |
@@ -196,6 +196,17 @@ CI 改写未经远端验证。
   （官方文档：Teams/Enterprise only allow organization members），所以 `update_access_policy`
   传 `public` 一定被拒——工具文档也要求只传 `available_modes` 返回的档位。
   要匿名可访问就换个人版账号发布，别反复试写。
+- **换账号发布的规定动作**：`prepare_site` 用**新 `actionId` + `createNewSite: true` + `displayName` +
+  新 `slug`，并且**不带 `projectId`**。旧账号那份站点在新账号下读回来是 `sites_forbidden`，
+  `get_context` 会把它列进 `unavailableSites`——这是账号隔离，不是站点被删，别去重试它的 action。
+- **匿名性要用不带 cookie 的 curl 证明**，不能用浏览器：in-app Browser 恰好带着 Qoder 会话，
+  登录态下"能打开"证明不了 `public` 生效。复现命令：
+  `curl -s -o /dev/null -w "%{http_code} %{content_type}" -H 'Accept: text/html' <地址>/atlas`
+  → 200 才算；用 `Accept: */*` 会拿到 404（回退只给文档请求）。
+- **托管站会往 HTML 里注入水印**：我们的 `index.html` 418 B，服务器吐出约 57 KB，多出来的是
+  `<qoder-sites-badge>`（`id="qoder-sites-watermark"`，独立 shadow root、`:host{all:initial}`、`position:fixed`）。
+  样式不会串进来，但**它是页面上的一层固定浮标**：T1 的视觉验收截图必须把它算进去，
+  别把它当成我们违反"不出现装饰性元素"的缺陷，也别试图去删它。
 - **`.qoder.site` 描述符是 host-local 的**，里面带冻结的 `index.html` 与内部 ID，已加进 `.gitignore`。
   换机器或换 agent 必须 `prepare_site` 新 action，不要复用别人机器上的 actionId。
 - **`prepare_site` 返回 `descriptorStatus: pending` 不是失败**：等 readiness 完成后用

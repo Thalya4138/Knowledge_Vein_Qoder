@@ -5,6 +5,77 @@
 
 ---
 
+---
+
+## 2026-11-12（晚 4）· QoderWang1 · 个人版账号发布，匿名公网实测四项通过
+
+**目标**：执行路径 ①——换个人版账号重新发布探针，把 `access_mode` 放开成 `public`，
+用**匿名**请求复测四项能力并回填 ADR-0002。
+**明确不做**：不改探针源码（上一轮的测法修正已够用）、不删团队版那份站点、不动 `main`。
+
+**授权记录**：用户明确要求"1 你现在试一下"，路径 ① 的目的就是匿名可访问；
+`update_access_policy` 的 `mode: public` 带 `confirmPublic: true` 是在该授权下执行的。
+
+**实际改动**
+
+- 新站点（个人版账号）：`prepare_site` 新 action + `createNewSite: true` + slug `vein-probe-personal`
+  + `spa: true`，不带 `projectId` → `publish_site` → `update_access_policy(public)`
+- `docs/DECISIONS.md`：ADR-0002 能力表全部换成**匿名**实测结果；访问模式一节改为已解决，
+  并记下"比赛链接必须出自个人版账号"这条结论 + 两份站点对照表 + 平台注入水印的事实
+- `docs/HANDOFF.md`：③ 标为已解决；卡行状态/接手第一步换成新地址；看板 T0-0；
+  §6 新增三条（换账号的规定动作、匿名性要用不带 cookie 的 curl 证明、水印注入）
+
+**人工判断**
+
+- 换账号后先做**身份判定**再动手：`list_sites(owned)` 返回 0 个项目 + 旧 action 报 `sites_forbidden`
+  ⇒ 确认是账号切换而不是 Sites 服务故障（服务正常才会两者同时成立）。
+  这一步不能跳——在团队版账号上 `createNewSite` 只会再产出一个不能匿名的站点。
+- `public` 一可选我就放开，但**匿名结论只用 curl 作证**。浏览器恰好带着 Qoder 会话，
+  它"能打开"证明不了 `public` 生效，所以四项自检与匿名性是两组独立证据，文档里分开写。
+
+**验证**
+
+```text
+# 身份判定
+list_sites(owned) → total_size 0            # 当前账号名下没有站点
+get_publish_status(旧 action) → sites_forbidden
+get_site_access(新 siteId) → available_modes 含 public（requires_confirmation: true）
+                              selected 不再要求同组织  ⇒ 个人版
+
+# 发布与放开
+prepare_site → artifactReady true、canPublish true、blockers []
+publish_site → succeeded、committed true、published true
+update_access_policy(public, confirmPublic) → mode: public、auth_integration_status: not_required
+
+# 匿名 curl（不带 cookie，Accept 两种各测一遍）
+/                       text/html → 200 text/html 57460B 含 #root      | */* → 200
+/atlas                  text/html → 200 含 #root                       | */* → 404
+/no-such-route-abc123   text/html → 200 含 #root                       | */* → 404
+/probe/large.txt        → 200 text/plain 262144B（两种 Accept 一致）
+/probe/build-info.json  → 200 application/json 394B
+
+# 浏览器四项自检（https://vein-probe-personal-dx7phlm8g8e.qoder.zone/atlas）
+1 深链      通过  应用从 /atlas 直接启动
+2 静态资源  通过  整包 523.9 KB；256 KB 下载完整 439 ms
+3 iframe    通过  Desmos load 3.2–6.0 s
+4 IndexedDB 通过  首次 04:31:00 不变，重载后累计 2 次、内容完整
+```
+
+**顺带测到的新事实**：托管站把 418 B 的 `index.html` 扩成约 57 KB 输出，多出来的是
+`<qoder-sites-badge>`（`id="qoder-sites-watermark"`，独立 shadow root、`:host{all:initial}`、`position:fixed`）。
+样式不会串进来，但它是页面上的固定浮标——T1 的视觉验收要把它算进画面，也别去删它。
+
+**剩余问题**
+
+- [ ] 截图 `docs/evidence/t0-0-sites-*.png` 仍缺：in-app Browser 面板隐藏
+      （`take_screenshot` 报 `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`，viewport 0x0 / attached false）。
+      本轮证据是 curl 原文 + 探针文本 + 网络面板，图像证据待面板打开后补。
+- [ ] 包体/单资源**上限**仍未测；IndexedDB"会不会被清理"要隔天再访问才知道。
+- [ ] ADR-0002 的**选型本身**（框架 / Markdown / 编辑器 / 图谱 / 存储 + 被排除方案）仍未填 —— 现在能力表齐了，可以填。
+- [ ] ② D-2 待拍板。团队版那份站点保留但不再是公网入口。
+
+---
+
 ## 2026-11-12（晚 3）· QoderWang1 · 探针修正与登录态实测四项
 
 **目标**：用户登录后重跑四项能力，把 ADR-0002 的能力表填成真结果。
