@@ -5,6 +5,71 @@
 
 ---
 
+## 2026-11-12（晚 2）· QoderWang1 · T0-0 探针部署到 Qoder Sites
+
+**目标**：按 `HANDOFF.md` §4.2「部署须知」把探针发布出去，用公网地址实测四项能力，结果回填 ADR-0002。
+**明确不做**：不改选型结论（四项没测到就不填）、不开 Function/数据库、不动访问策略（`public` 不在可选档里，
+放开匿名访问需要用户单独授权）、不 push `main`。
+
+**开发输入**：用户授权部署 + QoderJudge1 的「部署须知」五条与提交拆分建议。
+
+**实际改动**
+
+- `docs/DECISIONS.md` ADR-0002：能力表由"待验证"改为实测结果 + 实测条件（commit、地址、`spa: true`）；
+  表外记下这次真正的收获 —— 访问模式只有 `private`/`selected`/`organization`，**没有 `public`**
+- `docs/HANDOFF.md`：我的卡行改状态与接手第一步；待人拍板新增 **③ 探针能否匿名可访问**（三条路 a/b/c）；
+  部署须知写明 #1 #2 #4 已照做、**#3 未做到**及原因；看板 T0-0 / T0-2 状态更新；
+  §6 新增三条坑（登录墙在路由之前、`.qoder.site` 是 host-local、`descriptorStatus: pending` 的正确处理）
+- `.gitignore`：新增 `*.qoder.site`
+
+**人工判断**
+
+- 探针页发布时 `spa: true` 是我主动开的（这个开关本身就是待测能力），并在 ADR 里写明"主动开启"，
+  不让它看起来像默认行为。
+- 没有把本地 preview 的四项通过结果搬进 ADR。须知 #4 要求"测不出的格子写未验证（原因）"，
+  四项就照这么写，只把"整包 523 KB 上传通过"记成**部分**结论。
+
+**验证**
+
+```text
+# 从已提交 commit 构建（须知 #1）
+$ git rev-parse --short HEAD
+942412e
+$ npm run build → 271.33 kB │ gzip 88.05 kB，✓ built in 163ms
+$ dist 清单：index.html / assets/*.css / assets/*.js / probe/large.txt / probe/build-info.json（5 个文件）
+
+# 发布链路（工具返回，逐条核对）
+prepare_site → artifactReady true、dependenciesReady true、blockers []、canPublish true
+publish_site → operation succeeded、committed true、published true
+readiness    → publication_completed
+地址         → https://vein-t0-probe-4588bqc00js.qoder.zone（access_mode: private）
+descriptor   → descriptorStatus: written（重试同一 action + 同入参后写出）
+
+# 公网实测（须知 #3）—— 五项全部被登录墙挡住
+$ for p in / /atlas /no-such-route-abc123 /probe/large.txt /probe/build-info.json; do curl …; done
+/                        HTTP 401 | application/json | 69 bytes
+/atlas                   HTTP 401 | application/json | 69 bytes
+/no-such-route-abc123    HTTP 401 | application/json | 69 bytes
+/probe/large.txt         HTTP 401 | application/json | 69 bytes
+/probe/build-info.json   HTTP 401 | application/json | 69 bytes
+body: {"code":"sites_gateway_login_required","message":"login is r…
+
+# 浏览器同一地址：标题「登录后即可访问」，跳转 qoder.cn/users/sign-in（未代用户登录）
+# get_site_access → available_modes: private / selected(≤50, 同组织) / organization   ← 无 public
+```
+
+**证据缺口**：`docs/evidence/t0-0-sites-*.png` **没有**。探针四项在公网地址上一次都没跑起来，
+截图只会是登录页，那不是能力证据。按须知 #5 的状态处理：卡里写"阻塞"，不绕路换托管平台。
+
+**剩余问题**
+
+- [ ] ③ 未拍板：`public` 档能否开。比赛要求"公网可用、匿名可访问"，这条不解决就不是"部署完成"。
+- [ ] ADR-0002 四项能力仍"未验证（原因）"。若用户先在浏览器登录一次，我可以在登录态下重跑并回填（那是 a 路）。
+- [ ] CI 仍未经远端验证（本轮只 push 分支，`ci.yml` 的 job 只在 push main / PR 时跑）。
+
+---
+
+
 ## 2026-11-12（晚）· QoderWang1 · T0-0 探针 + 8 条裁决落地
 
 **范围**：把用户对 8 条矛盾的裁决写进契约、schema 与数据；补上没人守的布局 schema；搭 T0-0 部署探针。

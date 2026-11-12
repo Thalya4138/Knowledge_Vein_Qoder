@@ -22,7 +22,7 @@
 
 ---
 
-## ADR-0002 · 应用框架 / 编辑器 / 图谱 / 存储选型（**待 T0-0 探针结果填写**）
+## ADR-0002 · 应用框架 / 编辑器 / 图谱 / 存储选型（**探针已部署，四项能力实测被访问模式挡住**）
 
 **背景修正**（2026-11-12）：`ARCHITECTURE.md` 原写"必须先写完本 ADR 再开工"，那句做不到——
 下面的能力表只能靠部署一次实测得到，先写 ADR 就是让 ADR 猜。因此顺序改为
@@ -41,15 +41,27 @@
 - 存储：IndexedDB 封装、事务、迁移方案。
 - 被排除的方案及原因。
 
-**同时记录 Qoder Sites 能力验证结果**（由 T0-0 探针逐项实测；未测的保持"待验证"，不写推测）：
+**Qoder Sites 能力实测结果**
+
+实测条件：探针页从 commit `942412e`（分支 `task/T0-0-QoderWang1`）构建，
+`prepare_site` 上传 523 KB 静态产物（`spa: true` 显式开启）后 `publish_site` 发布成功
+（`published: true`、operation `succeeded`、`committed: true`），地址
+`https://vein-t0-probe-4588bqc00js.qoder.zone`。
 
 | 问题 | 探针里怎么测 | 结果 |
 | --- | --- | --- |
-| SPA 深链是否 404 | 直接访问 `/atlas` 刷新 | 待验证 |
-| 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | 待验证 |
-| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | 待验证 |
-| IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | 待验证 |
-| 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | 待验证（大概率无 → 走 IndexedDB） |
+| SPA 深链是否 404 | 直接访问 `/atlas` 刷新 | **未验证**：网关在任何路由之前返回 `401 sites_gateway_login_required`，请求没到应用。`prepare_site` 确有 `spa` 开关且已开启，效果待匿名可达后重测 |
+| 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | **部分**：整包 523 KB 上传与校验通过，未触碰大小报错；256 KB 单资源的下载同样被 401 挡住，**未验证** |
+| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | **未验证**：应用未被加载，探针没跑（本地 preview 的通过结果不迁移到托管站） |
+| IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | **未验证**：同上。且浏览器需先登录 Qoder 才能进入应用 |
+| 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | **未启用**：探针刻意不带 Function/数据库。平台确有 `functionDirectory`、`databaseAccess`、Storage 等能力，是否允许由后续 ADR 决定 |
+
+**这次实测最大的收获不在表里，而在表外**：站点访问模式只有 `private` / `selected`（≤50 人，需同组织）/
+`organization` 三档，**本账号本环境不提供 `public`**，且 `auth_integration_status: ready` 意味着
+所有路径都要先过 Qoder 登录。
+
+这与比赛硬要求"公网可用、匿名可访问"直接冲突（`CONTEST_SUBMISSION.md`）。
+在解决之前，任何"部署完成"都只等于"登录用户能看到"。可选路径见 `HANDOFF.md` §4.2 ④。
 
 ---
 

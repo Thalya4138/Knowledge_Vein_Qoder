@@ -68,3 +68,7 @@ screenshots/private/
 .qoder/cache/
 .qoder/history/
 .qoder/*.local
+
+# Qoder Sites 的本地描述符：按「目录 + 账号 + 环境」私有，含冻结快照与内部 ID。
+# 换机器/换 agent 必须 prepare 新 action，提交它只会误导别人去复用测不出 recovery 的 actionId。
+*.qoder.site

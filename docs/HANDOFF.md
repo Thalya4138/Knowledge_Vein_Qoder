@@ -81,7 +81,7 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | agentId | 任务 | 分支 / commit | 状态 | 接手第一步 | 待人拍板 |
 | --- | --- | --- | --- | --- | --- |
-| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006） | 起始 `883ea7a`；**全部改动仍是本地 `main` 上的未提交修改** | **阻塞：等用户按下方「提交拆分」提交到 `task/T0-0-QoderWang1` 并合并** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；再 `npm run build && npx vite preview` 打开探针页 | ② D-2（见下表）；① 部署已授权 |
+| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针已部署到 Qoder Sites**（改了真源：`DECISIONS.md` ADR-0002 能力表、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD `942412e`（已 push，QoderJudge1 代提交的四次拆分） | **阻塞：等用户拍板 ③（站点没有 public 档，四项能力实测被登录墙挡住）** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；探针页 `https://vein-t0-probe-4588bqc00js.qoder.zone`（需 Qoder 登录，登录后四项自检会自动跑） | ② D-2；③ 访问模式（见下表） |
 | QoderJudge1 | 审查 QoderWang1 的 T0-0 交付 | 无分支（只改本文件与 `AGENTS.md` §2 第 6 条，随上面的提交带走） | 已完成 | — | 见下表 |
 
 状态只有四种：**进行中 / 待合并 / 已合并 / 阻塞**。选"阻塞"必须写清等谁。
@@ -121,8 +121,15 @@ CI 改写未经远端验证。
 | --- | --- | --- | --- |
 | ① | ~~是否授权把 T0-0 探针部署到 Qoder Sites~~ | — | **已授权 部署 T0-0 探针到 Qoder Sites**（用户 2026-11-12 确认）。授权范围只限探针页，不含后续任何版本；执行要求见下方「部署须知」 |
 | ② | **D-2**：用户在逻辑视图手写的推导，`epistemic` 默认值（`PRODUCT_SPEC.md` §6.1 末尾） | T3 图谱编辑要用；T0 不受影响 | 规格里的倾向是默认 `logically-derived`。反对理由：`epistemic` 回答的是"谁为这条边担保"，用户刚写下、没人核对的推导默认标"逻辑推出"，正是本项目要反对的"没理由的断言"换了个方向。倾向默认 `user-personal` 并标待核对，核对通过再升级。不急，T3 之前定即可 |
+| ③ | **探针站点能不能匿名可访问**：`get_site_access` 的 `available_modes` 只有 `private` / `selected`（≤50 人，需同组织）/ `organization`，**没有 `public`**；网关在任何路由之前返回 `401 sites_gateway_login_required` | ADR-0002 四项能力全都测不到（请求没到应用），而且比赛"公网可用、匿名可访问"这条硬要求本身受影响 | 三条路，按代价排序：**a)** 用户在浏览器里登录一次 Qoder 账号，我在登录态下重跑四项——能测到回退 / 资源 / iframe / IndexedDB，但"匿名可访问"仍未解决；**b)** 确认 `public` 档能否在 Sites 设置里或另一账号/环境下开启；**c)** 若确实只能登录访问，比赛交付方式要重想（评委愿不愿意登录？帖子链接能否接受"需 Qoder 账号"）——这条越晚决定越贵。a 与 b 不冲突，可并行 |
 
 **部署须知（① 的执行要求）**
+
+> **执行结果（QoderWang1，2026-11-12）**：#1 #2 已照做（从 `942412e` 构建，dist 只有 5 个文件、
+> 无 sourcemap / 无 `.env` / 无私人数据），#4 已回填 ADR-0002。**#3 没做到**：站点是 `private`，
+> 网关在路由前拦下所有请求（含 `/`、`/atlas`、`/probe/large.txt` 全部 `401`），
+> 探针四项在公网地址上一次都没跑起来，因此没有 `docs/evidence/t0-0-sites-*.png` 可交。
+> 按 #5 处理：状态改"阻塞"，原始报错见 ADR-0002 与下表 ③，没有绕路换托管平台。
 
 1. **先提交，再部署。** 从已提交的 commit 构建，并在 ADR-0002 记下该 commit 号——
    能力表的结论必须能追溯到"测的是哪一版"。
@@ -136,8 +143,8 @@ CI 改写未经远端验证。
 
 | 任务 | 状态 | 前置 |
 | --- | --- | --- |
-| T0-0 部署探针 | 代码完成；**部署已授权**，待提交后执行（见部署须知） | 提交 |
-| T0-2 ADR-0002 | 阻塞 | T0-0 部署实测 |
+| T0-0 部署探针 | 代码已提交并 push（`942412e`）；**已发布到 Qoder Sites**；四项能力实测**阻塞** | 用户拍板 ③（访问模式） |
+| T0-2 ADR-0002 | 部分回填：部署链路、包体上传、访问模式已实测；四项能力写"未验证（原因）" | ③ |
 | T0-1 外壳 | 未认领，阻塞 | T0-2 |
 | T0-3 zod 领域类型 | 未认领 | T0-1（`TASK_T0.md` §3 的顺序） |
 | T0-4 内容校验接入 | 大部分已由 QoderWang1 完成（`verify:content` 覆盖布局与证据、Vitest、ajv schema 测试）；**剩 CI 未经远端验证** | 合并后首次 push 触发 CI |
@@ -175,6 +182,14 @@ CI 改写未经远端验证。
   （ADR-0006）。它只出现在个人视图，报告不得引为论据。
 - **dev 模式的探针结论不算结论**：vite dev 服务器自带 history 回退，会把"本地能跑"误报成
   "托管站支持深链"。填 ADR-0002 只用部署后那一跑的结果。
+- **Qoder Sites 的登录墙在路由之前。** `private` 站点下所有路径（包括 `/atlas` 和静态资源）
+  一律 `401 sites_gateway_login_required`，返回的是 JSON 而不是应用外壳。
+  所以"深链是否 404"这类问题在放开访问前**测不出来**，别把 401 读成"不支持回退"，
+  也别拿本地 preview 的 200 顶替。
+- **`.qoder.site` 描述符是 host-local 的**，里面带冻结的 `index.html` 与内部 ID，已加进 `.gitignore`。
+  换机器或换 agent 必须 `prepare_site` 新 action，不要复用别人机器上的 actionId。
+- **`prepare_site` 返回 `descriptorStatus: pending` 不是失败**：等 readiness 完成后用
+  **同一个 actionId + 完全相同的入参**重试一次，描述符会从冻结 ZIP 写出来，不会重新打包上传。
 - **换行符**：本机 `core.autocrlf=true`，仓库 `.gitattributes` 规定文本为 LF。
   `git diff` 里的 "CRLF will be replaced by LF" 警告是这两者在对齐，无害；不要为了消警告去改 `.gitattributes`。
 - **本机网络**：远端是 HTTPS 地址，本机 HTTPS 直连 GitHub 不稳定，SSH 可用但每次往返约 3–4 秒。
