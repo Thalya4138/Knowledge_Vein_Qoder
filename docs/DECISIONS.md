@@ -22,7 +22,7 @@
 
 ---
 
-## ADR-0002 · 应用框架 / 编辑器 / 图谱 / 存储选型（**探针已部署，四项能力实测被访问模式挡住**）
+## ADR-0002 · 应用框架 / 编辑器 / 图谱 / 存储选型（**能力表已实测，选型结论仍待填**）
 
 **背景修正**（2026-11-12）：`ARCHITECTURE.md` 原写"必须先写完本 ADR 再开工"，那句做不到——
 下面的能力表只能靠部署一次实测得到，先写 ADR 就是让 ADR 猜。因此顺序改为
@@ -30,6 +30,10 @@
 
 探针结论出来之前的临时决定：**路由用 HashRouter**。它在任何静态托管上都能跑深链，
 日后实测确认支持 SPA 回退再换 BrowserRouter，改动只有一行。这是临时措施，不是选型结论。
+
+**2026-11-12 实测后的更新**：托管站在 `spa: true` 下确实把文档请求回退到 `index.html`
+（从 `/atlas` 整页导航能启动应用），所以 **T0-1 外壳可以直接用 BrowserRouter**，不必保留 HashRouter。
+探针页自身维持 HashRouter 不动——它已经发布可用，而换路由不会影响上面测出的任何一格结论。
 
 必须回答：
 
@@ -43,25 +47,28 @@
 
 **Qoder Sites 能力实测结果**
 
-实测条件：探针页从 commit `942412e`（分支 `task/T0-0-QoderWang1`）构建，
-`prepare_site` 上传 523 KB 静态产物（`spa: true` 显式开启）后 `publish_site` 发布成功
-（`published: true`、operation `succeeded`、`committed: true`），地址
-`https://vein-t0-probe-4588bqc00js.qoder.zone`。
+实测条件：探针页修正深链测法后重新构建发布（`prepare_site` 新 action，`spa: true` 主动开启），
+地址 `https://vein-t0-probe-4588bqc00js.qoder.zone`。**四项均在部署后的公网地址上跑**，
+但注意：站点 `access_mode` 为 `organization`，实测是在**已登录 Qoder 账号的浏览器**里完成的。
+匿名可达性仍未验证（见下方"表外的收获"）。
 
 | 问题 | 探针里怎么测 | 结果 |
 | --- | --- | --- |
-| SPA 深链是否 404 | 直接访问 `/atlas` 刷新 | **未验证**：网关在任何路由之前返回 `401 sites_gateway_login_required`，请求没到应用。`prepare_site` 确有 `spa` 开关且已开启，效果待匿名可达后重测 |
-| 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | **部分**：整包 523 KB 上传与校验通过，未触碰大小报错；256 KB 单资源的下载同样被 401 挡住，**未验证** |
-| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | **未验证**：应用未被加载，探针没跑（本地 preview 的通过结果不迁移到托管站） |
-| IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | **未验证**：同上。且浏览器需先登录 Qoder 才能进入应用 |
-| 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | **未启用**：探针刻意不带 Function/数据库。平台确有 `functionDirectory`、`databaseAccess`、Storage 等能力，是否允许由后续 ADR 决定 |
+| SPA 深链是否 404 | 从 `/atlas` 整页导航，看应用是否启动 | **通过**：应用从 `/atlas` 直接启动，文档请求被回退到 `index.html` → **BrowserRouter 可行**，HashRouter 不是硬约束 |
+| 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | **通过（下界）**：整包 523.9 KB 上传与校验通过；`probe/large.txt` 256 KB 下载完整，456 ms。**上限未测**——没探到边界就不能写上限 |
+| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | **通过**：`load` 事件 437 ms，且 `https://www.desmos.com/calculator?lang=zh-CN` 返回 200 `text/html`（网络面板核对）。肉眼确认截图仍缺 |
+| IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | **通过**：写 200,000 字符，跨 4 次加载首次时间戳不变、内容完整。**"不会被清理"没测到**——那需要隔天再访问 |
+| 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | **未启用**：探针刻意不带 Function/数据库。平台确有 `functionDirectory` / `databaseAccess` / Storage 能力入口，是否允许由后续 ADR 决定 |
 
-**这次实测最大的收获不在表里，而在表外**：站点访问模式只有 `private` / `selected`（≤50 人，需同组织）/
-`organization` 三档，**本账号本环境不提供 `public`**，且 `auth_integration_status: ready` 意味着
-所有路径都要先过 Qoder 登录。
+**测法本身踩过一个坑，值得记进决策依据**：第一版探针用 `fetch('/no-such-route')` 判回退，
+在同一个 `/atlas` 上得到 404，而浏览器导航得到应用外壳——**回退只给文档请求**
+（`Sec-Fetch-Dest: document`），资源请求一律 404。据此差点写下"必须用 HashRouter"的错误结论。
+判据改成"应用是从哪个 `pathname` 启动的"之后才测对。这条已写进 `HANDOFF.md` §6。
 
-这与比赛硬要求"公网可用、匿名可访问"直接冲突（`CONTEST_SUBMISSION.md`）。
-在解决之前，任何"部署完成"都只等于"登录用户能看到"。可选路径见 `HANDOFF.md` §4.2 ④。
+**表外的收获（对比赛更关键）**：`access_mode` 从 `private` 变成了 `organization`
+（用户登录后），`available_modes` 里依然**没有 `public`**。也就是说站点现在要 Qoder 登录才能打开，
+而比赛要求"公网可用、匿名可访问"（`CONTEST_SUBMISSION.md`）。这一条不解决，"部署完成"只等于
+"登录用户能看到"。待拍板项见 `HANDOFF.md` §4.2 ③。
 
 ---
 
