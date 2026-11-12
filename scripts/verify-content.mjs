@@ -10,6 +10,9 @@
  *   5. 讲义里引用的 chapters 文件真实存在（status=planned 的章节可以没有讲义）
  *   6. 教材版式：资源卡 [!res] 指向真实 span 且带 why；旁栏 @锚点 真实存在；图片文件存在
  *   7. 图谱的 noteAnchor / sourceSpanIds / evidenceIds 都能落地
+ *   8. 布局与证据：layouts/ 只有三视图；positions / layers / groups / hyperEdges / personalEdges
+ *      引用的节点都存在；手绘边（ADR-0006）只出现在个人视图；逻辑视图六档 epistemic 线型齐全；
+ *      evidence/ 的每条证据都记得/理解/会用分开记
  *
  * 用法：node scripts/verify-content.mjs
  */
@@ -94,9 +97,9 @@ async function main() {
     if (!existsSync(kbPath)) { fail(`${kb}: 缺 kb.json`); continue; }
     if (!existsSync(graphPath)) { fail(`${kb}: 缺 graph.json`); continue; }
 
-    const course = await readJson(kbPath);
+    const kbMeta = await readJson(kbPath);
     const graph = await readJson(graphPath);
-    if (!course || !graph) continue;
+    if (!kbMeta || !graph) continue;
 
     // ---- 节点 ----
     const nodeIds = new Set();
@@ -153,19 +156,87 @@ async function main() {
       }
     }
 
-    // ---- 布局引用的节点必须存在 ----
+    // ---- 布局：三视图各一份；引用的节点、超边、手绘边都必须落地 ----
+    const VIEW_TYPES = ['structure', 'logic', 'personal'];
     const layoutDir = path.join(dir, 'layouts');
+    const nodeRef = (id, where) => {
+      if (!nodeIds.has(id)) fail(`${kb}/layouts/${where}: 引用了不存在的节点 ${id}`);
+    };
     if (existsSync(layoutDir)) {
-      for (const f of await readdir(layoutDir)) {
-        if (!f.endsWith('.json')) continue;
+      const layoutFiles = (await readdir(layoutDir)).filter((f) => f.endsWith('.json'));
+      for (const f of layoutFiles) {
+        const name = f.replace(/\.json$/, '');
+        if (!VIEW_TYPES.includes(name)) {
+          fail(`${kb}: layouts/${f} 不是三视图之一 —— 布局目录只放视图布局，学习证据属于 evidence/`);
+        }
+      }
+      for (const f of layoutFiles) {
         const layout = await readJson(path.join(layoutDir, f));
         if (!layout) continue;
-        for (const id of Object.keys(layout.positions ?? {})) {
-          if (!nodeIds.has(id)) fail(`${kb}/layouts/${f}: 引用了不存在的节点 ${id}`);
-        }
+        const view = f.replace(/\.json$/, '');
+        if (layout.viewType !== view) fail(`${kb}/layouts/${f}: viewType "${layout.viewType}" 与文件名不一致`);
+        for (const id of Object.keys(layout.positions ?? {})) nodeRef(id, f);
         for (const layer of layout.layers ?? []) {
-          for (const id of layer.nodeIds ?? []) {
-            if (!nodeIds.has(id)) fail(`${kb}/layouts/${f}: 层 "${layer.label}" 引用不存在的节点 ${id}`);
+          for (const id of layer.nodeIds ?? []) nodeRef(id, f);
+        }
+        for (const g of layout.groups ?? []) {
+          for (const id of g.nodeIds ?? []) nodeRef(id, f);
+        }
+        for (const h of layout.hyperEdges ?? []) {
+          for (const id of [...(h.premiseIds ?? []), ...(h.conclusionIds ?? [])]) nodeRef(id, f);
+          if (!(graph.relationGroups ?? []).some((rg) => rg.id === h.id)) {
+            fail(`${kb}/layouts/${f}: 超边 ${h.id} 在 graph.json 的 relationGroups 里没有对应记录`);
+          }
+        }
+        // ADR-0006：手绘边只是「我怎么记」，不得进入客观视图
+        for (const pe of layout.personalEdges ?? []) {
+          if (view !== 'personal') {
+            fail(`${kb}/layouts/${f}: 手绘边 ${pe.id} 出现在${view}视图 —— 个人联想会冒充数学结论`);
+          }
+          nodeRef(pe.from, f);
+          nodeRef(pe.to, f);
+          if (!pe.label || !pe.label.trim()) {
+            fail(`${kb}/layouts/${f}: 手绘边 ${pe.id} 没有可见标签（meaning 可空，标签不可空）`);
+          }
+        }
+        // 逻辑视图：六档 epistemic 必须各有线型，弱断言还必须有文字标签
+        if (view === 'logic') {
+          const es = layout.edgeStyle ?? {};
+          for (const e of EPISTEMIC) {
+            if (!es[e]) {
+              fail(`${kb}/layouts/${f}: edgeStyle 缺 "${e}" —— 六档认知状态都要有可区分的线型`);
+            } else if (['analogy', 'hypothesis', 'user-personal'].includes(e) && !es[e].label) {
+              fail(`${kb}/layouts/${f}: "${e}" 只有线型没有文字标签 —— 区分需颜色+线型+文字三重（AGENTS §4）`);
+            }
+          }
+        }
+      }
+    } else {
+      warn(`${kb}: 缺 layouts/ 目录（三视图没有可加载的布局）`);
+    }
+
+    // ---- 学习证据：掌握状态只能来自这里，不来自阅读次数 ----
+    const evDir = path.join(dir, 'evidence');
+    if (existsSync(evDir)) {
+      for (const f of (await readdir(evDir)).filter((x) => x.endsWith('.json'))) {
+        const ev = await readJson(path.join(evDir, f));
+        if (!ev) continue;
+        for (const e of ev.evidence ?? []) {
+          for (const id of e.targetIds ?? []) {
+            if (!nodeIds.has(id)) fail(`${kb}/evidence/${f}: 证据 ${e.id} 指向不存在的节点 ${id}`);
+          }
+          for (const k of ['recall', 'understand', 'apply']) {
+            if (typeof e.score?.[k] !== 'boolean') {
+              fail(`${kb}/evidence/${f}: 证据 ${e.id} 缺 score.${k} —— 记得/理解/会用是三件事，要分开记`);
+            }
+          }
+          if (!e.rubric?.length) warn(`${kb}/evidence/${f}: 证据 ${e.id} 没有评分细则，分数无从解释`);
+        }
+        for (const [id, lvl] of Object.entries(ev.userSelfReport ?? {})) {
+          if (id === 'note') continue;
+          if (!nodeIds.has(id)) fail(`${kb}/evidence/${f}: 自评指向不存在的节点 ${id}`);
+          if (!['recall', 'understand', 'apply'].includes(lvl)) {
+            fail(`${kb}/evidence/${f}: 自评 ${id} 的层级非法 "${lvl}"（应为 recall/understand/apply）`);
           }
         }
       }
@@ -193,7 +264,7 @@ async function main() {
     }
 
     // ---- 章节文件存在 ----
-    for (const ch of course.outline ?? []) {
+    for (const ch of kbMeta.outline ?? []) {
       if (ch.status === 'planned' && !ch.notePath) continue; // 待写章节：只有图谱节点
       if (!ch.notePath) { fail(`${kb}: 章节 ${ch.id} 状态为 ${ch.status ?? '未标注'} 却没有 notePath`); continue; }
       if (ch.rendered && !existsSync(path.join(dir, ch.rendered))) fail(`${kb}: 章节 ${ch.id} 的 rendered 样张不存在 ${ch.rendered}`);
@@ -209,7 +280,7 @@ async function main() {
         titles.set(n.title, n.id);
         for (const a of n.aliases ?? []) titles.set(a, n.id);
       }
-      for (const ch2 of course.outline ?? []) titles.set(ch2.title, ch2.id);
+      for (const ch2 of kbMeta.outline ?? []) titles.set(ch2.title, ch2.id);
       for (const l of links) {
         const hit = titles.get(l);
         if (!hit) {
@@ -269,8 +340,8 @@ async function main() {
       }
     }
 
-    // ---- course.nodeIds 与 graph 一致 ----
-    for (const id of course.nodeIds ?? []) {
+    // ---- kbMeta.nodeIds 与 graph 一致 ----
+    for (const id of kbMeta.nodeIds ?? []) {
       if (!nodeIds.has(id)) fail(`${kb}: kb.json 的 nodeIds 含不存在节点 ${id}`);
     }
 
@@ -294,8 +365,8 @@ async function main() {
           }
         }
         // 覆盖矩阵：必须覆盖 outline 的每一章，且 unsourced 章要带 warning
-        const chapterIds = new Set((course.outline ?? []).map((c) => c.id));
-        const writtenIds = new Set((course.outline ?? []).filter((c) => c.status !== 'planned').map((c) => c.id));
+        const chapterIds = new Set((kbMeta.outline ?? []).map((c) => c.id));
+        const writtenIds = new Set((kbMeta.outline ?? []).filter((c) => c.status !== 'planned').map((c) => c.id));
         const covered = new Set();
         for (const c of mf.coverage?.byChapter ?? []) {
           covered.add(c.chapterId);
@@ -332,7 +403,7 @@ async function main() {
     for (const e of errors) console.error(`  · ${e}`);
     process.exit(1);
   }
-  console.log('\n✓ 内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接 / 资源来源 / 覆盖矩阵）');
+  console.log('\n✓ 内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接 / 资源来源 / 覆盖矩阵 / 布局与证据）');
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
