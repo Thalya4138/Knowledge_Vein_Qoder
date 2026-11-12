@@ -65,10 +65,25 @@
 （`Sec-Fetch-Dest: document`），资源请求一律 404。据此差点写下"必须用 HashRouter"的错误结论。
 判据改成"应用是从哪个 `pathname` 启动的"之后才测对。这条已写进 `HANDOFF.md` §6。
 
-**表外的收获（对比赛更关键）**：`access_mode` 从 `private` 变成了 `organization`
-（用户登录后），`available_modes` 里依然**没有 `public`**。也就是说站点现在要 Qoder 登录才能打开，
-而比赛要求"公网可用、匿名可访问"（`CONTEST_SUBMISSION.md`）。这一条不解决，"部署完成"只等于
-"登录用户能看到"。待拍板项见 `HANDOFF.md` §4.2 ③。
+**表外的收获（对比赛更关键）**：`access_mode` 从 `private` 变成了 `organization`（用户登录后），
+`available_modes` 里依然**没有 `public`**。也就是说站点现在要 Qoder 登录才能打开，
+而比赛要求"公网可用、匿名可访问"（`CONTEST_SUBMISSION.md`）。
+
+**根因已确认，不是平台故障**：用户账号截图显示订阅套餐为「**团队版 · 成员**」。
+官方文档（`docs.qoder.com/qoder/sites`）原文："Individual plans offer 'Anyone can access' (public)
+or 'Only invited users'. **Teams/Enterprise only allow organization members.**"
+所以 `public` 缺席是**套餐决定的**，与站点配置、`governance_status`（normal）、`lifecycle`（active）无关。
+组织管理员能否放开公开站点，文档未提，**记为未知**，不要当成可依赖的路径。
+
+三条出路（代价从低到高）：
+
+1. **用个人版 Qoder 账号再发布一份**——保持"部署到 Qoder Sites"这个交付形态不变。
+   同一份源码，新 `actionId` + `createNewSite: true` + 新 slug、不带 `projectId`（换账号的规定路径）。
+   现在这份 `organization` 站点保留作内部预览，两份站点在交接卡里分开记。
+2. **向组委会确认口径**：评委用 Qoder 账号登录后打开，算不算"公网可用"。
+   算的话本条不改代码就能交付；不算就回到路径 1。
+3. **换静态托管**：与 `README.md` 写的交付形态（Qoder 开发 → Qoder Sites → 天池发帖）冲突，
+   而且 `HANDOFF.md` 部署须知 #5 明确禁止绕路换平台。**默认不走**，要走近路径 2 先问。
 
 ---
 
