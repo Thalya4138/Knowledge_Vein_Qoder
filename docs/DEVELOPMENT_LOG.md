@@ -9,6 +9,51 @@
 
 ---
 
+---
+
+## 2026-11-12（晚 6）· QoderWang1 · 复查推送状态时发现 PR #1 已合并
+
+**目标**：回答"都 push 过了吧"——不靠记忆，用 `git fetch` + 比对本地/远端。
+**明确不做**：不 rebase（分支已 push，重写历史会影响别人）、不动 `main`、不再部署。
+
+**发现（我上一条卡写错了）**
+
+```text
+$ git branch -vv
+  main   883ea7a [origin/main: behind 5]        ← 本地 main 落后，说明远端动过
+$ git log --oneline origin/main -1
+08af8e8 Merge pull request #1 from Thalya4138/task/T0-0-QoderWang1
+$ git log --oneline HEAD..origin/main
+08af8e8                                        ← 本分支缺那个 merge commit
+```
+
+**PR #1 已经被合并**：晚 5 之前的四个提交（8 条裁决 + schema/校验器 + 探针代码 + 日志）已进 `main`。
+而我在 §4.0 与 ④ 里写的是"`main` 还停在 `883ea7a`、整条分支待合并"——**过期结论写进了权威文件**。
+
+**处理**
+
+1. `git merge origin/main` 进本分支（merge 而非 rebase：分支已 push，不能重写别人可能拉走的历史）。
+2. §4.0 指针更正为"部分已合并，剩第二个 PR（部署与实测 13 个提交）"。
+3. §4.2 ④ 按接龙规则**追加更正**，原文不删；并提醒 CI 首跑结果没人确认过，别默认它是绿的。
+4. §4.5 追加 **#5 更正 #3/#4**，把这次的错判写成一条历史记录而不是抹掉。
+
+**教训（接上一条）**：卡里凡是"远端现在处于什么状态"这类断言，必须是**刚 fetch 过的**结果；
+`main` 是共享分支，别人（或用户）随时会推进它。写"停在某个 commit"就等于埋了一颗过期雷——
+更好的做法是像 ④ 那样给出取法命令。
+
+**验证**
+
+```text
+$ git merge origin/main → Merge made by the 'ort' strategy（无内容冲突）
+$ git status --short --branch → ahead 2
+$ npm run verify:content / typecheck / test / build → 通过（18 tests）
+$ git log --oneline HEAD..origin/main → 空（不再分叉）
+```
+
+**剩余问题**：④ 变成"开第二个 PR + 确认 CI 首跑"；②⑤⑦ 不变。
+
+---
+
 ## 2026-11-12（晚 5）· QoderWang1 · ⑥ 结案；交接卡改为接龙结构
 
 **目标**：把用户确认的"⑥ 那个个人账号就是我"落进卡里；按用户指出的方式把交接卡从
