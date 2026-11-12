@@ -5,6 +5,58 @@
 
 ---
 
+## 2026-11-12（晚 3）· QoderWang1 · 探针修正与登录态实测四项
+
+**目标**：用户登录后重跑四项能力，把 ADR-0002 的能力表填成真结果。
+**明确不做**：不改选型结论本身（框架/编辑器/图谱/存储仍待填）、不动访问策略（`public` 不在可选档里）、
+不 push `main`、不换托管平台。
+
+**实际改动**
+
+- `apps/web/src/probe/checks.ts`：`probeSpaFallback` → `probeDeepLink`。判据从"fetch 一个不存在的路径"
+  换成"应用是从哪个 `pathname` 启动的"，并保留一条 fetch 对照证据，标明它**不决定**深链
+- `apps/web/src/probe/ProbePage.tsx`：该项卡片加「从 /atlas 重新加载（整页导航）」按钮
+- `docs/DECISIONS.md`：ADR-0002 能力表全部改为实测结果 + 测法踩坑记录 + HashRouter 临时决定的更新
+  （**T0-1 外壳可以直接用 BrowserRouter**；探针页保持 HashRouter 不动）
+- `docs/HANDOFF.md`：卡行状态改「待合并」、③ 更新（a 已执行完、b/c 待办）、部署须知执行结果、
+  看板 T0-0/T0-2、§6 新增"深链只能用导航测"
+
+**人工判断（本轮最重要的一条）**
+
+第一版探针在部署站上把深链判成 **失败**（`fetch('/atlas') → 404`），而浏览器导航 `/atlas`
+拿到的是应用外壳。查明差异是**回退只给文档请求**（`Sec-Fetch-Dest: document`），资源请求一律 404。
+也就是说：**如果照第一版的自动结论填 ADR，我们会写下"必须用 HashRouter"，那是错的**。
+修正判据后重发一版（新 action，`spa: true` 不变）才测出通过。这条已进 §6 已知坑。
+
+**验证**
+
+```text
+$ npm run typecheck → 通过   $ npm run test → 2 files / 18 tests   $ npm run build → 271.42 kB │ gzip 88.10 kB
+
+# 发布（修正版）
+prepare_site（新 action，projectId 复用，spa: true）→ artifactReady true、canPublish true、blockers []
+publish_site → operation succeeded、committed true、published true
+site.access_mode → organization（用户登录后从 private 变了；available_modes 仍无 public）
+
+# 公网地址实测：https://vein-t0-probe-4588bqc00js.qoder.zone/atlas
+1 深链        通过  location.pathname = /atlas，应用直接启动
+              对照：fetch 不存在路径 → HTTP 404 不含 #root（资源请求行为，不决定深链）
+2 静态资源    通过  整包 523.9 KB / 4 文件；probe/large.txt 256 KB → HTTP 200 实收 262144 B，456 ms
+3 iframe      通过  Desmos load 437 ms；网络面板 https://www.desmos.com/calculator?lang=zh-CN → 200 text/html
+4 IndexedDB   通过  写 200,000 字符；跨 4 次加载首次时间戳 04:04:51 不变、内容完整；配额显示 ~162 GB
+```
+
+**剩余问题**
+
+- [ ] 截图 `docs/evidence/t0-0-sites-*.png` **没有**：in-app Browser 面板隐藏，`take_screenshot` 报
+      `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`。上面是结构与网络证据，不是图像证据。面板打开后补拍即可。
+- [ ] ③ 匿名可访问仍未解决：`access_mode: organization`，评委需要 Qoder 登录才能打开。
+- [ ] ADR-0002 的**选型本身**（框架 / Markdown 解析器 / 编辑器 / 图谱库 / 存储 + 被排除方案）还没填。
+- [ ] IndexedDB 的"会不会被清理"要隔天再访问才知道；大小上限没探到边界就不能写。
+
+---
+
+
 ## 2026-11-12（晚 2）· QoderWang1 · T0-0 探针部署到 Qoder Sites
 
 **目标**：按 `HANDOFF.md` §4.2「部署须知」把探针发布出去，用公网地址实测四项能力，结果回填 ADR-0002。
