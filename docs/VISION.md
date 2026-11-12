@@ -353,3 +353,5 @@ Cognitive Atlas        学习   实验   探索   图谱
   这个 demo 需要学习并写入 prompt，毋庸置疑。（→ `TEXTBOOK_STYLE_ANALYSIS.md`、`NOTE_GENERATION.md` §3.5 / §6.5）
 - **demo 后期要实现：它本身是可编辑的，也是可以批注、高亮的。**（→ `PRODUCT_SPEC.md` §3.7）
 - **动态生成（D-1）推迟**：等整个平台做起来了再开始动态实现，不急。（→ `REQUIREMENTS_TRACE.md` §6）
+- **产品更名为「知脉 · Vein」。** 上文第一部分里作为产品总名的 "Cognitive Atlas" 保留原文不改；
+  今后 Cognitive Atlas 只指 04 板块（认知与记忆图谱）。（→ `PRODUCT_SPEC.md` 标题、`README.md`）

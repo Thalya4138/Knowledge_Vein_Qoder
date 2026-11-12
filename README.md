@@ -1,4 +1,4 @@
-# Cognitive Atlas · 认知图谱
+# 知脉 · Vein
 
 把课程材料变成**人愿意读、能长期维护**的讲义；把抽象概念变成**能动手验证**的实验；
 把已学知识之间**有依据的联系**发现出来；把这些沉淀成**自己能编辑、能回忆**的知识网络。
@@ -146,7 +146,7 @@ workspace/            ← 本地私人知识库，.gitignore 排除，永不提�
 
 ## 链接
 
-- GitHub：<https://github.com/Thalya4138/Cognitive-Atlas_Qoder>
+- GitHub：<https://github.com/Thalya4138/Knowledge_Vein_Qoder>
 - 天池赛题页 / 论坛：见上
 - 产品定义：[docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)
 - 参照产品（notasand / Thinki / 3B1B / WiseGraph / ClassPulse …）：[docs/REFERENCES.md](docs/REFERENCES.md)

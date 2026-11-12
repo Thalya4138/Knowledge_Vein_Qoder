@@ -33,7 +33,7 @@
 标题：
 
 ```text
-〖StudyHack〗Cognitive Atlas｜让已经学过的东西真正连起来
+〖StudyHack〗知脉 Vein｜让已经学过的东西真正连起来
 ```
 
 正文九段（**按这个顺序，不要写成产品说明书**）：

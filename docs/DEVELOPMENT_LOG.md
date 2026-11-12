@@ -276,6 +276,15 @@ $ node scripts/verify-content.mjs
 
 ---
 
+## 2026-11-12（晚）· 产品更名：知脉 · Vein
+
+- **目标**：产品总名由 Cognitive Atlas 改为「知脉 · Vein」。
+- **原因**：Cognitive Atlas 与神经科学领域已有的同名本体项目撞名，且与 04 板块英文名重复，介绍时自相嵌套。
+- **实际改动**：README、PRODUCT_SPEC、CONTEST_SUBMISSION 帖子标题、REFERENCES 对比表、UX_AND_FLOWS 线框图、
+  讲义样张页眉（index.html / src.html）、manifest 作者字段、.env.example、package.json `name`、Obsidian css 注释。
+- **明确不改**：VISION.md 原文（只在第三部分追加说明）；本日志历史条目；GitHub 仓库地址；
+  schema `$id` 与 `cognitive-atlas.css` 文件名（技术标识符，改动会断引用）。04 板块英文名仍为 Cognitive Atlas。
+
 ## 条目模板（之后照此追加）
 
 ```markdown
