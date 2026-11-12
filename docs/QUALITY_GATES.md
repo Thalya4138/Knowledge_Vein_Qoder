@@ -10,7 +10,7 @@
 ## 1. 自动化验收（CI 必须跑）
 
 ```bash
-npm run verify:content   # 样例数据 + 引用完整性 + 讲义链接 + 提纲化检测
+npm run verify:content   # 样例数据 + 引用完整性 + 讲义链接 + 提纲化 + 布局与证据
 npm run typecheck
 npm run test             # 单元：领域校验、导出保真、检索锚点
 npm run build
@@ -27,6 +27,10 @@ npm run build
 | A7 | 导出→清库→导入后：节点数、关系类型分布、三布局坐标、MemoryCue、Markdown hash 一致 | `test` |
 | A8 | `AᵀA` 可逆 ⇔ `A` 满列秩（实数域），含反例：单行矩阵 `[1 1]` | `test` |
 | A9 | 检索命中返回的锚点在文档中真实存在 | `test` |
+| A10 | `layouts/` 恰为三视图各一份，`viewType` 与文件名一致；`positions`/`layers`/`groups`/`hyperEdges`/`personalEdges` 引用的节点都存在，超边与 `relationGroups` 同 id | `verify:content` |
+| A11 | 手绘边只出现在个人视图且 `label` 非空；逻辑视图六档 `epistemic` 线型齐全，类比/猜想/个人三档必须带文字标签（无障碍三重区分） | `verify:content` |
+| A12 | 学习证据落在 `evidence/`，`score` 把 recall/understand/apply 分开记，`targetIds` 与自评键都指向存在的节点 | `verify:content` |
+| A13 | `schemas/*.json` 与 `content/demo/**` 一致，字段名不漂移（曾经 `kb.schema.json` 要求 `id` 而数据用 `kbId`） | `test` |
 
 ---
 
@@ -63,7 +67,10 @@ npm run build
 
 - [ ] 三视图切换：布局各自保留，节点 id 一致
 - [ ] 拖动节点 → 刷新 → 位置还在
-- [ ] 手动连线必须填"意味着什么"，空内容不允许保存
+- [ ] **知识关系**连线：`explanation` / `assumptions` 为空时不允许进入 accepted（ADR-0003 不变）
+- [ ] **手绘边**（`PersonalEdge`，ADR-0006）：`label` 空则不允许保存，`meaning` 空**允许**保存；
+      它显示为虚线 +「我的联想」，与知识关系一眼可分；切到结构/逻辑视图后它不出现；
+      报告的引用列表里选不到它
 - [ ] 点一条边，能看到类型 + explanation + assumptions + boundary + 来源锚点
 - [ ] AI 提议显示为幽灵层，**未点应用前不改变任何位置**
 - [ ] 拒绝一条候选边，它能被标记为 rejected 且不进入结构视图
@@ -104,7 +111,8 @@ npm run build
 - [ ] 演示路径 ≤5 步走完
 - [ ] 手机宽度（375px）不横向滚动
 - [ ] 控制台无致命错误；所有首屏按钮都有动作（无死链、无 `href="#"`）
-- [ ] 图谱拖拽在示例规模（9 节点）下无卡顿
+- [ ] 图谱拖拽在 demo 全部节点下无卡顿（规模以 `content/demo/linear-algebra/graph.json` 为准，别在文档里写死数字）
+- [ ] 首屏显示的统计数字来自运行时计算，与已加载数据一致
 
 ---
 

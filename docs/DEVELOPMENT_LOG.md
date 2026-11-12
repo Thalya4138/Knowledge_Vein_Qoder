@@ -5,6 +5,91 @@
 
 ---
 
+## 2026-11-12（晚）· QoderWang1 · T0-0 探针 + 8 条裁决落地
+
+**范围**：把用户对 8 条矛盾的裁决写进契约、schema 与数据；补上没人守的布局 schema；搭 T0-0 部署探针。
+**明确不做**：阅读器 / 检索 / 图谱 / 实验（T1–T5）、接 LLM、推远端、部署公网（探针部署待用户确认）。
+
+**开发输入**：用户裁决。其中 #1 与 #8 合并成一个死结——ADR-0002 要实测结果，实测要能部署的东西，
+所以"先写完 ADR 再开工"这句被废止，顺序改为 **T0-0 探针 → ADR-0002 → T0-1 外壳**。
+#5 是产品决策：手绘边不受 ADR-0003 强制，但必须与知识关系视觉可分、且只待在个人视图。
+
+**实际改动**
+
+- **文档规则改写**（类 A 的根因）：文档只写"为什么"和"以谁为准"，
+  字段清单与统计数字一律指向 `schemas/` 与 `content/demo/` —— 见 AGENTS §5、DOMAIN_MODEL 表头、
+  QUALITY_GATES §8、UX_AND_FLOWS §8（首页四个数字改为运行时计算，并写清统计口径）
+- 新增 `schemas/layout.schema.json`、`schemas/evidence.schema.json`
+- 修 schema↔数据漂移：`kb.schema.json` 的 `id` → `kbId`（另两个 schema 本来就用 `kbId`）、声明 `integrity`；
+  `graph.schema.json` 的 `if/then` 补 `type`（否则 ajv 严格模式直接拒绝编译）
+- `layouts/learning.json` → `evidence/learning.json`（`PRODUCT_SPEC` 早就是这么规定的，是数据放错了）；
+  `structure.json` 注释 `course.outline` → `kb.json 的 outline`
+- `verify-content.mjs` 新增 A10–A12：`layouts/` 只许三视图、`positions`/`layers`/`groups`/`hyperEdges`/`personalEdges`
+  引用的节点必须存在、超边必须与 `relationGroups` 同 id、手绘边不得进入客观视图、
+  逻辑视图六档 `epistemic` 线型齐全且弱断言必须带文字标签、学习证据 `score` 三件套分开记
+- 裁决入文档：ADR-0002 前置条件改写 + 新增 **ADR-0006**；AGENTS 第 3 条限定适用范围、
+  §4 "五类 `epistemic`" 改六类（与 GLOSSARY 一致）；GLOSSARY 增 `PersonalEdge` 与 `kbId`；
+  PRODUCT_SPEC §6.1 增两实体对照表；TASK_T0 / IMPLEMENTATION_PLAN / QUALITY_GATES 同步
+- **新代码**：`apps/web` T0-0 探针（Vite 8 + React 19 + TS 7 + Vitest 5 + ajv 8）。
+  HashRouter；四项自检各带"结论 / 证据 / 这个结论会怎么骗人"；Desmos 实嵌区供肉眼确认；
+  结论可一键复制成 ADR-0002 表格。`domain/math.ts` + `math.test.ts`（A8）+ `schemas.test.ts`（A13）
+
+**人工判断**
+
+- `manifest.json` 有 `kind: "video"` 而 schema 枚举只有 `video-course`：判数据为准，补 `video`
+  并写明"单条视频 vs 整套课程"不许合并（定位方式不同：时间戳 vs 章节）。
+- 探针第一版有两处不诚实：dev 模式下把 HTML 回退当 JSON 解析而抛异常；把 vite dev 服务器的
+  history 回退写成"BrowserRouter 可用"。改为按 content-type 判定并如实标注来源 ——
+  本地结论不能冒充托管站结论。
+
+**验证**
+
+```text
+$ node scripts/verify-content.mjs
+✓ 内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接 / 资源来源 / 覆盖矩阵 / 布局与证据）
+
+$ npx vitest run
+ ✓ src/domain/math.test.ts (7 tests)
+ ✓ src/domain/schemas.test.ts (11 tests)
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+
+$ npx tsc --noEmit        # 无输出，通过
+
+$ npx vite build
+apps/web/dist/assets/index-DdnsdOkZ.js   271.33 kB │ gzip: 88.05 kB
+✓ built in 109ms
+```
+
+反向测试（在 `$HOME` 下的临时副本破坏 6 类，仓库内不留产物）：9 条错误全部命中，退出码 1；
+真实仓库退出码 0。破坏项含：学习证据放回 `layouts/`、手绘边进结构视图且标签为空、
+`analogy` 线型缺标签、超边 id 对不上 `relationGroups`、证据指向不存在节点、`score.apply` 缺失。
+
+浏览器实测（`npm run build` + `vite preview`，来源 `http://localhost:4173`）：
+
+| 探针 | 结果 | 关键证据 |
+| --- | --- | --- |
+| SPA 深链 | 通过（限本机来源） | `GET /no-such-route-… → 200 text/html`，含 `#root` |
+| 大静态资源 | 通过 | 产物合计 523 KB；取回 256 KB 用时 5 ms |
+| 外部 iframe | 通过 | Desmos `load` 事件 521 ms；`?lang=zh-CN` 返回 200；坐标系确实画出（见截图） |
+| IndexedDB | 通过 | 写 200,000 字符 → 重载后首次时间不变、累计次数递增 |
+
+截图：`docs/evidence/t0-0-probe-build.png`（四格结论）、`docs/evidence/t0-0-desmos-embed.png`（Desmos 真渲染）、
+`docs/evidence/t0-0-probe-desktop.png`（首版，已过时，保留作迭代痕迹）。
+dev 模式另测一次：`#/atlas` 深链可达，静态资源项如实返回"无法判定"。
+
+**剩余问题**
+
+- [ ] **探针还没上 Qoder Sites**：ADR-0002 的能力表仍是"待验证"。本地 preview 只证明代码能跑，
+      不证明托管站的回退、大小上限与 CSP。部署需要用户确认。
+- [ ] 窄屏 375px 未截图：本轮只有探针页，三栏外壳与断点在 T0-1。
+- [ ] D-2 仍未拍板：用户在逻辑视图手写推导时 `epistemic` 的默认值（PRODUCT_SPEC §6.1 末尾）。
+- [ ] 探针页没有设计系统，T0-1 外壳会重做它；`domain/` 的 zod 类型（T0-3）未开始。
+- [ ] `.github/workflows/ci.yml` 已从"只跑内容校验"改写为 `npm ci → verify:content → typecheck → test → build`，
+      但**未验证**：CI 只在 push 到远端后才跑，本轮没有 push。
+
+---
+
 ## 2026-11-11 · 仓库重构
 
 **背景**：初版仓库有 23 个 Markdown 文件、零行代码。
