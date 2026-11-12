@@ -35,12 +35,14 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "title", "notePath"],
+        "required": ["id", "title", "status"],
         "additionalProperties": true,
         "properties": {
-          "id": { "type": "string", "pattern": "^ch\\.[0-9a-z-]+$" },
+          "id": { "type": "string", "pattern": "^(ch|sec)\\.[0-9a-z-]+$" },
           "title": { "type": "string", "minLength": 1 },
-          "notePath": { "type": "string", "pattern": "\\.md$" },
+          "status": { "type": "string", "enum": ["written", "planned"], "description": "planned = 只有图谱节点、尚无讲义" },
+          "notePath": { "type": ["string", "null"], "pattern": "\\.md$", "description": "status=written 时必填" },
+          "rendered": { "type": "string", "description": "可选：期望渲染结果（手工样张），用于阅读器验收" },
           "goal": { "type": "string" },
           "prereqIds": { "type": "array", "items": { "type": "string" } }
         }

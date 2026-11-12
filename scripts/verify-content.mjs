@@ -7,7 +7,9 @@
  *   2. 关系的 from/to 指向真实存在的节点（引用完整性）
  *   3. relationGroup 的前提与结论节点存在
  *   4. 讲义中的 [[wiki link]] 都能落到一个节点（防止讲义与图谱脱节）
- *   5. 讲义里引用的 chapters 文件真实存在
+ *   5. 讲义里引用的 chapters 文件真实存在（status=planned 的章节可以没有讲义）
+ *   6. 教材版式：资源卡 [!res] 指向真实 span 且带 why；旁栏 @锚点 真实存在；图片文件存在
+ *   7. 图谱的 noteAnchor / sourceSpanIds / evidenceIds 都能落地
  *
  * 用法：node scripts/verify-content.mjs
  */
@@ -33,7 +35,25 @@ const BLOCKS = new Set([
   'exercise',   // 练习：题目，答案折叠
   'viewpoint',  // 看法：存在多种合理解读
   'unsourced',  // 无来源：本段为原创论述，须显式声明
+  // ---- 教材栏目（prompts/NOTE_GENERATION.md §3.5；样张见 content/demo/*/rendered/）----
+  'problem',    // 问题探讨（节首）
+  'focus',      // 本节聚焦（旁栏）
+  'side',       // 相关信息（旁栏）
+  'ask',        // 旁栏问题
+  'xref',       // 知识链接（跨章 / 跨知识库）
+  'res',        // 资源卡：> [!res] s.<spanId> @<锚点>
+  'figure',     // 图（编号 + 图注）
+  'table',      // 表（编号 + 题注）
+  'practice',   // 探究·实践
+  'discuss',    // 思考·讨论
+  'critical',   // 批判性思维
+  'training',   // 思维训练（节末）
+  'summary',    // 本章小结
 ]);
+// 栏目块不计入"正文块 ≤8"的限制（R12 只管正文流里的语义块）
+const COLUMN_BLOCKS = new Set(['problem', 'focus', 'side', 'ask', 'xref', 'res', 'figure', 'table',
+  'practice', 'discuss', 'critical', 'training', 'exercise', 'summary']);
+const REQUIRED_COLUMNS = ['problem', 'focus', 'training', 'exercise'];
 
 // 资源三态与覆盖状态（与 schemas/manifest.schema.json 保持一致）
 const ORIGINS = new Set(['user-import', 'discovered', 'generated']);
@@ -151,8 +171,32 @@ async function main() {
       }
     }
 
+    // ---- 先读资源清单里的 span，供讲义与图谱校验 ----
+    const mfPrePath = path.join(dir, 'resources', 'manifest.json');
+    const mfPre = existsSync(mfPrePath) ? await readJson(mfPrePath) : null;
+    const spanById = new Map((mfPre?.spans ?? []).map((s) => [s.id, s]));
+
+    // ---- 图谱落地：noteAnchor / sourceSpanIds / evidenceIds ----
+    for (const n of graph.nodes ?? []) {
+      if (n.noteAnchor) {
+        const file = n.noteAnchor.split('#')[0];
+        if (!existsSync(path.join(dir, file))) fail(`${kb}: 节点 ${n.id} 的 noteAnchor 指向不存在的讲义 ${file}`);
+      }
+      for (const sid of n.sourceSpanIds ?? []) {
+        if (!spanById.has(sid)) fail(`${kb}: 节点 ${n.id} 引用不存在的 span ${sid}`);
+      }
+    }
+    for (const r of graph.relations ?? []) {
+      for (const sid of r.evidenceIds ?? []) {
+        if (!spanById.has(sid)) fail(`${kb}/${r.id}: evidenceIds 引用不存在的 span ${sid}`);
+      }
+    }
+
     // ---- 章节文件存在 ----
     for (const ch of course.outline ?? []) {
+      if (ch.status === 'planned' && !ch.notePath) continue; // 待写章节：只有图谱节点
+      if (!ch.notePath) { fail(`${kb}: 章节 ${ch.id} 状态为 ${ch.status ?? '未标注'} 却没有 notePath`); continue; }
+      if (ch.rendered && !existsSync(path.join(dir, ch.rendered))) fail(`${kb}: 章节 ${ch.id} 的 rendered 样张不存在 ${ch.rendered}`);
       const p = path.join(dir, ch.notePath);
       if (!existsSync(p)) { fail(`${kb}: 章节 ${ch.id} 的讲义缺失 ${ch.notePath}`); continue; }
 
@@ -185,12 +229,36 @@ async function main() {
         fail(`${kb}: ${ch.notePath} 用了 ::: 块语法 —— Obsidian 无法渲染，请用 > [!type] callout`);
       }
 
-      // 块体系：每章 ≤8 个块，且至少 1 个 link
-      if (callouts.length > 8) {
-        warn(`${kb}: ${ch.notePath} 有 ${callouts.length} 个块（建议 ≤8），正文可能被切碎`);
+      // 块体系：正文块 ≤8（栏目块不计）
+      const bodyBlocks = callouts.filter((m) => !COLUMN_BLOCKS.has(m[1]));
+      if (bodyBlocks.length > 8) {
+        warn(`${kb}: ${ch.notePath} 有 ${bodyBlocks.length} 个正文块（建议 ≤8），正文可能被切碎`);
       }
-      if (!callouts.some((m) => m[1] === 'link')) {
+      const isTextbook = callouts.some((m) => COLUMN_BLOCKS.has(m[1]));
+      if (isTextbook) {
+        // 教材版式：必备栏目（NOTE_GENERATION R14）
+        for (const c of REQUIRED_COLUMNS) {
+          if (!callouts.some((m) => m[1] === c)) warn(`${kb}: ${ch.notePath} 缺必备栏目 > [!${c}]（NOTE_GENERATION §3.5）`);
+        }
+        // 段落锚 ^id 与旁栏对齐 @id
+        const blockIds = new Set([...md.matchAll(/(?:^|\s)\^([A-Za-z0-9-]+)\s*$/gm)].map((m) => m[1]));
+        for (const m of md.matchAll(/^>\s*\[![a-z-]+\][+-]?[^\n]*?@([A-Za-z0-9-]+)\s*$/gm)) {
+          if (!blockIds.has(m[1])) fail(`${kb}: ${ch.notePath} 的旁栏块对齐到不存在的锚点 @${m[1]}`);
+        }
+        // 资源卡必须指向真实 span，且 span 带 why 与可验证定位
+        for (const m of md.matchAll(/^>\s*\[!res\]\s+(s\.[A-Za-z0-9.-]+)/gm)) {
+          const sp = spanById.get(m[1]);
+          if (!sp) { fail(`${kb}: ${ch.notePath} 的资源卡引用不存在的 span ${m[1]}`); continue; }
+          if (!sp.why) fail(`${kb}/${sp.id}: 作为旁栏资源卡使用，但缺 why（为什么链到这里）`);
+          if (sp.locator?.type === 'section') warn(`${kb}/${sp.id}: 资源卡定位只到 section，建议精确到页 / 时间 / 文本片段`);
+        }
+      } else if (!callouts.some((m) => m[1] === 'link')) {
         warn(`${kb}: ${ch.notePath} 没有 > [!link] 块——本章与其它知识的关联没有被显式接出来`);
+      }
+      // 图片文件必须存在
+      for (const m of md.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g)) {
+        if (/^https?:/.test(m[1])) continue;
+        if (!existsSync(path.join(path.dirname(p), decodeURI(m[1])))) fail(`${kb}: ${ch.notePath} 引用的图片不存在 ${m[1]}`);
       }
 
       // 讲义不该是关键词堆
@@ -227,6 +295,7 @@ async function main() {
         }
         // 覆盖矩阵：必须覆盖 outline 的每一章，且 unsourced 章要带 warning
         const chapterIds = new Set((course.outline ?? []).map((c) => c.id));
+        const writtenIds = new Set((course.outline ?? []).filter((c) => c.status !== 'planned').map((c) => c.id));
         const covered = new Set();
         for (const c of mf.coverage?.byChapter ?? []) {
           covered.add(c.chapterId);
@@ -238,7 +307,7 @@ async function main() {
             warn(`${kb}: 章节 ${c.chapterId} 标记为无来源，但没有 warning 说明（UI 需要它来提示幻觉风险）`);
           }
         }
-        for (const cid of chapterIds) {
+        for (const cid of writtenIds) {
           if (!covered.has(cid)) warn(`${kb}: 章节 ${cid} 没有在 coverage 中出现（资源—讲义映射不完整）`);
         }
         // discovered 资源必须有 uri，否则无法核对

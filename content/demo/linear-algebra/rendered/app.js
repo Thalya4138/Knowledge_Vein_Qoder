@@ -43,9 +43,9 @@ const RESOURCES = {
   "ocw-pdf": {
     kind: "pdf", kindLabel: "PDF",
     title: "18.06SC Session 2.2 讲义摘要：Projections onto subspaces",
-    meta: "MIT OpenCourseWare · CC BY-NC-SA 4.0 · 本地副本 sources/",
+    meta: "MIT OpenCourseWare · CC BY-NC-SA 4.0 · 本地副本 resources/files/",
     loc: "第 2 页 · “Why project?”", page: 2,
-    file: "sources/MIT18_06SCF11_Ses2.2sum.pdf",
+    file: "../resources/files/MIT18_06SCF11_Ses2.2sum.pdf",
     online: "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/00e9c8f0eafedeab21a3d079a17ed3d8_MIT18_06SCF11_Ses2.2sum.pdf#page=2",
     quote: [
       ["p.2", "As we know, the equation Ax = b may have no solution. The vector Ax is always in the column space of A, and b is unlikely to be in the column space. <mark>So, we project b onto a vector p in the column space of A and solve Ax̂ = p.</mark>"],

@@ -348,7 +348,7 @@ Cognitive Atlas        学习   实验   探索   图谱
 
 ### 2026-11-12
 
-- **讲义的目标样式是人教版教科书。** `preview/` 里的 demo（旁栏这些）是专门学习
+- **讲义的目标样式是人教版教科书。** `preview/` 里的 demo（旁栏这些；现位于 `content/demo/linear-algebra/rendered/`）是专门学习
   《普通高中教科书 生物学 必修2 遗传与进化》（人民教育出版社）的**版式、语言风格表述和内容产出**做出来的；
   这个 demo 需要学习并写入 prompt，毋庸置疑。（→ `TEXTBOOK_STYLE_ANALYSIS.md`、`NOTE_GENERATION.md` §3.5 / §6.5）
 - **demo 后期要实现：它本身是可编辑的，也是可以批注、高亮的。**（→ `PRODUCT_SPEC.md` §3.7）

@@ -236,6 +236,46 @@ $ node scripts/verify-content.mjs
 
 ---
 
+## 2026-11-12（傍晚）· 旧讲义退役；样张嵌入知识库
+
+**用户决定**：旧四章讲义（早于教材式规则）删除，避免误导；`content/` 与 `preview/` 二选一合并或嵌套。
+
+**结构决定：嵌套。** 知识库是唯一单位；样张是讲义的**期望渲染结果**（golden file），放进所属知识库的 `rendered/`。
+不合并的原因：HTML / 字体等渲染产物不属于"md + json、可被 Obsidian 打开"的知识库格式。
+
+**改了什么**
+- 删除 `notes/01–04*.md`、`preview/lecture.html`、`scripts/build-preview.mjs`、`scripts/to-callouts.mjs`（后两者只服务旧讲义）及 `package.json` 中对应命令
+- 样张转写为唯一讲义 `notes/2.1-列空间中的最近点.md`（§3.5 语法），三张图拆为 `notes/figures/*.svg`；
+  **补写了练习答案与思维训练参考思路**（样张没有），数值经 numpy 验算
+- `preview/textbook-demo` → `content/demo/linear-algebra/rendered/`；MIT PDF → `resources/files/`
+- `kb.json` 大纲改为 `ch.01`(planned) / `sec.2-1`(written) / `sec.2-2`(planned)
+- `manifest.json`：新增 3 个 discovered 资源与 5 个片段级 span（时间戳 / 页码 / 文本锚 + 引文 + why），2 个原创讲义 span
+- `graph.json`：7 个节点锚到新讲义；8 个节点（第 1 章与"三种最近"）保留、锚点置空；5 条关系的证据改指真实 span
+- 校验器：教材栏目入白名单；planned 章节可无讲义；新增锚点 / 资源卡 / 图片 / 图谱落地检查；schema 同步
+- 全仓库路径引用同步（13 个文件）；`content/README.md` 明确开放许可材料的例外
+
+**验证**
+
+```text
+$ node scripts/verify-content.mjs
+✓ 内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接 / 资源来源 / 覆盖矩阵）
+```
+
+反向测试（临时副本中故意破坏 4 处）：4 处全部报错，退出码 1——新检查确实生效：
+
+```text
+· 旁栏块对齐到不存在的锚点 @p-nonexist
+· s.l15-normal: 作为旁栏资源卡使用，但缺 why
+· 资源卡引用不存在的 span s.bogus-span
+· 引用的图片不存在 figures/missing.svg
+```
+
+**未做**
+- 讲义 md 与样张已出现内容差（md 多了答案）；样张未同步，因为答案默认折叠、不影响版式验收
+- `scripts/obsidian-snippets/cognitive-atlas.css` 仍只覆盖旧块类型，教材栏目在 Obsidian 中显示为默认 callout 样式
+
+---
+
 ## 条目模板（之后照此追加）
 
 ```markdown

@@ -4,7 +4,7 @@
 把已学知识之间**有依据的联系**发现出来；把这些沉淀成**自己能编辑、能回忆**的知识网络。
 
 > **状态：骨架 + 契约 + 样例数据 + 一张讲义视觉样张，业务功能未实现。**
-> 样张 `preview/textbook-demo/index.html`（双击即开）只覆盖「01 学习工作台」里的讲义阅读这一格，
+> 样张 `content/demo/linear-algebra/rendered/index.html`（双击即开）只覆盖「01 学习工作台」里的讲义阅读这一格，
 > 而且是人工写的静态 HTML。全貌与每块的分期见 [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md)。
 > 本仓库当前不含可用的学习产品。它的作用是让第一行功能代码在无歧义的前提下开始。
 > 任何“已完成”的说法必须以 `docs/DEVELOPMENT_LOG.md` 中的测试证据为准。
@@ -41,7 +41,7 @@ npm run dev
 | **开发者** | [AGENTS.md](AGENTS.md) → [docs/TASK_T0.md](docs/TASK_T0.md) | 开发规范 + 第一轮任务说明 |
 | **想知道用户到底要什么** | [docs/VISION.md](docs/VISION.md) | 用户愿景**原文**；规格是它的工程翻译 |
 | **想知道"做到哪了"的人** | [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md) | 每条需求 → 规格 → 分期 → 现状，含待拍板的决策 |
-| **要做阅读器的人** | [preview/README.md](preview/README.md) → `preview/textbook-demo/index.html` | 视觉验收样张，规格与之冲突时以样张为准 |
+| **要做阅读器的人** | [content/demo/linear-algebra/rendered/README.md](content/demo/linear-algebra/rendered/README.md) → `content/demo/linear-algebra/rendered/index.html` | 视觉验收样张，规格与之冲突时以样张为准 |
 | **评委 / 第一次打开仓库的人** | 本页 → [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) §2 | 3 分钟理解产品在做什么 |
 | **要改产品定义的人（作者）** | [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) | 唯一产品真源，其他文档只引用不重述 |
 | **要改数据结构的人** | [docs/DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md) → [content/demo/](content/demo/) | 类型表 + 真实 JSON 实例 |
@@ -135,9 +135,8 @@ Resource ──► SourceSpan ──► NoteDocument ──► KnowledgeNode
 ```text
 apps/                 应用代码
   web/                React + Vite 前端
-content/demo/         公开样例：课程、讲义、图谱、资源清单（唯一可提交的内容）
+content/demo/         公开样例知识库：讲义、图谱、资源清单 + rendered/（讲义的期望渲染结果）
 docs/                 产品、数据、架构、验收、比赛（一文件一职责，不互相重述）
-preview/              视觉样张（静态 HTML，不是应用代码），见 preview/README.md
 prompts/              给模型的契约（带版本与 I/O schema）
 schemas/              JSON Schema，CI 用它校验样例数据
 workspace/            ← 本地私人知识库，.gitignore 排除，永不提交

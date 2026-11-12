@@ -13,8 +13,6 @@
     "dev": "echo \"[未实现] apps/web 尚未创建，见 docs/TASK_T0.md\" && exit 1",
     "build": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
     "typecheck": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
-    "test": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
-    "preview": "node scripts/build-preview.mjs",
-    "callouts": "node scripts/to-callouts.mjs"
+    "test": "echo \"[未实现] apps/web 尚未创建\" && exit 1"
   }
 }

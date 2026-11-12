@@ -17,13 +17,13 @@ T0 只做地基；阅读器、检索、图谱、实验分别是 T1–T5（见 `I
 | 5 | `docs/DOMAIN_MODEL.md` + `content/demo/linear-algebra/*.json` | 数据结构（JSON 比表格更精确） |
 | 6 | `docs/ARCHITECTURE.md` + `docs/UX_AND_FLOWS.md` | 技术边界与界面 |
 | 7 | `prompts/NOTE_GENERATION.md` §3.5、§6.5 + `docs/TEXTBOOK_STYLE_ANALYSIS.md` | 阅读器要渲染的语法与讲义质量判据 |
-| 8 | `preview/README.md` + `preview/textbook-demo/index.html` | 阅读器的视觉验收样张 |
+| 8 | `content/demo/linear-algebra/rendered/README.md` + `content/demo/linear-algebra/rendered/index.html` | 阅读器的视觉验收样张 |
 | 9 | `docs/REQUIREMENTS_TRACE.md` | 全部需求与分期；T0 只覆盖其中一小块 |
 
 ## 2. 现状
 
 - **仓库里没有应用代码。** 只有契约文档、JSON Schema、样例数据、校验脚本，
-  以及 `preview/` 下的静态视觉样张（手写 HTML，不在其上扩展；T1 在 `apps/web` 里重做）。
+  以及知识库内 `rendered/` 下的静态视觉样张（手写 HTML，不在其上扩展；T1 在 `apps/web` 里重做）。
 - `npm run dev` 等脚本目前是占位，会直接报"未实现"。
 - 样例数据已通过 `node scripts/verify-content.mjs`。
 - 任何功能在有测试或截图之前，都不记为"已实现"。

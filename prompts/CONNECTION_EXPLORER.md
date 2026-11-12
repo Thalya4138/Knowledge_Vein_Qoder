@@ -51,7 +51,7 @@
 
   "kbContext": {
     "availableNodeIds": ["n.least-squares", "..."],
-    "noteAnchors": { "n.least-squares": "notes/01-列空间与最近点.md#..." }
+    "noteAnchors": { "n.least-squares": "notes/2.1-列空间中的最近点.md#..." }
   },
   "outputPreference": "text" | "table" | "ui" | "report" | "graph-candidate"
 }
@@ -104,7 +104,7 @@
 - ❌ **低质量**："是的，它们都是正交投影的应用，核心都是最小化距离。"
   → 术语正确，但读者学不到任何东西，也无法判断什么时候不能套用。
 - ✅ **高质量**：
-  1. 对应表（见 `content/demo/linear-algebra/notes/03-三种最近.md` 的表格）
+  1. 对应表（对象 / 可行集 / 最优条件 / 唯一性逐项对齐；样例数据见 `graph.json` 的 `r.shared-pointplane`、`r.shared-skew`）
   2. 统一句：*都是"在一个仿射/线性集合里找离给定点最近的点"，共同判据是位移向量与可行方向正交*
   3. 差异三条：可行集维度不同（导致参数唯一性问题不同）、是否需要参数化、方程形状
   4. 反例/边界：把最小二乘公式套到异面直线上会错

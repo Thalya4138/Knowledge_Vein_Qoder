@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 150" width="190" height="150">
+          <polygon points="10,120 120,140 180,95 70,75" fill="#dcecf7" stroke="#8fbbd8"/>
+          <text x="140" y="132" font-size="10" fill="#4a7fa5" font-family="serif">Col(A)</text>
+          <line x1="40" y1="112" x2="112" y2="18" stroke="#1f5f8f" stroke-width="1.6" marker-end="url(#arr)"/>
+          <line x1="40" y1="112" x2="112" y2="98" stroke="#d0702a" stroke-width="1.6" marker-end="url(#arr2)"/>
+          <line x1="112" y1="98" x2="112" y2="22" stroke="#7a3f9d" stroke-width="1.4" stroke-dasharray="4 3"/>
+          <polyline points="112,90 120,88.5 120,96.5" fill="none" stroke="#7a3f9d" stroke-width="1"/>
+          <g font-size="12" font-family="serif" font-style="italic" font-weight="bold">
+            <text x="96" y="16" fill="#1f5f8f">b</text>
+            <text x="74" y="98" fill="#d0702a">p</text>
+            <text x="118" y="60" fill="#7a3f9d">e</text>
+          </g>
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#1f5f8f"/></marker>
+            <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#d0702a"/></marker>
+          </defs>
+        </svg>

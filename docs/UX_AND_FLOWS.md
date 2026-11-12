@@ -94,7 +94,7 @@ P0 只演示 `course` 一种。`discipline` 不需要额外功能——同一份
 
 ## 3. 阅读器规格（这是产品的门面）
 
-> **视觉验收样张：[`preview/textbook-demo/index.html`](../preview/textbook-demo/index.html)**（2026-11-12 用户认可）。
+> **视觉验收样张：[`content/demo/linear-algebra/rendered/index.html`](../content/demo/linear-algebra/rendered/index.html)**（2026-11-12 用户认可）。
 > 本节与样张冲突时**以样张为准**，并回来改本节。
 
 - **版式 = 主栏 + 旁栏（二维）**，参照人教版教科书：主栏是连续叙述；旁栏与它**逐段对齐**，

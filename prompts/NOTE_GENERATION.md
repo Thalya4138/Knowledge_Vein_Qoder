@@ -154,7 +154,7 @@
 
 ## 3.5 教材版式：栏目与旁栏（2026-11-12 新增，以样张为准）
 
-**目标形态**：[`preview/textbook-demo/index.html`](../preview/textbook-demo/index.html)（截图 `preview/shot-full.png`）。
+**目标形态**：[`content/demo/linear-algebra/rendered/index.html`](../content/demo/linear-algebra/rendered/index.html)（截图 `content/demo/linear-algebra/rendered/shot-full.png`）。
 它是人教版教科书式的**二维版式**：主栏连续叙述，旁栏与段落逐行对齐。
 下面是它在 Markdown 里的表示——生成器产出这个，阅读器把它渲染成样张那样。
 
@@ -178,6 +178,9 @@
 | `练习与应用` | 节末 | 一、`概念检测`（判断 `（ ）`、单选；**每个干扰项对应一个具体误解**）；二、`拓展应用`（真实情境） | 必需，答案折叠 |
 
 **章级**（每章末一次）：`本章小结` = **理解概念**（每条完整句："X 的主要内容是：……"）+ **发展能力**（"能够……""尝试……"，大学版不写价值观条目）；`复习与提高` = 跨节综合题。
+
+**块类型名**（`> [!类型]`，校验器白名单）：问题探讨 `problem` · 本节聚焦 `focus` · 相关信息 `side` · 旁栏问题 `ask` · 知识链接 `xref` · 资源卡 `res` · 图 `figure` · 表 `table` · 科学方法 `method` · 探究·实践 `practice` · 思考·讨论 `discuss` · 批判性思维 `critical` · 思维训练 `training` · 练习与应用 `exercise` · 本章小结 `summary`。
+答案、参考思路用折叠块 `> [!exercise]-` / `> [!training]-`。完整实例：`content/demo/linear-algebra/notes/2.1-列空间中的最近点.md`。
 
 栏目块不计入 R12 的"块 ≤ 8"限制（R12 管的是正文流里的语义块）。
 证据与出处见 `docs/TEXTBOOK_STYLE_ANALYSIS.md`。
@@ -421,7 +424,7 @@
 ## 6.5 教材腔：九条可执行的语言规则
 
 来源：人教版《生物学 必修2》第 1 章精读，证据见 `docs/TEXTBOOK_STYLE_ANALYSIS.md` §3。
-`preview/textbook-demo` 是这套规则在线性代数上的实例。
+`content/demo/linear-algebra/rendered` 是这套规则在线性代数上的实例。
 
 | # | 规则 | 合格 | 不合格 |
 | --- | --- | --- | --- |
@@ -594,4 +597,4 @@
 | --- | --- | --- |
 | v1.0 | 散文式规范 | 初稿 |
 | v2.0 | 改为 I/O 契约 + 二元 rubric + 反模式对照 | v1 无法被执行与验收；实现时无法据此判断"写得好不好" |
-| v2.1 | 新增 §3.5 教材版式、§6.5 教材腔九条、R14–R17；"你"限于任务 | 用户认可 `preview/textbook-demo`（按人教版生物必修 2 学习而成），要求把它的版式、语言、内容产出写进 prompt |
+| v2.1 | 新增 §3.5 教材版式、§6.5 教材腔九条、R14–R17；"你"限于任务 | 用户认可 `content/demo/linear-algebra/rendered`（按人教版生物必修 2 学习而成），要求把它的版式、语言、内容产出写进 prompt |

@@ -12,7 +12,7 @@
         "增广矩阵"
       ],
       "importance": "core",
-      "noteAnchor": "notes/01-线性方程组.md#1-有没有解",
+      "noteAnchor": null,
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -26,7 +26,7 @@
         "degrees of freedom"
       ],
       "importance": "core",
-      "noteAnchor": "notes/01-线性方程组.md#2-有几个解",
+      "noteAnchor": null,
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -41,7 +41,7 @@
         "null space"
       ],
       "importance": "core",
-      "noteAnchor": "notes/01-线性方程组.md#3-解长什么样",
+      "noteAnchor": null,
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -55,7 +55,7 @@
         "不过原点的平移子空间"
       ],
       "importance": "supporting",
-      "noteAnchor": "notes/01-线性方程组.md#3-解长什么样",
+      "noteAnchor": null,
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -69,7 +69,7 @@
         "linear independence"
       ],
       "importance": "core",
-      "noteAnchor": "notes/01-线性方程组.md#4-线性相关与无关",
+      "noteAnchor": null,
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -85,9 +85,9 @@
         "range(A)"
       ],
       "importance": "core",
-      "noteAnchor": "notes/01-线性方程组.md#1-有没有解",
+      "noteAnchor": "notes/2.1-列空间中的最近点.md#从代数问题到几何问题",
       "sourceSpanIds": [
-        "s.notes-01-orthogonality"
+        "s.ocw-ses22-p2"
       ],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -101,9 +101,9 @@
         "最小二乘近似"
       ],
       "importance": "core",
-      "noteAnchor": "notes/02-最近点.md#2-最近点的判据残差必须正交",
+      "noteAnchor": "notes/2.1-列空间中的最近点.md#列空间中的最近点",
       "sourceSpanIds": [
-        "s.notes-01-orthogonality"
+        "s.ocw-ses22-p2"
       ],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -117,9 +117,10 @@
         "normal equations 的来源"
       ],
       "importance": "core",
-      "noteAnchor": "notes/02-最近点.md#2-最近点的判据残差必须正交",
+      "noteAnchor": "notes/2.1-列空间中的最近点.md#最近点满足的条件",
       "sourceSpanIds": [
-        "s.notes-01-orthogonality"
+        "s.note-2-1-orth",
+        "s.l15-normal"
       ],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -133,9 +134,9 @@
         "normal equations"
       ],
       "importance": "core",
-      "noteAnchor": "notes/03-法方程.md#1-从正交条件到法方程",
+      "noteAnchor": "notes/2.1-列空间中的最近点.md#法方程",
       "sourceSpanIds": [
-        "s.notes-02-rank"
+        "s.l15-normal"
       ],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -149,9 +150,9 @@
         "full column rank"
       ],
       "importance": "supporting",
-      "noteAnchor": "notes/03-法方程.md#3-点唯一--参数唯一",
+      "noteAnchor": "notes/2.1-列空间中的最近点.md#点唯一，参数未必唯一",
       "sourceSpanIds": [
-        "s.notes-02-rank"
+        "s.l15-indep"
       ],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -161,9 +162,9 @@
       "kind": "theorem",
       "title": "最小二乘参数解唯一",
       "importance": "supporting",
-      "noteAnchor": "notes/03-法方程.md#3-点唯一--参数唯一",
+      "noteAnchor": "notes/2.1-列空间中的最近点.md#点唯一，参数未必唯一",
       "sourceSpanIds": [
-        "s.notes-02-rank"
+        "s.note-2-1-unique"
       ],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -173,7 +174,7 @@
       "kind": "example",
       "title": "点到平面的最短距离",
       "importance": "supporting",
-      "noteAnchor": "notes/04-三种最近.md#3-点到平面不需要参数所以没有这个问题",
+      "noteAnchor": null,
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -183,7 +184,7 @@
       "kind": "example",
       "title": "异面直线的最短距离",
       "importance": "supporting",
-      "noteAnchor": "notes/04-三种最近.md#4-异面直线方阵恰好唯一",
+      "noteAnchor": null,
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -193,7 +194,7 @@
       "kind": "concept",
       "title": "凸二次优化的一阶最优性条件",
       "importance": "extension",
-      "noteAnchor": "notes/04-三种最近.md#6-跨学科这一条是真实的同一性",
+      "noteAnchor": null,
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -207,8 +208,10 @@
         "投影"
       ],
       "importance": "core",
-      "noteAnchor": "notes/02-最近点.md#2-最近点的判据残差必须正交",
-      "sourceSpanIds": [],
+      "noteAnchor": "notes/2.1-列空间中的最近点.md#点唯一，参数未必唯一",
+      "sourceSpanIds": [
+        "s.wiki-lls-projection"
+      ],
       "origin": "user",
       "schemaVersion": "1.0"
     }
@@ -227,7 +230,7 @@
       "epistemic": "source-backed",
       "status": "accepted",
       "evidenceIds": [
-        "s.notes-01-orthogonality"
+        "s.ocw-ses22-p2"
       ]
     },
     {
@@ -244,7 +247,8 @@
       "epistemic": "logically-derived",
       "status": "accepted",
       "evidenceIds": [
-        "s.notes-01-orthogonality"
+        "s.note-2-1-orth",
+        "s.l15-normal"
       ]
     },
     {
@@ -261,7 +265,7 @@
       "epistemic": "logically-derived",
       "status": "accepted",
       "evidenceIds": [
-        "s.notes-02-rank"
+        "s.l15-normal"
       ]
     },
     {
@@ -278,7 +282,8 @@
       "epistemic": "logically-derived",
       "status": "accepted",
       "evidenceIds": [
-        "s.notes-02-rank"
+        "s.l15-indep",
+        "s.wiki-lls-projection"
       ]
     },
     {
@@ -294,7 +299,7 @@
       "epistemic": "logically-derived",
       "status": "accepted",
       "evidenceIds": [
-        "s.notes-02-rank"
+        "s.note-2-1-unique"
       ]
     },
     {

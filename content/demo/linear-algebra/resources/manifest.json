@@ -7,7 +7,7 @@
       "id": "res.demo-authoring-note",
       "origin": "generated",
       "kind": "note",
-      "title": "本项目原创讲义（四章）",
+      "title": "本项目原创讲义",
       "author": "Cognitive Atlas Project",
       "license": "MIT",
       "uri": null,
@@ -15,12 +15,56 @@
       "retrievedAt": "2026-11-11",
       "status": "used",
       "citedByChapters": [
-        "ch.01",
-        "ch.02",
-        "ch.03",
-        "ch.04"
+        "sec.2-1"
       ],
-      "note": "本演示的前三章不依赖外部教材，第 4 章第 6 节引用 MIT 18.06 作为外部对照。所有数学内容为本项目撰写。"
+      "note": "讲义正文为本项目撰写（教材式，见 prompts/NOTE_GENERATION.md §3.5/§6.5）；外部材料只作为旁栏资源卡引用。"
+    },
+    {
+      "id": "res.discovered.mit1806sc-l15",
+      "origin": "discovered",
+      "kind": "video",
+      "title": "MIT 18.06SC · Lecture 15: Projections onto Subspaces",
+      "author": "Gilbert Strang / MIT OpenCourseWare",
+      "license": "CC BY-NC-SA 4.0",
+      "uri": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/resources/lecture-15-projections-onto-subspaces/",
+      "videoId": "youtube:Y_Ac6KiQ1t0",
+      "retrievedAt": "2026-11-12",
+      "status": "used",
+      "citedByChapters": [
+        "sec.2-1"
+      ],
+      "note": "时间戳与引文取自官方字幕（Y_Ac6KiQ1t0.vtt），2026-11-12 核对。"
+    },
+    {
+      "id": "res.discovered.mit1806sc-ses22-pdf",
+      "origin": "discovered",
+      "kind": "pdf",
+      "title": "MIT 18.06SC Session 2.2 讲义摘要：Projections onto subspaces",
+      "author": "MIT OpenCourseWare",
+      "license": "CC BY-NC-SA 4.0",
+      "uri": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/00e9c8f0eafedeab21a3d079a17ed3d8_MIT18_06SCF11_Ses2.2sum.pdf",
+      "localPath": "resources/files/MIT18_06SCF11_Ses2.2sum.pdf",
+      "retrievedAt": "2026-11-12",
+      "status": "used",
+      "citedByChapters": [
+        "sec.2-1"
+      ],
+      "note": "CC BY-NC-SA 允许非商业再分发，故随 demo 附本地副本。"
+    },
+    {
+      "id": "res.discovered.wiki-linear-least-squares",
+      "origin": "discovered",
+      "kind": "web",
+      "title": "Linear least squares — Wikipedia",
+      "author": "Wikipedia contributors",
+      "license": "CC BY-SA 4.0",
+      "uri": "https://en.wikipedia.org/wiki/Linear_least_squares",
+      "retrievedAt": "2026-11-12",
+      "status": "used",
+      "citedByChapters": [
+        "sec.2-1"
+      ],
+      "note": "用文本片段锚（#:~:text=）定位到句子。"
     },
     {
       "id": "res.discovered.strang-mit1806",
@@ -31,11 +75,9 @@
       "license": "CC BY-NC-SA 4.0",
       "uri": "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/",
       "retrievedAt": "2026-11-12",
-      "status": "used",
-      "citedByChapters": [
-        "ch.04"
-      ],
-      "note": "已在第 4 章第 6 节就地引用（附带\"跳过了唯一性条件讨论\"的说明）。若纳入更多章节，须补齐讲次时间戳。"
+      "status": "candidate",
+      "citedByChapters": [],
+      "note": "课程主页级来源。片段级引用改用 res.discovered.mit1806sc-l15（同一讲的 18.06SC 版本）。"
     },
     {
       "id": "res.discovered.wiki-projection",
@@ -67,23 +109,81 @@
   ],
   "spans": [
     {
-      "id": "s.notes-01-orthogonality",
-      "resourceId": "res.demo-authoring-note",
+      "id": "s.ocw-ses22-p2",
+      "resourceId": "res.discovered.mit1806sc-ses22-pdf",
       "locator": {
-        "type": "section",
-        "value": "notes/02-最近点.md#2-最近点的判据残差必须正交"
+        "type": "page",
+        "value": "2"
       },
-      "quote": "若残差沿列空间某一方向还有分量，沿该方向移动 p 就能让距离更小，与「最近」矛盾。",
+      "quote": "As we know, the equation Ax = b may have no solution. The vector Ax is always in the column space of A, and b is unlikely to be in the column space. So, we project b onto a vector p in the column space of A and solve Ax̂ = p.",
+      "why": "这三句话是正文“先找最近点 p，再求参数 x̂”的英文原型，可以对照着读。",
       "hash": "sha256:pending-ci"
     },
     {
-      "id": "s.notes-02-rank",
+      "id": "s.l15-normal",
+      "resourceId": "res.discovered.mit1806sc-l15",
+      "locator": {
+        "type": "time",
+        "value": "25:12",
+        "end": "27:59"
+      },
+      "quote": "[25:12] And the key is that b minus A x-hat, that's the error. [25:24] Is perpendicular to the plane. [26:31] So really I have the equations a one transpose b minus Ax is zero. And also a two transpose b minus Ax is zero. [27:43] So the equation I'm coming up with is A transpose (b − A x-hat) is zero.",
+      "why": "这一段与正文“法方程”一小节的推理顺序相同：先说残差垂直于平面，再逐列写出正交条件，最后合成矩阵形式。",
+      "hash": "sha256:pending-ci"
+    },
+    {
+      "id": "s.l15-indep",
+      "resourceId": "res.discovered.mit1806sc-l15",
+      "locator": {
+        "type": "time",
+        "value": "20:12",
+        "end": "20:24"
+      },
+      "quote": "[20:12] They don't have to be perpendicular. [20:15] But they better be independent, because then that tells me the plane.",
+      "why": "Strang 在这里默认 A 的两列线性无关，于是法方程有唯一解。正文“点唯一，参数未必唯一”讨论的正是去掉这个前提以后会发生什么。",
+      "hash": "sha256:pending-ci"
+    },
+    {
+      "id": "s.l15-split",
+      "resourceId": "res.discovered.mit1806sc-l15",
+      "locator": {
+        "type": "time",
+        "value": "37:28",
+        "end": "38:16"
+      },
+      "quote": "[37:51] …has too many rows, it's just got a couple of columns, like a one and a two, but lots of rows. Not square. [38:02] And if it's not square, this A transpose A is square but I can't pull it apart like this [38:10] I'm not allowed to do this pull apart, except if A was square.",
+      "why": "概念检测第 1(3) 题考查的就是这个错误。听完这一段再判断，会更清楚错在哪里。",
+      "hash": "sha256:pending-ci"
+    },
+    {
+      "id": "s.wiki-lls-projection",
+      "resourceId": "res.discovered.wiki-linear-least-squares",
+      "locator": {
+        "type": "text-fragment",
+        "value": "https://en.wikipedia.org/wiki/Linear_least_squares#:~:text=represents%20orthogonal%20projection%20onto%20the%20column%20space"
+      },
+      "quote": "More rigorously, if XᵀX is invertible, then the matrix X(XᵀX)⁻¹Xᵀ represents orthogonal projection onto the column space of X.",
+      "why": "与正文中投影矩阵 P = A(AᵀA)⁻¹Aᵀ 的定义对应。注意原文同样带着“XᵀX 可逆”这一前提。",
+      "hash": "sha256:pending-ci"
+    },
+    {
+      "id": "s.note-2-1-orth",
       "resourceId": "res.demo-authoring-note",
       "locator": {
         "type": "section",
-        "value": "notes/03-法方程.md#3-点唯一--参数唯一"
+        "value": "notes/2.1-列空间中的最近点.md#最近点满足的条件"
       },
-      "quote": "最近点 p 总是唯一，但表达它的参数 s 未必唯一；AᵀA 可逆当且仅当 A 满列秩。",
+      "quote": "如果 eᵀv≠0，取 t 与 eᵀv 同号且 |t| 足够小，p+tv 就比 p 更靠近 b，这与 p 是最近点矛盾。",
+      "hash": "sha256:pending-ci"
+    },
+    {
+      "id": "s.note-2-1-unique",
+      "resourceId": "res.demo-authoring-note",
+      "locator": {
+        "type": "section",
+        "value": "notes/2.1-列空间中的最近点.md#点唯一，参数未必唯一"
+      },
+      "quote": "如果 A 的列向量线性相关，就存在非零向量 d 使 Ad=0，此时 x̂ 与 x̂+d 给出同一个点 p，参数便有无穷多组。",
       "hash": "sha256:pending-ci"
     }
   ],
@@ -91,36 +191,15 @@
     "note": "资源库页与「资源—讲义映射视图」的数据源。没有来源的章节是幻觉高风险区，需显式标出。",
     "byChapter": [
       {
-        "chapterId": "ch.01",
-        "resourceIds": [
-          "res.demo-authoring-note"
-        ],
-        "unsourced": true,
-        "warning": "本章完全基于本项目原创论述，未引用外部教材。线性方程组的标准结论（相容性判据、解集结构）属教科书共同知识，但具体表述与例题为原创，不得标为 source-backed。"
-      },
-      {
-        "chapterId": "ch.02",
-        "resourceIds": [
-          "res.demo-authoring-note"
-        ],
-        "unsourced": true,
-        "warning": "本章核心论证（残差正交的反证）为原创表述；未引用外部来源。"
-      },
-      {
-        "chapterId": "ch.03",
-        "resourceIds": [
-          "res.demo-authoring-note"
-        ],
-        "unsourced": false
-      },
-      {
-        "chapterId": "ch.04",
+        "chapterId": "sec.2-1",
         "resourceIds": [
           "res.demo-authoring-note",
-          "res.discovered.strang-mit1806"
+          "res.discovered.mit1806sc-l15",
+          "res.discovered.mit1806sc-ses22-pdf",
+          "res.discovered.wiki-linear-least-squares"
         ],
         "unsourced": false,
-        "note": "第 6 节引用了 MIT 18.06 作为外部对照，故链接就地给出。"
+        "note": "核心论证为本项目原创表述；4 张旁栏资源卡给出外部对照，均定位到片段。"
       }
     ]
   }

@@ -52,7 +52,7 @@
   "hits": [
     {
       "nodeId": "n.normal-eq",
-      "anchor": "notes/02-法方程.md#从正交条件到法方程",
+      "anchor": "notes/2.1-列空间中的最近点.md#法方程",
       "kind": "note|source-span|node",
       "snippet": "…AᵀAs=Aᵀb…",
       "context": "在「法方程」一节，作为最新点的代数表述出现",
@@ -82,7 +82,7 @@
 ```jsonc
 {
   "patch": {
-    "targetAnchor": "notes/02-法方程.md#点唯一不等于参数唯一",
+    "targetAnchor": "notes/2.1-列空间中的最近点.md#点唯一，参数未必唯一",
     "op": "insert-after",
     "after": "…新增段落…",
     "reason": "…",

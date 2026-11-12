@@ -95,8 +95,8 @@ workspace/linear-algebra/
   resources/             # 资源清单 + 来源证据（不存原文，除非有授权）
     manifest.json
   notes/                 # ← 唯一真源：人能读的 Markdown
-    01-列空间与最近点.md
-    02-法方程.md
+    2.1-列空间中的最近点.md
+    figures/             # 讲义插图（svg / png）
   graph.json             # 节点与带理由的边
   layouts/               # 三种视图各自的布局（不改节点本身）
     structure.json

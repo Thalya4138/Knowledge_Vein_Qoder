@@ -11,9 +11,9 @@
 | 日期 | 交付 | 完成判据 |
 | --- | --- | --- |
 | 11/11 | 骨架 + 契约 + 样例数据 | `npm run verify:content` 通过；README 可读 |
-| 11/12 | 讲义视觉样张 `preview/textbook-demo` + 需求对照表 | 用户认可样张 ✅ |
+| 11/12 | 讲义视觉样张 `content/demo/linear-algebra/rendered` + 需求对照表 | 用户认可样张 ✅ |
 | 11/12–11/13 | 脚手架跑起来 + ADR-0002 + 设计系统 | `npm run dev` 有可用外壳；三栏布局；示例数据加载 |
-| 11/14–11/16 | **阅读器 + 讲义渲染**（主栏+旁栏、栏目、资源抽屉、KaTeX） | demo 讲义渲染后与 `preview/textbook-demo` **并排截图**无明显差距；旁栏资源能打开片段 |
+| 11/14–11/16 | **阅读器 + 讲义渲染**（主栏+旁栏、栏目、资源抽屉、KaTeX） | demo 讲义渲染后与 `content/demo/linear-algebra/rendered` **并排截图**无明显差距；旁栏资源能打开片段 |
 | 11/17–11/18 | **检索 + 补入 diff** | 搜"法方程"返回 2 处并跳转；补入可预览撤销 |
 | 11/19–11/21 | **图谱三视图 + 手工编辑** | 拖动/连线/分组/撤销；三布局独立持久化 |
 | 11/22–11/23 | **关联探索 A 模式** + 候选确认 | 一条候选从生成→确认→出现在图谱 |
@@ -39,11 +39,11 @@
 
 ### T1 · 阅读（产品门面）
 
-- **T1-0** 把 demo 讲义的一节改写成 `NOTE_GENERATION.md` §3.5 的语法（栏目块、`^段落锚`、`[!res] s.id`），
-  manifest 补齐样张里那 5 个 span（含 `why`）——这是阅读器的测试输入
+- **T1-0** ✅ 2026-11-12 完成：样张已转写为 `content/demo/linear-algebra/notes/2.1-列空间中的最近点.md`（§3.5 语法），
+  manifest 补齐 5 个片段级 span（含 `why`），校验器覆盖锚点 / 资源卡 / 图片——这是阅读器的测试输入
 - **T1-1** Markdown 解析器：标题锚点、栏目 callout、旁栏 `@锚` 对齐、`<details>`、`[[wiki link]]`、KaTeX
 - **T1-2** 阅读器 UI：**主栏+旁栏二维版式**、资源抽屉（引文+位置+理由）、图表编号、折叠；窄屏旁栏退化为内联
-  —— 视觉验收标准是 `preview/textbook-demo/index.html`
+  —— 视觉验收标准是 `content/demo/linear-algebra/rendered/index.html`
 - **T1-3** 锚点跳转与复制
 
 ### T2 · 检索

@@ -14,7 +14,7 @@
 | `Workspace` | id, name, locale, storageMode | 私人工作区与公开 demo 严格隔离 |
 | `KnowledgeBase` | id, title, outline[], prereqIds[], resourceIds[] | 课程主干顺序与自由探索并存 |
 | `Resource` | id, kind, origin, title, uri?, author?, license, hash, retrievedAt | `origin` 必为 `user-import`/`discovered`/`generated`；**无许可不得标 discovered** |
-| `SourceSpan` | id, resourceId, locator{page/section/time/range/text-fragment, end?}, quote?, **why?**, hash | `why` = 为什么链到正文这里；进旁栏的 span 必填（样张 `preview/textbook-demo/app.js` 的 `RESOURCES` 即其雏形）。 定位器必须可验证；不知道就写 `unavailable`，**不许猜页码** |
+| `SourceSpan` | id, resourceId, locator{page/section/time/range/text-fragment, end?}, quote?, **why?**, hash | `why` = 为什么链到正文这里；进旁栏的 span 必填（样张 `content/demo/linear-algebra/rendered/app.js` 的 `RESOURCES` 即其雏形）。 定位器必须可验证；不知道就写 `unavailable`，**不许猜页码** |
 | `NoteDocument` | id, kbId, path, md, revision, sourceSpanIds[] | Markdown 是内容真源；AI 不得覆盖 user-authored 段落 |
 | `Annotation` | id, noteId, revision, target{blockAnchor, textQuote{exact, prefix, suffix}}, kind, color?, body?, linkedNodeIds[], createdAt | `kind` ∈ highlight/comment/question/explain；**存在 sidecar（`annotations/<note>.json`），不写进 md 正文**；按文本引文重新定位，找不到就标 `orphaned` 并保留，不静默丢弃 |
 | `KnowledgeNode` | id, kind, title, aliases[], noteAnchor?, sourceSpanIds[], importance | `kind` ∈ concept/theorem/method/example/question/idea |
@@ -73,7 +73,7 @@
 ```jsonc
 // 节点
 { "id": "n.colspace", "kind": "concept", "title": "列空间 Col(A)",
-  "importance": "core", "noteAnchor": "notes/01-列空间与最近点.md#列空间" }
+  "importance": "core", "noteAnchor": "notes/2.1-列空间中的最近点.md#从代数问题到几何问题" }
 
 { "id": "n.normal-eq", "kind": "theorem", "title": "法方程 AᵀAs=Aᵀb",
   "importance": "core" }
