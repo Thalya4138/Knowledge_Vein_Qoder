@@ -4,11 +4,11 @@
   "title": "KnowledgeBase",
   "description": "一个知识库。粒度由用户决定：整个学科（discipline）/ 一门课（course）/ 一个专题（topic）。落盘即一个目录，可被 Obsidian / Git / 纯文本编辑器直接使用。",
   "type": "object",
-  "required": ["schemaVersion", "id", "title", "level", "outline"],
+  "required": ["schemaVersion", "kbId", "title", "level", "outline"],
   "additionalProperties": true,
   "properties": {
     "schemaVersion": { "type": "string" },
-    "id": { "type": "string", "pattern": "^kb\\.[a-z0-9-]+$" },
+    "kbId": { "type": "string", "pattern": "^kb\\.[a-z0-9-]+$", "description": "与 graph.schema.json / manifest.schema.json 同一个键名；代码里的类型名是 KnowledgeBase。" },
     "title": { "type": "string", "minLength": 1 },
     "subtitle": { "type": "string" },
     "level": {
@@ -50,6 +50,12 @@
     },
     "learningPath": { "type": "object", "additionalProperties": true },
     "resourceIds": { "type": "array", "items": { "type": "string" } },
-    "nodeIds": { "type": "array", "items": { "type": "string" } }
+    "nodeIds": { "type": "array", "items": { "type": "string" } },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "本知识库自带的完整性声明（例如「每条 [[wiki link]] 必须落到节点」）。只是给人看的说明，真正的强制在 scripts/verify-content.mjs。",
+      "properties": { "note": { "type": "string" } }
+    }
   }
 }

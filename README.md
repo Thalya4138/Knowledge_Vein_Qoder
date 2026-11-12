@@ -3,10 +3,10 @@
 把课程材料变成**人愿意读、能长期维护**的讲义；把抽象概念变成**能动手验证**的实验；
 把已学知识之间**有依据的联系**发现出来；把这些沉淀成**自己能编辑、能回忆**的知识网络。
 
-> **状态：骨架 + 契约 + 样例数据 + 一张讲义视觉样张，业务功能未实现。**
+> **状态：契约 + 样例数据 + 讲义视觉样张 + 一个部署探针（T0-0）。学习产品本身仍未实现。**
 > 样张 `content/demo/linear-algebra/rendered/index.html`（双击即开）只覆盖「01 学习工作台」里的讲义阅读这一格，
 > 而且是人工写的静态 HTML。全貌与每块的分期见 [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md)。
-> 本仓库当前不含可用的学习产品。它的作用是让第一行功能代码在无歧义的前提下开始。
+> 现在能跑的代码是**探针**，不是产品：它只回答"Qoder Sites 能不能撑住这个架构"。
 > 任何“已完成”的说法必须以 `docs/DEVELOPMENT_LOG.md` 中的测试证据为准。
 
 ---
@@ -14,20 +14,23 @@
 ## 现在能跑什么
 
 ```bash
-node scripts/verify-content.mjs
-# ✓ 内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接）
+npm install
+npm run verify:content   # ✓ 样例数据 + 引用完整性 + 讲义链接 + 布局与证据
+npm run typecheck        # ✓
+npm run test             # ✓ 18 项：schema↔数据一致性（A13）、A8 满列秩反例
+npm run build            # ✓ 271 KB / gzip 88 KB
+npm run dev              # ✓ T0-0 探针页 + 四个视口的深链占位
 ```
 
-这是**目前唯一能跑的东西**：它校验样例数据的引用完整性，并强制"每条边必须有
-理由、条件、认知状态"这条硬约束。
+`verify:content` 强制"每条知识关系必须有理由、条件、认知状态"这条硬约束，
+并检查三视图布局与学习证据的引用完整性。
 
-```bash
-npm run dev
-# ✗ 还没有。apps/web 尚不存在。
-```
+`npm run dev` 打开的是 **T0-0 部署探针**（`docs/TASK_T0.md` §3）：四项能力自检
+（深链回退 / 大静态资源 / 外部 iframe / IndexedDB），每项都同时给出结论、证据，
+以及"这个结论会以什么方式骗人"。它的四个路由只是深链测试面，**不是外壳**（外壳是 T0-1）。
 
-**仓库里没有任何应用代码。** 文档里的界面、流程、验收标准都是**目标契约**，
-不是现状。T0 任务（见 [docs/TASK_T0.md](docs/TASK_T0.md)）才把它变成能跑的东西。
+**学习产品仍然没有代码**：阅读器、检索、图谱、实验（T1–T5）都还没开始。
+文档里的界面、流程、验收标准是**目标契约**，不是现状。
 
 > 之所以先把契约和数据写完再写代码，是因为本项目最容易崩的地方不是技术，
 > 是"生成的图没有理由"。这条约束必须写在 schema 里，不能写在产品文档里靠自觉。
@@ -39,6 +42,7 @@ npm run dev
 | 你是 | 读这个 | 为什么 |
 | --- | --- | --- |
 | **开发者** | [AGENTS.md](AGENTS.md) → [docs/TASK_T0.md](docs/TASK_T0.md) | 开发规范 + 第一轮任务说明 |
+| **来干活的 agent（本地或非本地）** | [docs/HANDOFF.md](docs/HANDOFF.md) → [AGENTS.md](AGENTS.md) §2 | 认领、分支、交付、红线；交接卡是唯一对话面，聊天记录不算 |
 | **想知道用户到底要什么** | [docs/VISION.md](docs/VISION.md) | 用户愿景**原文**；规格是它的工程翻译 |
 | **想知道"做到哪了"的人** | [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md) | 每条需求 → 规格 → 分期 → 现状，含待拍板的决策 |
 | **要做阅读器的人** | [content/demo/linear-algebra/rendered/README.md](content/demo/linear-algebra/rendered/README.md) → `content/demo/linear-algebra/rendered/index.html` | 视觉验收样张，规格与之冲突时以样张为准 |
@@ -134,11 +138,11 @@ Resource ──► SourceSpan ──► NoteDocument ──► KnowledgeNode
 
 ```text
 apps/                 应用代码
-  web/                React + Vite 前端
-content/demo/         公开样例知识库：讲义、图谱、资源清单 + rendered/（讲义的期望渲染结果）
-docs/                 产品、数据、架构、验收、比赛（一文件一职责，不互相重述）
+  web/                React + Vite 前端 —— 目前只有 T0-0 探针（src/probe/）与深链占位路由
+content/demo/         公开样例知识库：讲义、图谱、资源清单、学习证据 + rendered/（讲义的期望渲染结果）
+docs/                 产品、数据、架构、验收、比赛、多 agent 交接（一文件一职责，不互相重述）
 prompts/              给模型的契约（带版本与 I/O schema）
-schemas/              JSON Schema，CI 用它校验样例数据
+schemas/              JSON Schema：kb / graph / manifest / layout / evidence，CI 用它校验样例数据
 workspace/            ← 本地私人知识库，.gitignore 排除，永不提交
 ```
 

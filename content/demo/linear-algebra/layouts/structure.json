@@ -3,7 +3,7 @@
   "id": "layout.structure",
   "kbId": "kb.linear-algebra",
   "viewType": "structure",
-  "note": "结构视图 = 学科客观上如何组织。分层由 course.outline 决定，不由算法决定。用户可拖动，但层级标签不可随意改动。",
+  "note": "结构视图 = 学科客观上如何组织。分层由 kb.json 的 outline 决定，不由算法决定。用户可拖动，但层级标签不可随意改动。",
   "relationFilter": ["contains", "prerequisite"],
   "layers": [
     { "layer": 0, "label": "预备概念", "nodeIds": ["n.colspace"] },

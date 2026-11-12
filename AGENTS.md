@@ -22,8 +22,11 @@
    “以下是……的总结”这类机器口吻，视为缺陷，见 `prompts/NOTE_GENERATION.md` §6。
 2. **保真优先于好看。** 不编造定理、条件、来源、页码、实验数据、用户学习记录。
    没有出处就写“无来源，待核对”，不要伪造引用。
-3. **每条关系必须有理由。** `explanation` 与 `assumptions` 非空，`epistemic` 必填。
-   只有一条线、没有解释的边，不允许进入 accepted 状态。
+3. **每条知识关系必须有理由。** `KnowledgeRelation` 与 `RelationGroup` 的 `explanation` 与
+   `assumptions` 非空，`epistemic` 必填；只有一条线、没有解释的边不允许进入 accepted 状态。
+   唯一的例外是个人视图的手绘边 `PersonalEdge`（ADR-0006）：它表达“我怎么记”而不是“知识之间
+   凭什么相连”，理由选填。代价是它不进逻辑视图与结构视图、不得被报告引为论据，
+   并且界面上必须与知识关系一眼可分。
 4. **学习者是主人。** AI 的一切写入都走 `ProposedChange` → 用户预览 diff → 确认/拒绝 → 可撤销。
    **个人记忆视图的布局，AI 永远不自动重排。**
 5. **四板块共用一个领域模型。** 不允许为“关联探索”和“图谱”各造一套节点。同一 `node.id`。
@@ -36,6 +39,8 @@
 
 ## 2. 开工协议（每一轮都走）
 
+0. **先认领**：读 `docs/HANDOFF.md` §4 的交接卡，确认任务没被别人占，再单独提交一行认领。
+   多 agent（含非本地）协作时以那张卡为唯一对话面——它比聊天记录可靠。
 1. **声明范围**：这一轮做什么、**明确不做什么**。写在 `docs/DEVELOPMENT_LOG.md` 顶部。
 2. **先确定性、后生成式**：解析、编辑、检索、存储、布局、导入导出 —— 这些先做对。
    LLM 只在确定性骨架之上接入。
@@ -43,7 +48,8 @@
 4. **自检**：`npm run typecheck && npm run test && npm run build`。样例数据用
    `schemas/` 校验。UI 交互截桌面 + 窄屏两张图。
 5. **写日志**：日期 / 任务号 / 改了什么 / 怎么验证的 / 已知缺陷 / 下一步。
-6. **不擅自**：不 push 远端、不部署公网、不装付费 API、不改 `content/demo` 里的第三方来源声明。
+6. **不擅自**：不 push `main`（只许 push 自己的 `task/*` 分支，见 `docs/HANDOFF.md` §2）、不部署公网、
+   不装付费 API、不改 `content/demo` 里的第三方来源声明。
 
 ---
 
@@ -60,7 +66,7 @@
 
 - 阅读优先：正文行宽 42–50 em，衬线正文，字号不小于 16px，行高 1.7 上下。
 - 层级靠**留白与字号**，不靠满屏浅灰小字和细边框卡片。
-- 颜色有语义：五类 `epistemic` 在图上必须有**颜色 + 形状/线型 + 文字标签**三重区分（无障碍）。
+- 颜色有语义：六类 `epistemic`（取值以 `docs/GLOSSARY.md` 为准）在图上必须有**颜色 + 形状/线型 + 文字标签**三重区分（无障碍）。
 - 键盘可达、焦点可见、尊重 `prefers-reduced-motion`。
 - 空状态必须给出下一步动作，不能是空白页。
 - 不出现：装饰性 emoji、无意义渐变动画、把所有内容塞进圆角卡片的“AI 风”。
@@ -73,14 +79,20 @@
 apps/web/src/
   app/          路由与页面外壳
   features/     workspace | lab | connection | atlas（对应四视口）
+                工具注册表在 features/lab/ —— 它只服务于可视化实验室
   domain/       实体类型、校验、迁移、id 规则
   content/      讲义解析（标题锚点、callout、details、wiki link）
   store/        持久化（IndexedDB）与版本
+  ai/           provider adapter、prompt 调用、无 Key 降级
   ui/           设计系统组件
-content/demo/   样例课程（合法公开，原创）
-schemas/        JSON Schema
+content/demo/   样例知识库（合法公开，原创）
+schemas/        JSON Schema：kb / graph / manifest / layout / evidence
 docs/           契约文档
 ```
+
+目录以 `docs/ARCHITECTURE.md` §8 为准，本节只是摘要。
+**字段与统计数字不在文档里抄写**：字段清单看 `schemas/*.json`，样例数据看 `content/demo/`，
+运行时数字由代码从数据算出。抄一遍就会过期一次。
 
 新增依赖前问一句：**标准库/已有依赖能不能做到？** 能，就别加。
 

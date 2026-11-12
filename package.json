@@ -10,9 +10,25 @@
   },
   "scripts": {
     "verify:content": "node scripts/verify-content.mjs",
-    "dev": "echo \"[未实现] apps/web 尚未创建，见 docs/TASK_T0.md\" && exit 1",
-    "build": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
-    "typecheck": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
-    "test": "echo \"[未实现] apps/web 尚未创建\" && exit 1"
+    "dev": "vite",
+    "preview": "vite preview",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "ajv": "^8.20.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
   }
 }

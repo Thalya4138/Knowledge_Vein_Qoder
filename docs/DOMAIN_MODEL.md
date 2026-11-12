@@ -3,16 +3,20 @@
 **状态：v1.0 契约。** TypeScript 类型在 `apps/web/src/domain/` 落地；本文件与 `schemas/*.json` 是权威。
 真实实例见 `content/demo/linear-algebra/`——**写代码前先读那几份 JSON，它们比本表更精确。**
 
+> **本表只回答"为什么"和"以谁为准"，不抄字段清单。** 字段的权威定义在 `schemas/*.json`
+> （graph / kb / manifest / layout / evidence），实例在 `content/demo/`。
+> 本表出现的字段名只为指出不变量落在哪个字段上；两边不一致时**改本表**，不要改数据来迁就文档。
+
 术语统一见 [GLOSSARY.md](GLOSSARY.md)。产品约束的来源见 [PRODUCT_SPEC.md](PRODUCT_SPEC.md) §6.3。
 
 ---
 
 ## 1. 实体总表
 
-| 实体 | 关键字段 | 不变量（违反即为 bug） |
+| 实体 | 不变量落在哪些字段上（完整清单见 `schemas/*.json`） | 不变量（违反即为 bug） |
 | --- | --- | --- |
 | `Workspace` | id, name, locale, storageMode | 私人工作区与公开 demo 严格隔离 |
-| `KnowledgeBase` | id, title, outline[], prereqIds[], resourceIds[] | 课程主干顺序与自由探索并存 |
+| `KnowledgeBase` | `kb.json` 的 `kbId` / `level` / `outline[]` / `parentKbId` `childKbIds` / `resourceIds[]` / `nodeIds[]` | 主干顺序与自由探索并存。`level` ∈ `discipline`/`course`/`topic` 只改变导航深度，**不改数据结构** |
 | `Resource` | id, kind, origin, title, uri?, author?, license, hash, retrievedAt | `origin` 必为 `user-import`/`discovered`/`generated`；**无许可不得标 discovered** |
 | `SourceSpan` | id, resourceId, locator{page/section/time/range/text-fragment, end?}, quote?, **why?**, hash | `why` = 为什么链到正文这里；进旁栏的 span 必填（样张 `content/demo/linear-algebra/rendered/app.js` 的 `RESOURCES` 即其雏形）。 定位器必须可验证；不知道就写 `unavailable`，**不许猜页码** |
 | `NoteDocument` | id, kbId, path, md, revision, sourceSpanIds[] | Markdown 是内容真源；AI 不得覆盖 user-authored 段落 |
@@ -20,10 +24,11 @@
 | `KnowledgeNode` | id, kind, title, aliases[], noteAnchor?, sourceSpanIds[], importance | `kind` ∈ concept/theorem/method/example/question/idea |
 | `KnowledgeRelation` | id, from, to, type, direction, explanation, assumptions[], epistemic, status, evidenceIds[] | **`explanation` 与 `assumptions` 非空**；`epistemic` 必填 |
 | `RelationGroup` | id, premiseIds[], conclusionIds[], logicType, proofRef? | 多前提推导不得压成二元边 |
-| `ViewLayout` | id, viewType, positions{nodeId:{x,y,layer?,collapsed?}}, groups[], style | 三视图独立；**AI 不得自动重排 personal** |
-| `LearningEvidence` | id, targetIds[], task, response, rubric, score, date | 掌握状态从证据推断，不来自阅读次数 |
+| `ViewLayout` | `layouts/<view>.json`，字段见 `schemas/layout.schema.json` | 一个视图一份文件，`viewType` 必须与文件名一致；三视图独立持久化；**AI 不得自动重排 personal**；`personalEdges` 只允许出现在个人视图（ADR-0006）；逻辑视图必须给六档 `epistemic` 各自的线型 |
+| `PersonalEdge` | `layouts/personal.json` 的 `personalEdges[]`：`label` 必填，`meaning` 选填 | **不是 `KnowledgeRelation`**，不受 ADR-0003 的 `explanation`/`assumptions` 强制。它只影响"你自己怎么记"：不进逻辑视图与结构视图，报告不得引为论据，界面上与知识关系一眼可分（虚线 + 「我的联想」） |
+| `LearningEvidence` | `evidence/*.json`，字段见 `schemas/evidence.schema.json`；同文件另有 `userSelfReport` | 落盘在 `evidence/`，**不放 `layouts/`**（它不是视图布局）。`score` 必须把 `recall`/`understand`/`apply` 分开记；掌握状态只来自证据或用户自评，**`userSelfReport` 优先级最高**，不来自阅读次数 |
 | `ChapterProgress` | chapterId, status, lastOpenedAt, evidenceIds[] | 状态只能是 `unread`/`reading`/`read`/`verified`；**`read` ≠ 掌握** |
-| `MemoryCue` | id, text, linkedNodeIds[], layoutId | 用户私有；不得被描述为客观事实 |
+| `MemoryCue` | `graph.json` 的 `memoryCues[]`：`text` / `linkedNodeIds[]` / `layoutId` | 用户私有；不得被描述为客观事实。与 `PersonalEdge` 同属"记忆"而非"知识"，两者都不受 ADR-0003 约束 |
 | `ProposedChange` | id, op, target, before, after, rationale, evidence, status, undoToken? | 必须经用户确认；`undoToken` 由应用层生成 |
 | `VisualizationRun` | id, tool, inputRef, params, resultRef, status, noteAnchor? | `status` ∈ real/pre-rendered/example/failed，**不许伪装** |
 | `Report` | id, title, question, markdown, citedRelationIds[], citedNodeIds[], createdAt | 报告是**论证文本**，不是对话导出；每条论断有锚点或标为推论 |
@@ -65,6 +70,9 @@
 
 所以 `explanation` + `assumptions` + `epistemic` 三者是**schema 级必填**，
 校验失败的关系**不得写入 accepted**。这是本产品与"AI 思维导图"的分界线。
+
+**适用范围**：`KnowledgeRelation` 与 `RelationGroup`。个人视图的手绘边 `PersonalEdge` 不在此列——
+它表达的是记忆路径而不是知识命题（ADR-0006），代价是它只能待在个人视图、不能当证据。
 
 ---
 

@@ -23,11 +23,12 @@ content/demo/<kb-name>/
   graph.json             节点 + 带理由的关系 + 关系组 + 记忆线索
   resources/manifest.json 资源清单 + 片段级来源（spanId → 页 / 时间 / 文本锚 + 引文 + why）
   resources/files/       开放许可材料的本地副本（可选）
-  layouts/
+  layouts/               三视图各自的布局，字段见 schemas/layout.schema.json
     structure.json       结构视图布局
     logic.json           逻辑视图布局
     personal.json        个人记忆视图布局
-    learning.json        学习证据（可选）
+  evidence/              学习证据与用户自评，字段见 schemas/evidence.schema.json
+    learning.json        练习/回忆记录 + 自评层级（可选）
   rendered/              讲义的期望渲染结果（可选，仅 demo 用于阅读器验收；不属于知识库格式）
 ```
 
