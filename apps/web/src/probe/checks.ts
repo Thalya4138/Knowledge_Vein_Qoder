@@ -11,51 +11,41 @@ export interface ProbeResult {
 const fmt = (n: number) =>
   n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${(n / 1024).toFixed(1)} KB`;
 
-/** dev 服务器的回退不是托管站的回退，结论必须带上这个限定。 */
-const originNote = () =>
-  import.meta.env.DEV ? '（来源是 vite dev 服务器，不代表托管站）' : '';
-
 /**
- * 探测 1 · SPA 深链回退。
- * 直接抓一个不可能存在的路径：如果站把未知路径重写成 index.html，
- * 说明 BrowserRouter 可用；返回 404 说明必须留在 HashRouter。
+ * 探测 1 · 深链能否到达应用。
+ *
+ * 上一版用 fetch 抓一个不存在的路径来判定，结论是错的：托管站的回退只给
+ * **文档请求**（浏览器导航），fetch/XHR 一律 404。在 Qoder Sites 上实测过——
+ * 同一个 `/atlas`，导航返回应用外壳，fetch 返回 404。
+ *
+ * 所以主判据换成「本站是从哪个 pathname 启动起来的」：
+ * 如果应用从 /atlas 这个 URL 成功启动，服务器必然把它重写到了 index.html。
  */
-export async function probeSpaFallback(): Promise<ProbeResult> {
+export async function probeDeepLink(): Promise<ProbeResult> {
+  const path = location.pathname;
   const token = Math.random().toString(36).slice(2, 8);
-  const url = new URL(`/no-such-route-${token}`, location.origin);
-  const res = await fetch(url.href, { cache: 'no-store' });
+  const res = await fetch(`/no-such-route-${token}`, { cache: 'no-store' });
   const body = await res.text();
-  const contentType = res.headers.get('content-type') ?? '(无)';
-  const hasRoot = body.includes('id="root"');
-  const evidence = [
-    `GET ${url.pathname} → HTTP ${res.status}`,
-    `content-type: ${contentType}`,
-    `响应体 ${fmt(body.length)}；${hasRoot ? '包含 #root，是应用外壳' : '不含 #root'}`,
-    `当前来源：${location.origin}`,
+  const fetchEvidence = [
+    `对照：fetch 一个不存在的路径 → HTTP ${res.status}，` +
+      `${body.includes('id="root"') ? '含 #root' : '不含 #root'}（这是资源请求的行为，不决定深链）`,
   ];
-  if (res.status === 200 && hasRoot) {
+
+  if (path !== '/' && path !== '/index.html') {
     return {
       state: 'pass',
-      summary: `未知路径回退到应用外壳 —— BrowserRouter 在这台来源上不会 404 ${originNote()}`,
-      evidence,
+      summary: `应用从 ${path} 直接启动 —— 文档请求被回退到 index.html，BrowserRouter 可行`,
+      evidence: [`location.pathname = ${path}`, `location.search = ${location.search || '(空)'}`, ...fetchEvidence],
       caveat:
-        '两种情况会被误判为 pass：软 404（返回 200 但是错误页），以及 dev 服务器自带的 history 回退。' +
-        '最终以部署站上地址栏直访 /workspace 的肉眼结果为准。',
-    };
-  }
-  if (res.status === 404) {
-    return {
-      state: 'fail',
-      summary: `未知路径返回 404 —— 这台来源没有 SPA 回退，必须使用 HashRouter ${originNote()}`,
-      evidence,
-      caveat: '这正是当前 HashRouter 默认值的依据；换 BrowserRouter 前需要站方提供回退配置。',
+        '回退只对导航生效：fetch/XHR 取同样的路径仍是 404，所以别用资源请求去测路由。' +
+        '另外本应用当前仍是 HashRouter，从 /atlas 启动后渲染的是探针首页——这格测的是「外壳到不到达」，不是「路由对不对」。',
     };
   }
   return {
     state: 'unknown',
-    summary: `返回 HTTP ${res.status}，无法判定 ${originNote()}`,
-    evidence,
-    caveat: '可能是登录墙、CDN 拦截或重定向；请人工在地址栏直访一次并记录看到的内容。',
+    summary: '当前从 / 启动，没经过深链。点下面「从 /atlas 重新加载」才测得出这一格',
+    evidence: [`location.pathname = ${path}`, ...fetchEvidence],
+    caveat: '若重载后出现 404 页而不是这个页面，说明这台来源不做文档回退，结论翻成 fail。',
   };
 }
 
