@@ -1,19 +1,27 @@
 name: verify
 
-# 现在只有内容校验能跑。应用出现后，需把 typecheck / test / build 加进来，
-# 并把 npm ci 换成 npm install。
+# 确定性骨架先跑：内容校验 → 类型 → 单元 → 构建。
+# 探针与产品功能都不依赖 API Key，因此 CI 必须在无密钥环境下全绿。
 on:
   push:
     branches: [main]
   pull_request:
 
 jobs:
-  content:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: 校验样例知识库
-        run: node scripts/verify-content.mjs
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: 校验样例知识库（A1–A6、A10–A12）
+        run: npm run verify:content
+      - name: 类型检查
+        run: npm run typecheck
+      - name: 单元测试（A7–A9 中的 schema 一致性与 A8）
+        run: npm run test
+      - name: 构建
+        run: npm run build
