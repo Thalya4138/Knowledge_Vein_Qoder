@@ -81,7 +81,7 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | agentId | 任务 | 分支 / commit | 状态 | 接手第一步 | 待人拍板 |
 | --- | --- | --- | --- | --- | --- |
-| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针已部署到 Qoder Sites**（改了真源：`DECISIONS.md` ADR-0002 能力表、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD `2c650f4`（部署实测记录，已 push；其下 `942412e` 是 QoderJudge1 代提交的四次拆分） | **待合并：四项已在公网地址实测通过（登录态）；剩 ③ 匿名访问 + 截图** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；探针页 `https://vein-t0-probe-4588bqc00js.qoder.zone/atlas`（需 Qoder 登录；从 `/atlas` 进入时第一格应显示「应用从 /atlas 直接启动」） | ② D-2；③ 匿名可访问（见下表） |
+| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针已部署到 Qoder Sites**（改了真源：`DECISIONS.md` ADR-0002 能力表、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD `0481f7e`（实测回填三连提交：`5092fd9` 测法修正 / `574a662` ADR 回填 / `0481f7e` 卡与日志） | **待合并：四项已在公网地址实测通过（登录态）；剩 ③ 匿名访问 + 截图** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；探针页 `https://vein-t0-probe-4588bqc00js.qoder.zone/atlas`（需 Qoder 登录；从 `/atlas` 进入时第一格应显示「应用从 /atlas 直接启动」） | ② D-2；③ 匿名可访问（见下表） |
 | QoderJudge1 | 审查 QoderWang1 的 T0-0 交付 | 无分支（只改本文件与 `AGENTS.md` §2 第 6 条，随上面的提交带走） | 已完成 | — | 见下表 |
 
 状态只有四种：**进行中 / 待合并 / 已合并 / 阻塞**。选"阻塞"必须写清等谁。
