@@ -3,7 +3,9 @@
 把课程材料变成**人愿意读、能长期维护**的讲义；把抽象概念变成**能动手验证**的实验；
 把已学知识之间**有依据的联系**发现出来；把这些沉淀成**自己能编辑、能回忆**的知识网络。
 
-> **状态：骨架 + 契约 + 样例数据，业务功能未实现。**
+> **状态：骨架 + 契约 + 样例数据 + 一张讲义视觉样张，业务功能未实现。**
+> 样张 `preview/textbook-demo/index.html`（双击即开）只覆盖「01 学习工作台」里的讲义阅读这一格，
+> 而且是人工写的静态 HTML。全貌与每块的分期见 [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md)。
 > 本仓库当前不含可用的学习产品。它的作用是让 Qoder 在无歧义的前提下开始写第一行功能代码。
 > 任何“已完成”的说法必须以 `docs/DEVELOPMENT_LOG.md` 中的测试证据为准。
 
@@ -37,10 +39,13 @@ npm run dev
 | 你是 | 读这个 | 为什么 |
 | --- | --- | --- |
 | **Qoder（实现者）** | [AGENTS.md](AGENTS.md) → [prompts/QODER_KICKOFF.md](prompts/QODER_KICKOFF.md) | 规则 + 第一轮可粘贴指令 |
+| **任何 agent / 想知道用户到底要什么** | [docs/VISION.md](docs/VISION.md) | 用户愿景**原文**（不必再让用户粘贴）；规格是它的工程翻译 |
+| **想知道"做到哪了"的人** | [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md) | 每条需求 → 规格 → 分期 → 现状，含待拍板的决策 |
+| **要做阅读器的人** | [preview/README.md](preview/README.md) → `preview/textbook-demo/index.html` | 视觉验收样张，规格与之冲突时以样张为准 |
 | **评委 / 第一次打开仓库的人** | 本页 → [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) §2 | 3 分钟理解产品在做什么 |
 | **要改产品定义的人（作者）** | [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) | 唯一产品真源，其他文档只引用不重述 |
 | **要改数据结构的人** | [docs/DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md) → [content/demo/](content/demo/) | 类型表 + 真实 JSON 实例 |
-| **要写讲义 / 改写作风格的人** | [prompts/NOTE_GENERATION.md](prompts/NOTE_GENERATION.md) → [docs/NOTE_SAMPLE_ANALYSIS.md](docs/NOTE_SAMPLE_ANALYSIS.md) | 生成契约 + 人读得懂的可检查标准 |
+| **要写讲义 / 改写作风格的人** | [prompts/NOTE_GENERATION.md](prompts/NOTE_GENERATION.md) → [docs/TEXTBOOK_STYLE_ANALYSIS.md](docs/TEXTBOOK_STYLE_ANALYSIS.md)（人教版教科书范本）→ [docs/NOTE_SAMPLE_ANALYSIS.md](docs/NOTE_SAMPLE_ANALYSIS.md) | 生成契约 + 人读得懂的可检查标准 |
 | **要提交比赛的人** | [docs/CONTEST_SUBMISSION.md](docs/CONTEST_SUBMISSION.md) | 帖子模板、证据清单、倒计时 |
 
 ---
@@ -132,6 +137,7 @@ apps/                 应用代码（Qoder 在其下实现）
   web/                React + Vite 前端
 content/demo/         公开样例：课程、讲义、图谱、资源清单（唯一可提交的内容）
 docs/                 产品、数据、架构、验收、比赛（一文件一职责，不互相重述）
+preview/              视觉样张（静态 HTML，不是应用代码），见 preview/README.md
 prompts/              给模型的契约（带版本与 I/O schema）
 schemas/              JSON Schema，CI 用它校验样例数据
 workspace/            ← 本地私人知识库，.gitignore 排除，永不提交
@@ -144,3 +150,4 @@ workspace/            ← 本地私人知识库，.gitignore 排除，永不提�
 - GitHub：<https://github.com/Thalya4138/Cognitive-Atlas_Qoder>
 - 天池赛题页 / 论坛：见上
 - 产品定义：[docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)
+- 参照产品（notasand / Thinki / 3B1B / WiseGraph / ClassPulse …）：[docs/REFERENCES.md](docs/REFERENCES.md)

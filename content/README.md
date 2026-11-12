@@ -14,7 +14,7 @@
 
 ```text
 content/demo/<kb-name>/
-  course.json            课程主干、章节、先修、节点清单
+  kb.json                元信息 + level(学科/课程/专题) + 主干大纲 + 父子知识库
   notes/*.md             讲义（唯一内容真源）
   graph.json             节点 + 带理由的关系 + 关系组 + 记忆线索
   resources/manifest.json 资源清单 + 来源片段（spanId → 定位）
@@ -30,12 +30,10 @@ content/demo/<kb-name>/
 只用 `prompts/NOTE_GENERATION.md` §4 列出的块类型，别的会被 `verify:content` 拒绝：
 
 ```text
-definition  theorem  derivation  proof  source_quote  note
-viewpoint   method   extension   caveat  correction   unresolved
-worked_example  contrast
+material  note  aside  link  trap  exercise  method  viewpoint  unsourced
 ```
 
-**不要自创 `::: tip` / `::: caution` / `::: warning`** —— 同义词扩散会让前端解析器
+**不要自创 `> [!tip]` / `> [!caution]`** —— 同义词扩散会让前端解析器
 和导出器各自为政，这正是初版仓库的病根之一。
 
 ## 写关系时的硬规则

@@ -27,7 +27,7 @@
 必须回答：
 
 - 框架与构建：为什么是这个？包体多大？
-- Markdown：解析器能否表达 `::: 块`、`<details>`、`[[wiki link]]`？导出能否降级为标准 Markdown？
+- Markdown：解析器能否表达 Obsidian callout、`<details>`、`[[wiki link]]`？导出能否降级为标准 Markdown？
 - 编辑器：CodeMirror 还是 Tiptap？**导出保真度**如何验证？
 - 图谱：React Flow vs Cytoscape vs d3-force？
   判据是**拖拽/连线/撤销/大图性能**，不是渲染美观度。
@@ -77,7 +77,7 @@
 ## ADR-0005 · 讲义用 Markdown 而非富文本私有格式（2026-11-11，已采纳）
 
 **理由**：可 Git、可 diff、可被 Obsidian/编辑器打开、可迁移、不会被本产品锁定。
-`::: 块` 是 Markdown 的超集，导出时降级为标准语法（`<details>`、引用块、列表）。
+callout 是 Obsidian 原生语法，在 GitHub/纯文本中自动降级为引用块；导出时不丢内容。
 
 **代价**：块级编辑的即时预览需要自己做；复杂排版能力有限。
 **接受**：学术讲义不需要复杂排版。

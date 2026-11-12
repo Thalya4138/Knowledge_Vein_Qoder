@@ -14,16 +14,20 @@
 | `Workspace` | id, name, locale, storageMode | 私人工作区与公开 demo 严格隔离 |
 | `KnowledgeBase` | id, title, outline[], prereqIds[], resourceIds[] | 课程主干顺序与自由探索并存 |
 | `Resource` | id, kind, origin, title, uri?, author?, license, hash, retrievedAt | `origin` 必为 `user-import`/`discovered`/`generated`；**无许可不得标 discovered** |
-| `SourceSpan` | id, resourceId, locator{page/section/time/range}, quote?, hash | 定位器必须可验证；不知道就写 `unavailable`，**不许猜页码** |
+| `SourceSpan` | id, resourceId, locator{page/section/time/range/text-fragment, end?}, quote?, **why?**, hash | `why` = 为什么链到正文这里；进旁栏的 span 必填（样张 `preview/textbook-demo/app.js` 的 `RESOURCES` 即其雏形）。 定位器必须可验证；不知道就写 `unavailable`，**不许猜页码** |
 | `NoteDocument` | id, kbId, path, md, revision, sourceSpanIds[] | Markdown 是内容真源；AI 不得覆盖 user-authored 段落 |
+| `Annotation` | id, noteId, revision, target{blockAnchor, textQuote{exact, prefix, suffix}}, kind, color?, body?, linkedNodeIds[], createdAt | `kind` ∈ highlight/comment/question/explain；**存在 sidecar（`annotations/<note>.json`），不写进 md 正文**；按文本引文重新定位，找不到就标 `orphaned` 并保留，不静默丢弃 |
 | `KnowledgeNode` | id, kind, title, aliases[], noteAnchor?, sourceSpanIds[], importance | `kind` ∈ concept/theorem/method/example/question/idea |
 | `KnowledgeRelation` | id, from, to, type, direction, explanation, assumptions[], epistemic, status, evidenceIds[] | **`explanation` 与 `assumptions` 非空**；`epistemic` 必填 |
 | `RelationGroup` | id, premiseIds[], conclusionIds[], logicType, proofRef? | 多前提推导不得压成二元边 |
 | `ViewLayout` | id, viewType, positions{nodeId:{x,y,layer?,collapsed?}}, groups[], style | 三视图独立；**AI 不得自动重排 personal** |
 | `LearningEvidence` | id, targetIds[], task, response, rubric, score, date | 掌握状态从证据推断，不来自阅读次数 |
+| `ChapterProgress` | chapterId, status, lastOpenedAt, evidenceIds[] | 状态只能是 `unread`/`reading`/`read`/`verified`；**`read` ≠ 掌握** |
 | `MemoryCue` | id, text, linkedNodeIds[], layoutId | 用户私有；不得被描述为客观事实 |
 | `ProposedChange` | id, op, target, before, after, rationale, evidence, status, undoToken? | 必须经用户确认；`undoToken` 由应用层生成 |
 | `VisualizationRun` | id, tool, inputRef, params, resultRef, status, noteAnchor? | `status` ∈ real/pre-rendered/example/failed，**不许伪装** |
+| `Report` | id, title, question, markdown, citedRelationIds[], citedNodeIds[], createdAt | 报告是**论证文本**，不是对话导出；每条论断有锚点或标为推论 |
+| `Thread` | id, anchorContext, turns[], origin | 「追问」的载体；上下文来自选区，不来自页面 |
 | `ExportBundle` | schemaVersion, manifest, docs[], graph, layouts[], assets[] | 导出→导入必须保真（节点/关系/三布局/来源） |
 
 ---

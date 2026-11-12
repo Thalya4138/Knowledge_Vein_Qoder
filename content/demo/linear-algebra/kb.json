@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.1",
+  "kbId": "kb.linear-algebra",
+  "title": "线性代数：从线性方程组到最小二乘",
+  "subtitle": "一条线：有没有解 → 无解怎么办 → 最近点 → 它其实是一阶最优条件",
+  "level": "course",
+  "parentKbId": null,
+  "childKbIds": [],
+  "locale": "zh-CN",
+  "levelLabel": "本科一年级",
+  "license": "本项目原创演示材料（MIT），供功能测试与公开展示",
+  "createdAt": "2026-11-11",
+  "updatedAt": "2026-11-12",
+
+  "outline": [
+    {
+      "id": "ch.01",
+      "title": "第一章 线性方程组",
+      "notePath": "notes/01-线性方程组.md",
+      "goal": "有没有解、有几个解、解长什么样——三问归一为「自由变量有几个」",
+      "prereqIds": []
+    },
+    {
+      "id": "ch.02",
+      "title": "第二章 最近点：无解时怎么办",
+      "notePath": "notes/02-最近点.md",
+      "goal": "把「求解」换成「求最近」，得到残差正交的判据",
+      "prereqIds": ["ch.01"]
+    },
+    {
+      "id": "ch.03",
+      "title": "第三章 法方程",
+      "notePath": "notes/03-法方程.md",
+      "goal": "从正交条件推出法方程，并分清「点唯一」与「参数唯一」",
+      "prereqIds": ["ch.02"]
+    },
+    {
+      "id": "ch.04",
+      "title": "第四章 三种「最近」是同一个问题吗",
+      "notePath": "notes/04-三种最近.md",
+      "goal": "对照最小二乘、点到平面、异面直线：共性、差异、以及真实的跨学科同一性",
+      "prereqIds": ["ch.03"]
+    }
+  ],
+
+  "learningPath": {
+    "note": "体系式学习沿 outline 顺序；问题式学习可从任意节点进入，系统提示缺哪条先修。",
+    "startHere": "ch.01"
+  },
+
+  "resourceIds": ["res.demo-authoring-note", "res.discovered.strang-mit1806"],
+  "nodeIds": [
+    "n.solvability", "n.free-variable", "n.nullspace", "n.affine-set",
+    "n.linear-independence", "n.colspace", "n.least-squares", "n.orthogonality",
+    "n.normal-eq", "n.full-column-rank", "n.unique-solution",
+    "n.point-plane", "n.skew-lines", "n.first-order-cond"
+  ],
+
+  "integrity": {
+    "note": "讲义中每一条 [[wiki link]] 都必须能在 graph.json 找到对应 nodeId 或 outline 章节；缺失视为缺陷。"
+  }
+}

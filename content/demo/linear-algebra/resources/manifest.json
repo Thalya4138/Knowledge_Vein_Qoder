@@ -1,35 +1,127 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.1",
   "kbId": "kb.linear-algebra",
+  "note": "本清单演示「多源整合」的三种 origin 与「覆盖状态」。discovered 条目默认 status=candidate，需用户勾选才进入讲义引用。",
   "resources": [
     {
       "id": "res.demo-authoring-note",
       "origin": "generated",
       "kind": "note",
-      "title": "本项目原创讲义（无外部依赖）",
+      "title": "本项目原创讲义（四章）",
       "author": "Cognitive Atlas Project",
       "license": "MIT",
       "uri": null,
       "hash": null,
       "retrievedAt": "2026-11-11",
-      "note": "本演示课程不依赖任何外部教材。讲义中的数学内容均为本项目撰写；如后续接入真实教材，须在此登记来源、许可与页码锚点。"
+      "status": "used",
+      "citedByChapters": [
+        "ch.01",
+        "ch.02",
+        "ch.03",
+        "ch.04"
+      ],
+      "note": "本演示的前三章不依赖外部教材，第 4 章第 6 节引用 MIT 18.06 作为外部对照。所有数学内容为本项目撰写。"
+    },
+    {
+      "id": "res.discovered.strang-mit1806",
+      "origin": "discovered",
+      "kind": "video-course",
+      "title": "MIT 18.06 Linear Algebra (Gilbert Strang)",
+      "author": "Gilbert Strang / MIT OpenCourseWare",
+      "license": "CC BY-NC-SA 4.0",
+      "uri": "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/",
+      "retrievedAt": "2026-11-12",
+      "status": "used",
+      "citedByChapters": [
+        "ch.04"
+      ],
+      "note": "已在第 4 章第 6 节就地引用（附带\"跳过了唯一性条件讨论\"的说明）。若纳入更多章节，须补齐讲次时间戳。"
+    },
+    {
+      "id": "res.discovered.wiki-projection",
+      "origin": "discovered",
+      "kind": "web",
+      "title": "Orthogonal projection — Wikipedia",
+      "author": "Wikipedia contributors",
+      "license": "CC BY-SA 4.0",
+      "uri": "https://en.wikipedia.org/wiki/Orthogonal_projection",
+      "retrievedAt": "2026-11-12",
+      "status": "candidate",
+      "citedByChapters": [],
+      "note": "用于对照「投影」在不同语境下的定义差异。属于可替代来源，不宜作为唯一依据。"
+    },
+    {
+      "id": "res.user.my-lecture-notes",
+      "origin": "user-import",
+      "kind": "photo-of-notes",
+      "title": "我的课堂笔记（第 7 讲）",
+      "author": "用户本人",
+      "license": "private",
+      "uri": null,
+      "hash": null,
+      "retrievedAt": "2026-11-10",
+      "status": "unused",
+      "citedByChapters": [],
+      "note": "示例：用户私有材料。origin=user-import 的内容默认不进公开导出包，除非用户显式勾选。"
     }
   ],
   "spans": [
     {
       "id": "s.notes-01-orthogonality",
       "resourceId": "res.demo-authoring-note",
-      "locator": { "type": "section", "value": "notes/01-列空间与最近点.md#为什么残差必须正交" },
+      "locator": {
+        "type": "section",
+        "value": "notes/02-最近点.md#2-最近点的判据残差必须正交"
+      },
       "quote": "若残差沿列空间某一方向还有分量，沿该方向移动 p 就能让距离更小，与「最近」矛盾。",
       "hash": "sha256:pending-ci"
     },
     {
       "id": "s.notes-02-rank",
       "resourceId": "res.demo-authoring-note",
-      "locator": { "type": "section", "value": "notes/02-法方程.md#点唯一不等于参数唯一" },
+      "locator": {
+        "type": "section",
+        "value": "notes/03-法方程.md#3-点唯一--参数唯一"
+      },
       "quote": "最近点 p 总是唯一，但表达它的参数 s 未必唯一；AᵀA 可逆当且仅当 A 满列秩。",
       "hash": "sha256:pending-ci"
     }
   ],
-  "note": "locator 的 type 可为 page / section / time / range / unavailable。未知时用 unavailable 并说明，禁止猜测页码。"
+  "coverage": {
+    "note": "资源库页与「资源—讲义映射视图」的数据源。没有来源的章节是幻觉高风险区，需显式标出。",
+    "byChapter": [
+      {
+        "chapterId": "ch.01",
+        "resourceIds": [
+          "res.demo-authoring-note"
+        ],
+        "unsourced": true,
+        "warning": "本章完全基于本项目原创论述，未引用外部教材。线性方程组的标准结论（相容性判据、解集结构）属教科书共同知识，但具体表述与例题为原创，不得标为 source-backed。"
+      },
+      {
+        "chapterId": "ch.02",
+        "resourceIds": [
+          "res.demo-authoring-note"
+        ],
+        "unsourced": true,
+        "warning": "本章核心论证（残差正交的反证）为原创表述；未引用外部来源。"
+      },
+      {
+        "chapterId": "ch.03",
+        "resourceIds": [
+          "res.demo-authoring-note"
+        ],
+        "unsourced": false
+      },
+      {
+        "chapterId": "ch.04",
+        "resourceIds": [
+          "res.demo-authoring-note",
+          "res.discovered.strang-mit1806"
+        ],
+        "unsourced": false,
+        "note": "第 6 节引用了 MIT 18.06 作为外部对照，故链接就地给出。"
+      }
+    ]
+  }
 }

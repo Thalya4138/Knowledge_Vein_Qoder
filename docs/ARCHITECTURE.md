@@ -13,7 +13,7 @@
 ├──────────────────────────────────────────────────────────┤
 │ domain：实体类型 · 校验 · 迁移 · id 规则（唯一真源）        │
 ├──────────────────────────────────────────────────────────┤
-│ content：Markdown 解析（标题锚点 / ::: 块 / details /    │
+│ content：Markdown 解析（标题锚点 / callout 块 / details /    │
 │          [[wiki link]]）· 确定性检索 · 导出导入            │
 ├──────────────────────────────────────────────────────────┤
 │ store：IndexedDB（Dexie 类）· 版本 · 撤销栈 · 自动保存      │
@@ -35,7 +35,7 @@
 | --- | --- | --- | --- |
 | 构建 | Vite | Qoder Sites 静态托管友好，零配置 | — |
 | UI | React + TS | 生态、图谱库支持、Qoder 熟悉度高 | Vue |
-| Markdown 渲染 | `unified`/`remark` + `remark-math` + KaTeX | 可控 AST，能解析自定义 `:::` 块与 wiki link | markdown-it |
+| Markdown 渲染 | `unified`/`remark` + `remark-math` + KaTeX | 可控 AST，能解析 Obsidian callout 与 wiki link | markdown-it |
 | 编辑 | CodeMirror 6（分栏预览） | 轻、可控、移动端尚可 | Tiptap（WYSIWYG 更友好但导出保真难） |
 | 图谱 | React Flow（编辑优先）或 Cytoscape（大图性能） | **本项目要"能编辑"，不是"能展示"** → 优先 React Flow | d3-force（完全自控） |
 | 存储 | IndexedDB + Dexie | 大文本、离线、事务 | localforage |
@@ -143,7 +143,7 @@ apps/web/src/
     connection/ 三模式 UI、候选确认
     atlas/      三视图、布局编辑、AI 侧栏
   domain/       实体类型、校验（zod）、迁移、id
-  content/      Markdown 解析、锚点、::: 块、wiki link
+  content/      Markdown 解析、锚点、callout、wiki link
   store/        Dexie schema、撤销栈
   ai/           provider adapter、prompt 调用、降级
   ui/           设计系统

@@ -1,18 +1,32 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://cognitive-atlas.local/schemas/course.schema.json",
+  "$id": "https://cognitive-atlas.local/schemas/kb.schema.json",
   "title": "KnowledgeBase",
-  "description": "一个课程/专题知识库。落盘即一个目录，可被 Obsidian / Git / 纯文本编辑器直接使用。",
+  "description": "一个知识库。粒度由用户决定：整个学科（discipline）/ 一门课（course）/ 一个专题（topic）。落盘即一个目录，可被 Obsidian / Git / 纯文本编辑器直接使用。",
   "type": "object",
-  "required": ["schemaVersion", "id", "title", "outline"],
+  "required": ["schemaVersion", "id", "title", "level", "outline"],
   "additionalProperties": true,
   "properties": {
     "schemaVersion": { "type": "string" },
     "id": { "type": "string", "pattern": "^kb\\.[a-z0-9-]+$" },
     "title": { "type": "string", "minLength": 1 },
     "subtitle": { "type": "string" },
+    "level": {
+      "type": "string",
+      "enum": ["discipline", "course", "topic"],
+      "description": "学科 / 课程 / 专题。决定 UI 的默认导航粒度，不影响数据结构。"
+    },
+    "parentKbId": {
+      "type": ["string", "null"],
+      "description": "若本知识库属于更大的知识库（如「线性代数」属于「数学」），填写父级 id。"
+    },
+    "childKbIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "学科级知识库可挂多个课程级知识库。"
+    },
     "locale": { "type": "string" },
-    "level": { "type": "string" },
+    "levelLabel": { "type": "string", "description": "面向读者的难度说明，如「本科一年级」。" },
     "license": { "type": "string" },
     "createdAt": { "type": "string" },
     "updatedAt": { "type": "string" },

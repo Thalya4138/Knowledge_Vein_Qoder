@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第1节 列空间中的最近点 · 教材式讲义样张</title>
+<link rel="stylesheet" href="katex.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="brand">Cognitive Atlas · 教材式讲义样张</span>
+  <label><input type="checkbox" id="annot"> 显示版式标注</label>
+</div>
+
+<!-- ============ 第一页 ============ -->
+<section class="sheet">
+  <div class="running-head">第2章 最近点与最小二乘</div>
+
+  <div class="title-block">
+    <div class="sec-no">第 1 节</div>
+    <h1>列空间中的最近点</h1>
+  </div>
+
+  <div class="box inquiry full" data-role="栏目 · 问题探讨（节首，引出冲突）">
+    <div class="box-head"><span class="icon">?</span>问题探讨</div>
+    <div class="inquiry-grid">
+      <div>
+        <p>在一次实验中测得三组数据：$t=1$ 时 $b=1$，$t=2$ 时 $b=2$，$t=3$ 时 $b=2$。如果 $b$ 与 $t$ 之间满足线性关系 $b=C+Dt$，这三个点就应当落在同一条直线上。</p>
+        <p class="discuss-head">讨论</p>
+        <p>1. 能否找到一条直线，同时经过这三个点？</p>
+        <p>2. 如果找不到，应当用什么标准，从无数条直线中挑出“最好”的一条？</p>
+      </div>
+      <figure class="inquiry-fig">
+        <svg viewBox="0 0 220 170" width="220" height="170">
+          <g stroke="#9bb" stroke-width="1"><line x1="30" y1="145" x2="210" y2="145"/><line x1="30" y1="145" x2="30" y2="10"/></g>
+          <g font-size="11" fill="#567" font-family="serif">
+            <text x="205" y="160">t</text><text x="16" y="16">b</text>
+            <text x="70" y="160">1</text><text x="120" y="160">2</text><text x="170" y="160">3</text>
+            <text x="18" y="109">1</text><text x="18" y="69">2</text>
+          </g>
+          <g stroke="#cfdde6" stroke-dasharray="3 3"><line x1="30" y1="105" x2="210" y2="105"/><line x1="30" y1="65" x2="210" y2="65"/></g>
+          <line x1="40" y1="137" x2="200" y2="47" stroke="#e3a33b" stroke-width="1.2" stroke-dasharray="5 3"/>
+          <line x1="40" y1="120" x2="200" y2="40" stroke="#c97fb0" stroke-width="1.2" stroke-dasharray="5 3"/>
+          <g fill="#1f7fbf"><circle cx="73" cy="105" r="4"/><circle cx="123" cy="65" r="4"/><circle cx="173" cy="65" r="4"/></g>
+        </svg>
+        <figcaption>三个数据点与两条候选直线</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="wave full"></div>
+
+  <div class="row">
+    <aside>
+      <div class="focus" data-role="旁栏 · 本节聚焦（读前给问题，不给结论）">
+        <div class="focus-head">本节聚焦</div>
+        <ul>
+          <li>方程组无解时，“近似解”应当怎样定义？</li>
+          <li>列空间中离 $\mathbf b$ 最近的点满足什么几何条件？法方程是怎样由这个条件得出的？</li>
+          <li>最近点与表示它的参数，在唯一性上有什么区别？</li>
+        </ul>
+      </div>
+    </aside>
+    <div class="main">
+      <p>上一章讨论线性方程组 $A\mathbf x=\mathbf b$ 时，总是先判断它有没有解。在实际测量中，常见的情形恰好相反：为了减小偶然误差，人们会测量远多于未知量个数的数据，方程的个数因此多于未知量的个数；而数据本身又带有误差，这样的方程组通常无解。</p>
+      <p>以问题探讨中的三组数据为例。把它们分别代入 $b=C+Dt$，得到</p>
+      $$C+D=1,\qquad C+2D=2,\qquad C+3D=2 .$$
+      <p>由前两个方程得 $C=0$，$D=1$，代入第三个方程却得到 $3=2$，矛盾。</p>
+      <p class="ask">方程组无解，是否意味着这些数据就没有用处了呢？</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <aside>
+      <div class="note" data-role="旁栏 · 相关信息（贴着它补充的那一段）">
+        <div class="note-head">相关信息</div>
+        <p>高斯（C. F. Gauss，1777—1855）在 1809 年的著作中称，自己早在 1795 年就已使用这一方法，并用它推算过谷神星的轨道。勒让德对此提出异议，两人关于发明优先权的争论持续多年。</p>
+      </div>
+    </aside>
+    <div class="main">
+      <p>1805 年，法国数学家勒让德（A.-M. Legendre，1752—1833）在研究彗星轨道的著作中提出了一种处理办法：既然没有一组参数能使每个方程都成立，就选择使各方程误差的平方和最小的那一组参数。这种方法叫作<b class="term">最小二乘法</b>（method of least squares）。</p>
+      <p>“误差的平方和最小”是一个代数上的要求。把这一要求换成几何语言，问题的结构会变得清楚得多。</p>
+    </div>
+  </div>
+
+  <div class="folio">2　第2章　最近点与最小二乘</div>
+</section>
+
+<!-- ============ 第二页 ============ -->
+<section class="sheet">
+  <div class="running-head">第2章 最近点与最小二乘</div>
+
+  <div class="row">
+    <aside>
+      <figure class="side-fig" data-role="旁栏 · 图（与正文对应段落同高）">
+        <svg viewBox="0 0 190 150" width="190" height="150">
+          <polygon points="10,120 120,140 180,95 70,75" fill="#dcecf7" stroke="#8fbbd8"/>
+          <text x="140" y="132" font-size="10" fill="#4a7fa5" font-family="serif">Col(A)</text>
+          <line x1="40" y1="112" x2="112" y2="18" stroke="#1f5f8f" stroke-width="1.6" marker-end="url(#arr)"/>
+          <line x1="40" y1="112" x2="112" y2="98" stroke="#d0702a" stroke-width="1.6" marker-end="url(#arr2)"/>
+          <line x1="112" y1="98" x2="112" y2="22" stroke="#7a3f9d" stroke-width="1.4" stroke-dasharray="4 3"/>
+          <polyline points="112,90 120,88.5 120,96.5" fill="none" stroke="#7a3f9d" stroke-width="1"/>
+          <g font-size="12" font-family="serif" font-style="italic" font-weight="bold">
+            <text x="96" y="16" fill="#1f5f8f">b</text>
+            <text x="74" y="98" fill="#d0702a">p</text>
+            <text x="118" y="60" fill="#7a3f9d">e</text>
+          </g>
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#1f5f8f"/></marker>
+            <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#d0702a"/></marker>
+          </defs>
+        </svg>
+        <figcaption><span class="fig-no">▲ 图 2-1</span>　$\mathbf b$ 在列空间上的最近点 $\mathbf p$，残差 $\mathbf e$ 垂直于列空间</figcaption>
+      </figure>
+    </aside>
+    <div class="main">
+      <h2>从代数问题到几何问题</h2>
+      <p>设 $A$ 的列向量为 $\mathbf a_1,\dots,\mathbf a_n$。乘积 $A\mathbf x$ 是这些列向量的线性组合，所有这样的线性组合构成的集合</p>
+      $$\operatorname{Col}(A)=\{A\mathbf x:\ \mathbf x\in\mathbb R^n\}$$
+      <p>叫作 $A$ 的<b class="term">列空间</b>（column space）。方程组 $A\mathbf x=\mathbf b$ 有解，当且仅当 $\mathbf b$ 属于 $\operatorname{Col}(A)$。</p>
+      <p>在三组数据的例子中，</p>
+      $$A=\begin{bmatrix}1&1\\1&2\\1&3\end{bmatrix},\qquad \mathbf b=\begin{bmatrix}1\\2\\2\end{bmatrix}.$$
+      <p>$A$ 的两列张成 $\mathbb R^3$ 中的一个平面，而 $\mathbf b$ 不在这个平面上（图 2-1）。</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <aside>
+      <a class="res" href="#" data-res="ocw-pdf" data-role="旁栏 · 资源链接（片段级：页码 + 原文）">
+        <span class="res-kind pdf">PDF</span>
+        <span class="res-title">MIT 18.06SC 讲义摘要</span>
+        <span class="res-loc">第 2 页 · “Why project?”</span>
+      </a>
+    </aside>
+    <div class="main">
+      <p>“方程组无解”于是有了几何含义：$\mathbf b$ 落在列空间之外。最小二乘法要做的，是先在列空间中找出离 $\mathbf b$ 最近的点 $\mathbf p$，再求出表示 $\mathbf p$ 的参数 $\hat{\mathbf x}$，使 $A\hat{\mathbf x}=\mathbf p$。</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <aside>
+      <div class="note" data-role="旁栏 · 相关信息">
+        <div class="note-head">相关信息</div>
+        <p>右边的论证只用到了内积的性质。在复数范围内，转置要换成共轭转置，相应的条件写作 $A^{*}(\mathbf b-A\hat{\mathbf x})=\mathbf 0$。</p>
+      </div>
+    </aside>
+    <div class="main">
+      <h2>最近点满足的条件</h2>
+      <p class="ask">列空间中有无数个点，离 $\mathbf b$ 最近的那一个有什么特征？</p>
+      <p>设 $\mathbf p=A\hat{\mathbf x}$ 是列空间中离 $\mathbf b$ 最近的点，记 $\mathbf e=\mathbf b-\mathbf p$，叫作<b class="term">残差</b>（residual）。在列空间中任取一个方向 $\mathbf v$，把 $\mathbf p$ 沿 $\mathbf v$ 移动到 $\mathbf p+t\mathbf v$，它与 $\mathbf b$ 的距离的平方为</p>
+      $$\|\mathbf b-(\mathbf p+t\mathbf v)\|^2=\|\mathbf e\|^2-2t\,\mathbf e^{\mathsf T}\mathbf v+t^2\|\mathbf v\|^2 .$$
+      <p>如果 $\mathbf e^{\mathsf T}\mathbf v\neq0$，取 $t$ 与 $\mathbf e^{\mathsf T}\mathbf v$ 同号且 $|t|$ 足够小，右边就小于 $\|\mathbf e\|^2$，即 $\mathbf p+t\mathbf v$ 比 $\mathbf p$ 更靠近 $\mathbf b$，这与 $\mathbf p$ 是最近点矛盾。因此，对列空间中的任何方向 $\mathbf v$，都有 $\mathbf e^{\mathsf T}\mathbf v=0$，即<b>残差与列空间正交</b>。</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <aside>
+      <a class="res" href="#" data-res="l15-normal" data-role="旁栏 · 资源链接（片段级：视频时间戳 + 字幕原文）">
+        <span class="res-kind video">视频</span>
+        <span class="res-title">Strang 第 15 讲 Projections onto Subspaces</span>
+        <span class="res-loc">25:12 – 27:59 · 由垂直推出法方程</span>
+      </a>
+    </aside>
+    <div class="main">
+      <h2>法方程</h2>
+      <p>列空间由 $A$ 的各列张成，所以“残差与列空间正交”等价于“残差与 $A$ 的每一列正交”：</p>
+      $$\mathbf a_i^{\mathsf T}(\mathbf b-A\hat{\mathbf x})=0,\qquad i=1,2,\dots,n .$$
+      <p>把这 $n$ 个等式合写成矩阵形式 $A^{\mathsf T}(\mathbf b-A\hat{\mathbf x})=\mathbf 0$，整理得</p>
+      $$A^{\mathsf T}A\,\hat{\mathbf x}=A^{\mathsf T}\mathbf b . \tag{2-1}$$
+      <p>方程组 (2-1) 叫作<b class="term">法方程</b>（normal equations）。“法”即垂直，这个名称记录了方程的来历：它是由残差垂直于列空间这一条件得出的。</p>
+    </div>
+  </div>
+
+  <div class="folio right">第1节　列空间中的最近点　3</div>
+</section>
+
+<!-- ============ 第三页 ============ -->
+<section class="sheet">
+  <div class="running-head">第2章 最近点与最小二乘</div>
+
+  <div class="row">
+    <aside>
+      <figure class="side-fig" data-role="旁栏 · 图">
+        <svg viewBox="0 0 190 150" width="190" height="150">
+          <g stroke="#9bb" stroke-width="1"><line x1="20" y1="135" x2="185" y2="135"/><line x1="20" y1="135" x2="20" y2="8"/></g>
+          <g font-size="10" fill="#567" font-family="serif"><text x="60" y="148">1</text><text x="105" y="148">2</text><text x="150" y="148">3</text><text x="180" y="148">t</text><text x="8" y="14">b</text></g>
+          <!-- b = 2/3 + t/2 ; y_px = 135 - 40*b ; x_px = 20 + 45*t -->
+          <line x1="20" y1="108.3" x2="182" y2="27.3" stroke="#d0702a" stroke-width="1.6"/>
+          <g stroke="#7a3f9d" stroke-width="1.3" stroke-dasharray="3 2">
+            <line x1="65" y1="95" x2="65" y2="88.3"/><line x1="110" y1="55" x2="110" y2="68.3"/><line x1="155" y1="55" x2="155" y2="48.3"/>
+          </g>
+          <g fill="#1f7fbf"><circle cx="65" cy="95" r="3.5"/><circle cx="110" cy="55" r="3.5"/><circle cx="155" cy="55" r="3.5"/></g>
+        </svg>
+        <figcaption><span class="fig-no">▲ 图 2-2</span>　最佳直线 $b=\tfrac23+\tfrac12t$，虚线为各点的残差</figcaption>
+      </figure>
+    </aside>
+    <div class="main">
+      <p>回到问题探讨中的三组数据。计算得</p>
+      $$A^{\mathsf T}A=\begin{bmatrix}3&6\\6&14\end{bmatrix},\qquad A^{\mathsf T}\mathbf b=\begin{bmatrix}5\\11\end{bmatrix},$$
+      <p>解法方程得 $C=\tfrac23$，$D=\tfrac12$，最佳直线为 $b=\tfrac23+\tfrac12t$（图 2-2）。此时</p>
+      $$\mathbf p=\begin{bmatrix}7/6\\5/3\\13/6\end{bmatrix},\qquad \mathbf e=\mathbf b-\mathbf p=\begin{bmatrix}-1/6\\1/3\\-1/6\end{bmatrix}.$$
+      <p>可以验证，$\mathbf e$ 与 $A$ 的两列 $(1,1,1)^{\mathsf T}$、$(1,2,3)^{\mathsf T}$ 的内积都等于 0。</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <aside>
+      <a class="res" href="#" data-res="l15-indep" data-role="旁栏 · 资源链接（片段级）">
+        <span class="res-kind video">视频</span>
+        <span class="res-title">Strang 第 15 讲</span>
+        <span class="res-loc">20:12 · “They better be independent”</span>
+      </a>
+    </aside>
+    <div class="main">
+      <h2>点唯一，参数未必唯一</h2>
+      <p class="ask">最近点 $\mathbf p$ 只有一个，表示它的参数 $\hat{\mathbf x}$ 是否也只有一组呢？</p>
+      <p>最近点由 $\mathbf b$ 和列空间共同决定，与选用哪一组向量来张成列空间无关。可以证明，它总是存在并且唯一。</p>
+      <p>参数 $\hat{\mathbf x}$ 则不同。如果 $A$ 的列向量线性相关，就存在非零向量 $\mathbf d$ 使 $A\mathbf d=\mathbf 0$，此时 $\hat{\mathbf x}$ 与 $\hat{\mathbf x}+\mathbf d$ 给出同一个点 $\mathbf p$，参数便有无穷多组。只有当 $A$ 的列向量线性无关时，$A^{\mathsf T}A$ 才可逆，法方程有唯一解</p>
+      $$\hat{\mathbf x}=(A^{\mathsf T}A)^{-1}A^{\mathsf T}\mathbf b .$$
+    </div>
+  </div>
+
+  <div class="row">
+    <aside>
+      <a class="res" href="#" data-res="wiki-proj" data-role="旁栏 · 资源链接（片段级：网页文字片段高亮）">
+        <span class="res-kind web">网页</span>
+        <span class="res-title">Wikipedia: Linear least squares</span>
+        <span class="res-loc">定位到“orthogonal projection onto the column space”一句</span>
+      </a>
+    </aside>
+    <div class="main">
+      <p>相应地，$\mathbf p=A(A^{\mathsf T}A)^{-1}A^{\mathsf T}\mathbf b$。矩阵 $P=A(A^{\mathsf T}A)^{-1}A^{\mathsf T}$ 把任意向量变为它在列空间上的最近点，叫作向列空间的<b class="term">投影矩阵</b>（projection matrix）。</p>
+      <p>表 2-1 归纳了方程组 $A\mathbf x=\mathbf b$ 与最小二乘解在各种情形下的关系。</p>
+    </div>
+  </div>
+
+  <div class="table-wrap full" data-role="表（编号 + 题注，跨双栏）">
+    <div class="table-cap"><span class="fig-no">▼ 表 2-1</span>　方程组的解与最小二乘解</div>
+    <table>
+      <thead>
+        <tr><th rowspan="2">$A$ 的列向量</th><th colspan="2">$\mathbf b$ 与列空间的关系</th></tr>
+        <tr><th>$\mathbf b\in\operatorname{Col}(A)$</th><th>$\mathbf b\notin\operatorname{Col}(A)$</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>线性无关</td><td>$A\mathbf x=\mathbf b$ 有唯一解，最小二乘解就是这个解</td><td>$A\mathbf x=\mathbf b$ 无解，最小二乘解唯一</td></tr>
+        <tr><td>线性相关</td><td>$A\mathbf x=\mathbf b$ 有无穷多解，最小二乘解就是这些解</td><td>$A\mathbf x=\mathbf b$ 无解，最小二乘解有无穷多组</td></tr>
+        <tr class="sum"><td>最近点 $\mathbf p$</td><td colspan="2">在四种情形下都存在并且唯一</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="folio">4　第2章　最近点与最小二乘</div>
+</section>
+
+<!-- ============ 第四页 ============ -->
+<section class="sheet">
+  <div class="running-head">第2章 最近点与最小二乘</div>
+
+  <div class="box training full" data-role="栏目 · 思维训练（辨析一个常见推理）">
+    <div class="box-head"><span class="icon">✎</span>思维训练</div>
+    <div class="training-title">辨析一种推导</div>
+    <div class="two-col">
+      <p>有一种流传很广的记法：对方程 $A\mathbf x=\mathbf b$ 两边同时左乘 $A^{\mathsf T}$，就得到 $A^{\mathsf T}A\mathbf x=A^{\mathsf T}\mathbf b$。这个结果与法方程 (2-1) 完全相同。</p>
+      <p>1. 当 $A\mathbf x=\mathbf b$ 无解时，这种“推导”的出发点有什么问题？</p>
+      <p>2. 方程 $C\mathbf x=\mathbf d$ 与 $MC\mathbf x=M\mathbf d$ 的解集一定相同吗？请举例说明。</p>
+      <p>3. 这种推导不成立，得到的方程却是对的。请从函数 $f(\mathbf x)=\|\mathbf b-A\mathbf x\|^2$ 取最小值的条件出发，解释其中的原因；再想一想，如果把平方和换成绝对值之和，这种巧合是否还会出现。</p>
+    </div>
+  </div>
+
+  <div class="practice-head full"><span>练习与应用</span></div>
+
+  <div class="practice full" data-role="栏目 · 练习与应用（概念检测 / 拓展应用）">
+    <div>
+      <div class="pr-sub">一、概念检测</div>
+      <p>1. 判断下列表述是否正确。</p>
+      <p class="judge"><span>(1) 若 $A\mathbf x=\mathbf b$ 无解，则 $\mathbf b$ 不属于 $A$ 的列空间。</span><span class="paren">(　　)</span></p>
+      <p class="judge"><span>(2) 最小二乘解 $\hat{\mathbf x}$ 总是存在并且唯一。</span><span class="paren">(　　)</span></p>
+      <p class="judge"><span>(3) 若 $A$ 的列向量线性无关，则 $(A^{\mathsf T}A)^{-1}=A^{-1}(A^{\mathsf T})^{-1}$。<a class="res inline" href="#" data-res="l15-split"><span class="res-kind video">视频</span> 37:28</a></span><span class="paren">(　　)</span></p>
+      <p class="judge q"><span>2. 设 $\mathbf e$ 为最小二乘问题的残差，下列说法正确的是</span><span class="paren">(　　)</span></p>
+      <div class="choices"><span>A. $\mathbf e=\mathbf 0$</span><span>B. $\mathbf e$ 与 $A$ 的每一列正交</span><span>C. $\mathbf e$ 与 $\mathbf b$ 正交</span><span>D. $\mathbf e$ 属于 $A$ 的列空间</span></div>
+      <p>3. 用最小二乘法求与三点 $(0,1)$、$(1,2)$、$(2,2)$ 最接近的直线 $b=C+Dt$，并验证残差与 $A$ 的两列都正交。</p>
+    </div>
+    <div>
+      <div class="pr-sub">二、拓展应用</div>
+      <p>1. 设 $A=\begin{bmatrix}1&2\\2&4\\3&6\end{bmatrix}$，$\mathbf b=\begin{bmatrix}1\\2\\4\end{bmatrix}$。</p>
+      <p class="indent">(1) $\mathbf b$ 是否属于 $A$ 的列空间？</p>
+      <p class="indent">(2) 列空间中离 $\mathbf b$ 最近的点 $\mathbf p$ 是什么？</p>
+      <p class="indent">(3) 最小二乘解有多少组？写出它们的一般形式。</p>
+      <p>2. 在实验中，人们常在同一时刻对同一个量重复测量多次。用直线 $b=C+Dt$ 拟合这样的数据时，矩阵 $A$ 会出现相同的行。这会不会使 $A$ 的列向量线性相关？重复测量对最小二乘解的唯一性有没有影响？</p>
+      <p>3. 勒让德最初提出的标准是“误差的平方和最小”。请从本节的几何观点出发，说明为什么选用平方和，而不是误差的绝对值之和。</p>
+    </div>
+  </div>
+
+  <div class="folio right">第1节　列空间中的最近点　5</div>
+</section>
+
+<!-- ============ 资源抽屉 ============ -->
+<div id="drawer" aria-hidden="true">
+  <button id="drawer-close" title="关闭">×</button>
+  <div id="drawer-body"></div>
+</div>
+<div id="scrim"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

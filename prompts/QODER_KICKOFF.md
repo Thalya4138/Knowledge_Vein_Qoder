@@ -9,17 +9,22 @@
 
 ## 先读（按此顺序，不要跳）
 
+0. `docs/VISION.md` — 用户愿景原文（意图的原件；规格是它的工程翻译）
 1. `README.md` — 产品在做什么、仓库为什么这样组织
 2. `AGENTS.md` — 七条不可协商 + 每轮开工协议
 3. `docs/PRODUCT_SPEC.md` — 产品唯一真源
 4. `docs/GLOSSARY.md` — 命名唯一真源（**写代码时严格用它**）
 5. `docs/DOMAIN_MODEL.md` + `content/demo/linear-algebra/` 下的真实 JSON — 数据结构
 6. `docs/ARCHITECTURE.md` + `docs/UX_AND_FLOWS.md` — 技术边界与界面
-7. `prompts/NOTE_GENERATION.md` — 讲义质量判据（你在实现阅读器时要理解它）
+7. `prompts/NOTE_GENERATION.md` — 讲义质量判据，**尤其 §3.5 教材版式**（阅读器要渲染的语法）
+   与 §6.5 教材腔；证据在 `docs/TEXTBOOK_STYLE_ANALYSIS.md`
+8. `preview/README.md` + 浏览器打开 `preview/textbook-demo/index.html` — **阅读器的视觉验收样张**
+9. `docs/REQUIREMENTS_TRACE.md` — 全部需求与分期；你这一轮只碰其中一小块
 
 ## 现状（必须知道，避免误判）
 
-- **仓库里没有任何应用代码。** 只有契约文档、JSON Schema、样例数据和校验脚本。
+- **仓库里没有任何应用代码。** 只有契约文档、JSON Schema、样例数据、校验脚本，
+  以及 `preview/` 下的静态视觉样张（手写 HTML，**不要在它上面扩展**，T1 会在 `apps/web` 里重做）。
 - `README.md` 里的 `npm install && npm run dev` 是**目标状态**，现在还跑不起来。
 - 样例数据已通过 `node scripts/verify-content.mjs`。
 - 不要宣称任何功能"已实现"，直到你能给出测试或截图。

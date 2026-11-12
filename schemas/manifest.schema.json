@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cognitive-atlas.local/schemas/manifest.schema.json",
+  "title": "ResourceManifest",
+  "description": "资源清单 + 来源片段 + 覆盖状态。它是「这段是哪来的」的唯一对账入口。",
+  "type": "object",
+  "required": ["schemaVersion", "kbId", "resources", "spans"],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "kbId": { "type": "string" },
+    "note": { "type": "string" },
+    "resources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/resource" }
+    },
+    "spans": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/span" }
+    },
+    "coverage": {
+      "type": "object",
+      "description": "资源—讲义映射。unsourced: true 的章节是幻觉高风险区，UI 必须标出。",
+      "additionalProperties": true,
+      "properties": {
+        "byChapter": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["chapterId", "resourceIds", "unsourced"],
+            "properties": {
+              "chapterId": { "type": "string" },
+              "resourceIds": { "type": "array", "items": { "type": "string" } },
+              "unsourced": { "type": "boolean" },
+              "warning": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "resource": {
+      "type": "object",
+      "required": ["id", "origin", "kind", "title", "license", "status"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "pattern": "^res\\." },
+        "origin": {
+          "type": "string",
+          "enum": ["user-import", "discovered", "generated"],
+          "description": "三态必须视觉可区分。discovered 需用户勾选才计入引用。"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["note", "pdf", "slide", "transcript", "web", "video-course", "paper", "photo-of-notes", "code"]
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "author": { "type": ["string", "null"] },
+        "license": { "type": "string" },
+        "uri": { "type": ["string", "null"] },
+        "hash": { "type": ["string", "null"] },
+        "retrievedAt": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["used", "candidate", "unused", "rejected"],
+          "description": "已引用 / 待用户勾选 / 导入了但没用上 / 已拒绝。unused 是最有价值的信息。"
+        },
+        "citedByChapters": { "type": "array", "items": { "type": "string" } },
+        "note": { "type": "string" }
+      }
+    },
+    "span": {
+      "type": "object",
+      "required": ["id", "resourceId", "locator"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "pattern": "^s\\." },
+        "resourceId": { "type": "string" },
+        "locator": {
+          "type": "object",
+          "required": ["type", "value"],
+          "properties": {
+            "type": { "type": "string", "enum": ["page", "section", "time", "range", "text-fragment", "unavailable"] },
+            "value": { "type": "string" },
+            "end": { "type": "string", "description": "time/range 的终点，如 27:59" }
+          }
+        },
+        "quote": { "type": "string" },
+        "why": { "type": "string", "description": "这段为什么链到正文这里（旁栏卡片与抽屉里显示）；渲染进旁栏的 span 必填" },
+        "hash": { "type": "string" }
+      }
+    }
+  }
+}

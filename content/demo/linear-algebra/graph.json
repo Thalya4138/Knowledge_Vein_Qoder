@@ -2,16 +2,93 @@
   "schemaVersion": "1.0",
   "kbId": "kb.linear-algebra",
   "note": "本文件是「一条边必须携带理由」的示范。任何 explanation 为空或 epistemic 缺失的边，都视为不合格数据。",
-
   "nodes": [
+    {
+      "id": "n.solvability",
+      "kind": "theorem",
+      "title": "相容性判据",
+      "aliases": [
+        "有解判据",
+        "增广矩阵"
+      ],
+      "importance": "core",
+      "noteAnchor": "notes/01-线性方程组.md#1-有没有解",
+      "sourceSpanIds": [],
+      "origin": "user",
+      "schemaVersion": "1.0"
+    },
+    {
+      "id": "n.free-variable",
+      "kind": "concept",
+      "title": "自由变量",
+      "aliases": [
+        "自由参数",
+        "degrees of freedom"
+      ],
+      "importance": "core",
+      "noteAnchor": "notes/01-线性方程组.md#2-有几个解",
+      "sourceSpanIds": [],
+      "origin": "user",
+      "schemaVersion": "1.0"
+    },
+    {
+      "id": "n.nullspace",
+      "kind": "concept",
+      "title": "零空间 N(A)",
+      "aliases": [
+        "核",
+        "kernel",
+        "null space"
+      ],
+      "importance": "core",
+      "noteAnchor": "notes/01-线性方程组.md#3-解长什么样",
+      "sourceSpanIds": [],
+      "origin": "user",
+      "schemaVersion": "1.0"
+    },
+    {
+      "id": "n.affine-set",
+      "kind": "concept",
+      "title": "仿射集",
+      "aliases": [
+        " affine set",
+        "不过原点的平移子空间"
+      ],
+      "importance": "supporting",
+      "noteAnchor": "notes/01-线性方程组.md#3-解长什么样",
+      "sourceSpanIds": [],
+      "origin": "user",
+      "schemaVersion": "1.0"
+    },
+    {
+      "id": "n.linear-independence",
+      "kind": "concept",
+      "title": "线性相关与无关",
+      "aliases": [
+        "线性无关",
+        "linear independence"
+      ],
+      "importance": "core",
+      "noteAnchor": "notes/01-线性方程组.md#4-线性相关与无关",
+      "sourceSpanIds": [],
+      "origin": "user",
+      "schemaVersion": "1.0"
+    },
     {
       "id": "n.colspace",
       "kind": "concept",
       "title": "列空间 Col(A)",
-      "aliases": ["列空间", "A 的像", "column space", "range(A)"],
+      "aliases": [
+        "列空间",
+        "A 的像",
+        "column space",
+        "range(A)"
+      ],
       "importance": "core",
-      "noteAnchor": "notes/01-列空间与最近点.md#列空间",
-      "sourceSpanIds": ["s.notes-01-orthogonality"],
+      "noteAnchor": "notes/01-线性方程组.md#1-有没有解",
+      "sourceSpanIds": [
+        "s.notes-01-orthogonality"
+      ],
       "origin": "user",
       "schemaVersion": "1.0"
     },
@@ -19,10 +96,15 @@
       "id": "n.least-squares",
       "kind": "method",
       "title": "最小二乘",
-      "aliases": ["least squares", "最小二乘近似"],
+      "aliases": [
+        "least squares",
+        "最小二乘近似"
+      ],
       "importance": "core",
-      "noteAnchor": "notes/01-列空间与最近点.md#把无解改写为最近",
-      "sourceSpanIds": ["s.notes-01-orthogonality"],
+      "noteAnchor": "notes/02-最近点.md#2-最近点的判据残差必须正交",
+      "sourceSpanIds": [
+        "s.notes-01-orthogonality"
+      ],
       "origin": "user",
       "schemaVersion": "1.0"
     },
@@ -30,10 +112,15 @@
       "id": "n.orthogonality",
       "kind": "theorem",
       "title": "正交条件：残差 ⊥ 列空间",
-      "aliases": ["Aᵀr=0", "normal equations 的来源"],
+      "aliases": [
+        "Aᵀr=0",
+        "normal equations 的来源"
+      ],
       "importance": "core",
-      "noteAnchor": "notes/01-列空间与最近点.md#为什么残差必须正交",
-      "sourceSpanIds": ["s.notes-01-orthogonality"],
+      "noteAnchor": "notes/02-最近点.md#2-最近点的判据残差必须正交",
+      "sourceSpanIds": [
+        "s.notes-01-orthogonality"
+      ],
       "origin": "user",
       "schemaVersion": "1.0"
     },
@@ -41,10 +128,15 @@
       "id": "n.normal-eq",
       "kind": "theorem",
       "title": "法方程 AᵀAs = Aᵀb",
-      "aliases": ["法方程", "normal equations"],
+      "aliases": [
+        "法方程",
+        "normal equations"
+      ],
       "importance": "core",
-      "noteAnchor": "notes/02-法方程.md#从正交条件到法方程",
-      "sourceSpanIds": ["s.notes-02-rank"],
+      "noteAnchor": "notes/03-法方程.md#1-从正交条件到法方程",
+      "sourceSpanIds": [
+        "s.notes-02-rank"
+      ],
       "origin": "user",
       "schemaVersion": "1.0"
     },
@@ -52,10 +144,15 @@
       "id": "n.full-column-rank",
       "kind": "concept",
       "title": "满列秩",
-      "aliases": ["列满秩", "full column rank"],
+      "aliases": [
+        "列满秩",
+        "full column rank"
+      ],
       "importance": "supporting",
-      "noteAnchor": "notes/02-法方程.md#点唯一不等于参数唯一",
-      "sourceSpanIds": ["s.notes-02-rank"],
+      "noteAnchor": "notes/03-法方程.md#3-点唯一--参数唯一",
+      "sourceSpanIds": [
+        "s.notes-02-rank"
+      ],
       "origin": "user",
       "schemaVersion": "1.0"
     },
@@ -64,8 +161,10 @@
       "kind": "theorem",
       "title": "最小二乘参数解唯一",
       "importance": "supporting",
-      "noteAnchor": "notes/02-法方程.md#点唯一不等于参数唯一",
-      "sourceSpanIds": ["s.notes-02-rank"],
+      "noteAnchor": "notes/03-法方程.md#3-点唯一--参数唯一",
+      "sourceSpanIds": [
+        "s.notes-02-rank"
+      ],
       "origin": "user",
       "schemaVersion": "1.0"
     },
@@ -74,7 +173,7 @@
       "kind": "example",
       "title": "点到平面的最短距离",
       "importance": "supporting",
-      "noteAnchor": "notes/03-三种最近.md#问题二点到平面",
+      "noteAnchor": "notes/04-三种最近.md#3-点到平面不需要参数所以没有这个问题",
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -84,7 +183,7 @@
       "kind": "example",
       "title": "异面直线的最短距离",
       "importance": "supporting",
-      "noteAnchor": "notes/03-三种最近.md#问题三异面直线",
+      "noteAnchor": "notes/04-三种最近.md#4-异面直线方阵恰好唯一",
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
@@ -94,13 +193,26 @@
       "kind": "concept",
       "title": "凸二次优化的一阶最优性条件",
       "importance": "extension",
-      "noteAnchor": "notes/03-三种最近.md#跨学科视角",
+      "noteAnchor": "notes/04-三种最近.md#6-跨学科这一条是真实的同一性",
+      "sourceSpanIds": [],
+      "origin": "user",
+      "schemaVersion": "1.0"
+    },
+    {
+      "id": "n.orth-proj",
+      "kind": "concept",
+      "title": "正交投影",
+      "aliases": [
+        "orthogonal projection",
+        "投影"
+      ],
+      "importance": "core",
+      "noteAnchor": "notes/02-最近点.md#2-最近点的判据残差必须正交",
       "sourceSpanIds": [],
       "origin": "user",
       "schemaVersion": "1.0"
     }
   ],
-
   "relations": [
     {
       "id": "r.prereq-colspace",
@@ -109,10 +221,14 @@
       "type": "prerequisite",
       "direction": "forward",
       "explanation": "「最小二乘」这个提法本身依赖列空间：它要找的是列空间中离 b 最近的那个点。没有列空间，问题无从表述——你会退回「方程组无解」这个死局。",
-      "assumptions": ["A 为实矩阵，b 与 A 的列同维"],
+      "assumptions": [
+        "A 为实矩阵，b 与 A 的列同维"
+      ],
       "epistemic": "source-backed",
       "status": "accepted",
-      "evidenceIds": ["s.notes-01-orthogonality"]
+      "evidenceIds": [
+        "s.notes-01-orthogonality"
+      ]
     },
     {
       "id": "r.defined-by-orth",
@@ -121,10 +237,15 @@
       "type": "defined-by",
       "direction": "reverse",
       "explanation": "最小二乘解的性质由正交条件刻画：最优点的残差必须与列空间的每个方向正交。这是「最近」的直接推论，不是额外假设。",
-      "assumptions": ["欧氏内积", "最小化 ‖b−As‖²"],
+      "assumptions": [
+        "欧氏内积",
+        "最小化 ‖b−As‖²"
+      ],
       "epistemic": "logically-derived",
       "status": "accepted",
-      "evidenceIds": ["s.notes-01-orthogonality"]
+      "evidenceIds": [
+        "s.notes-01-orthogonality"
+      ]
     },
     {
       "id": "r.derive-normaleq",
@@ -133,10 +254,15 @@
       "type": "derives-from",
       "direction": "forward",
       "explanation": "把 r=b−As 代入 Aᵀr=0，得 Aᵀ(b−As)=0，整理即 AᵀAs=Aᵀb。注意方向：法方程不是从 Ax=b 变形而来（它无解），而是从最优性条件推出。",
-      "assumptions": ["实数域上的标准内积", "残差定义 r=b−As"],
+      "assumptions": [
+        "实数域上的标准内积",
+        "残差定义 r=b−As"
+      ],
       "epistemic": "logically-derived",
       "status": "accepted",
-      "evidenceIds": ["s.notes-02-rank"]
+      "evidenceIds": [
+        "s.notes-02-rank"
+      ]
     },
     {
       "id": "r.rank-iff-invertible",
@@ -145,10 +271,15 @@
       "type": "equivalent-under",
       "direction": "both",
       "explanation": "在实数域上，AᵀA 可逆 ⇔ A 的列向量线性无关 ⇔ A 满列秩。因为 AᵀAx=0 ⇒ xᵀAᵀAx=0 ⇒ ‖Ax‖²=0 ⇒ Ax=0，满列秩时只有 x=0。",
-      "assumptions": ["A 为实矩阵", "讨论的是 AᵀA 的可逆性，而非 A 本身"],
+      "assumptions": [
+        "A 为实矩阵",
+        "讨论的是 AᵀA 的可逆性，而非 A 本身"
+      ],
       "epistemic": "logically-derived",
       "status": "accepted",
-      "evidenceIds": ["s.notes-02-rank"]
+      "evidenceIds": [
+        "s.notes-02-rank"
+      ]
     },
     {
       "id": "r.contrast-pointwise",
@@ -157,10 +288,14 @@
       "type": "contrasts-with",
       "direction": "both",
       "explanation": "必须区分两件不同的事：最近点 p 在任何情况下都唯一（列空间是闭凸集），但表达它的参数 s 只在满列秩时唯一。把「p 唯一」误当成「解唯一」是本主题最常见的错误。",
-      "assumptions": ["有限维实内积空间"],
+      "assumptions": [
+        "有限维实内积空间"
+      ],
       "epistemic": "logically-derived",
       "status": "accepted",
-      "evidenceIds": ["s.notes-02-rank"]
+      "evidenceIds": [
+        "s.notes-02-rank"
+      ]
     },
     {
       "id": "r.shared-pointplane",
@@ -169,7 +304,10 @@
       "type": "shared-mechanism",
       "direction": "both",
       "explanation": "两者都是「在某个仿射/线性集合中，找距给定点最近的点」，共同的机制是：最优点处位移向量与可行方向集合正交。点到平面时可行方向是平面内的二维方向；最小二乘时可行方向是 Col(A)。",
-      "assumptions": ["欧氏距离", "可行集为仿射子空间"],
+      "assumptions": [
+        "欧氏距离",
+        "可行集为仿射子空间"
+      ],
       "epistemic": "pedagogical-inference",
       "status": "proposed",
       "evidenceIds": [],
@@ -182,7 +320,10 @@
       "type": "shared-mechanism",
       "direction": "both",
       "explanation": "异面直线最短距离同样是「最小化两点间欧氏距离，约束是两点各自落在一条直线上」。两条直线的方向向量张成一个二维子空间，公垂线方向与该子空间正交——和残差正交于列空间是同一个几何事实。",
-      "assumptions": ["两直线不平行（否则退化为平行线距离）", "参数化为 p₁+t u, p₂+s v"],
+      "assumptions": [
+        "两直线不平行（否则退化为平行线距离）",
+        "参数化为 p₁+t u, p₂+s v"
+      ],
       "epistemic": "pedagogical-inference",
       "status": "proposed",
       "evidenceIds": [],
@@ -195,7 +336,10 @@
       "type": "shared-mechanism",
       "direction": "both",
       "explanation": "f(s)=‖b−As‖² 是凸二次函数，其一阶最优性条件 ∇f=0 给出的正是 AᵀAs=Aᵀb。这是**真实的数学同一性**，不是类比：法方程就是该优化问题的一阶条件。反过来，这个视角解释了为什么最小二乘不需要迭代——二次函数的驻点即全局最小点。",
-      "assumptions": ["欧氏范数", "f 为凸函数（二次型半正定）"],
+      "assumptions": [
+        "欧氏范数",
+        "f 为凸函数（二次型半正定）"
+      ],
       "epistemic": "logically-derived",
       "status": "proposed",
       "evidenceIds": []
@@ -207,31 +351,98 @@
       "type": "analogy-to",
       "direction": "both",
       "explanation": "可以把正交投影想成正午阳光下的影子：影子是所有「投影方式」里最短的那个落点，最短正是因为光线垂直于地面。这个类比帮助建立直觉。",
-      "assumptions": ["仅作直观辅助"],
+      "assumptions": [
+        "仅作直观辅助"
+      ],
       "epistemic": "analogy",
       "status": "proposed",
       "evidenceIds": [],
       "boundaryOrCounterexample": "类比失效处：影子是**沿光线方向**的投影，而最小二乘是**沿列空间法向**的投影；若光线不垂直，影子就不再是最短距离。类比不构成证明。"
+    },
+    {
+      "id": "r.solvability-free",
+      "from": "n.solvability",
+      "to": "n.free-variable",
+      "type": "derives-from",
+      "direction": "forward",
+      "explanation": "相容性判据只回答「有没有解」。一旦有解，解的个数完全由自由变量的个数决定：自由变量有 k 个，解集就是 k 维仿射集。所以「有几个解」这个问题不引入新条件，它只是把「有没有解」的答案读细一层。",
+      "assumptions": [
+        "A 为 m×n 实矩阵",
+        "已判定方程组相容"
+      ],
+      "epistemic": "logically-derived",
+      "status": "accepted",
+      "evidenceIds": []
+    },
+    {
+      "id": "r.null-affine",
+      "from": "n.nullspace",
+      "to": "n.affine-set",
+      "type": "shared-mechanism",
+      "direction": "both",
+      "explanation": "解集 {x : Ax=b} 等于 p + N(A)，其中 p 是任一特解。这正是仿射集的定义形式：一个点加上一个线性子空间。区别在于 N(A) 过原点、是子空间，而解集一般不过原点，因此解集本身不是子空间——两个解相加不再是解。",
+      "assumptions": [
+        "方程组相容（否则解集为空，不构成仿射集）"
+      ],
+      "epistemic": "logically-derived",
+      "status": "accepted",
+      "evidenceIds": []
+    },
+    {
+      "id": "r.indep-null",
+      "from": "n.linear-independence",
+      "to": "n.nullspace",
+      "type": "equivalent-under",
+      "direction": "both",
+      "explanation": "A 的列线性无关 ⇔ Ax=0 只有零解 ⇔ N(A)={0}。这是同一个条件的三种写法：列向量的独立性、方程的解空间、核的平凡性。它们等价是因为「列的组合等于零」这句话本身就同时是这三件事。",
+      "assumptions": [
+        "A 为实矩阵"
+      ],
+      "epistemic": "logically-derived",
+      "status": "accepted",
+      "evidenceIds": []
+    },
+    {
+      "id": "r.proj-medium",
+      "from": "n.affine-set",
+      "to": "n.orth-proj",
+      "type": "prerequisite",
+      "direction": "forward",
+      "explanation": "要理解「最近点」，先要理解投影落在什么对象上：不是子空间，而是一般情形下的仿射集。第一章讲清楚了解集是仿射集，第二章才能问「在这类集合里最近的点是谁」。",
+      "assumptions": [
+        "读者已接受「解集是仿射集」这一结论",
+        "讨论的是欧氏空间中的最近点，换了范数后投影的几何直观要重新建立"
+      ],
+      "epistemic": "pedagogical-inference",
+      "status": "accepted",
+      "evidenceIds": []
     }
   ],
-
   "relationGroups": [
     {
       "id": "g.unique",
-      "premiseIds": ["n.orthogonality", "n.full-column-rank"],
-      "conclusionIds": ["n.unique-solution"],
+      "premiseIds": [
+        "n.orthogonality",
+        "n.full-column-rank"
+      ],
+      "conclusionIds": [
+        "n.unique-solution"
+      ],
       "logicType": "conjunction→conclusion",
       "explanation": "两条前提**同时**成立才有结论：正交条件保证任何解都是最近点，满列秩保证这样的参数只有一个。缺任一条，结论不成立。因此不能用两条独立二元边表示。",
       "epistemic": "logically-derived",
       "status": "accepted"
     }
   ],
-
   "memoryCues": [
     {
       "id": "mc.projection-first",
       "text": "先想「影子落在哪」（找投影），再看「剩下的那段是什么」（残差），最后才写方程。顺序反了就会去解那个本来就无解的 Ax=b。",
-      "linkedNodeIds": ["n.least-squares", "n.orthogonality", "n.normal-eq"],
+      "linkedNodeIds": [
+        "n.least-squares",
+        "n.orthogonality",
+        "n.normal-eq"
+      ],
       "layoutId": "layout.personal",
       "origin": "user"
     }
