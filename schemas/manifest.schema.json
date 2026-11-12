@@ -54,7 +54,8 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["note", "pdf", "slide", "transcript", "web", "video-course", "paper", "photo-of-notes", "code"]
+          "enum": ["note", "pdf", "slide", "transcript", "web", "video", "video-course", "paper", "photo-of-notes", "code"],
+          "description": "video = 单条视频（一讲）；video-course = 整套课程。两者定位方式不同（时间戳 vs 章节），不许合并。"
         },
         "title": { "type": "string", "minLength": 1 },
         "author": { "type": ["string", "null"] },

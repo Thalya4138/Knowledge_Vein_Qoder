@@ -93,8 +93,16 @@
       "allOf": [
         {
           "description": "类比与猜想必须写明失效处或反例，否则无法与事实区分。",
-          "if": { "properties": { "epistemic": { "enum": ["analogy", "hypothesis"] } }, "required": ["epistemic"] },
-          "then": { "required": ["boundaryOrCounterexample"] }
+          "if": {
+            "type": "object",
+            "properties": { "epistemic": { "enum": ["analogy", "hypothesis"] } },
+            "required": ["epistemic"]
+          },
+          "then": {
+            "type": "object",
+            "properties": { "boundaryOrCounterexample": { "type": "string", "minLength": 1 } },
+            "required": ["boundaryOrCounterexample"]
+          }
         }
       ]
     },

@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cognitive-atlas.local/schemas/layout.schema.json",
+  "title": "ViewLayout",
+  "description": "三视图各自的布局。布局只描述位置、分组、线型，不修改节点与关系本身。一份文件 = 一个视图；目录里出现第四份即视为缺陷（学习证据属于 evidence/）。个人视图的位置与手绘连线代表用户意图：AI 不得自动重排，也不得把 personalEdges 带进另外两个视图（ADR-0006）。additionalProperties 故意为 true：导入时未知字段必须保留而非丢弃（DOMAIN_MODEL §6 前向兼容），所以这里不做穷尽字段检查，只做会咬人的检查。",
+  "type": "object",
+  "required": ["schemaVersion", "id", "kbId", "viewType", "positions"],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "type": "string", "pattern": "^\\d+\\.\\d+$" },
+    "id": { "type": "string", "pattern": "^layout\\.(structure|logic|personal)$" },
+    "kbId": { "type": "string", "pattern": "^kb\\.[a-z0-9-]+$" },
+    "viewType": { "type": "string", "enum": ["structure", "logic", "personal"] },
+    "note": { "type": "string" },
+    "relationFilter": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "contains", "prerequisite", "defined-by", "derives-from",
+          "equivalent-under", "generalizes", "applies-to", "contrasts-with",
+          "shared-mechanism", "analogy-to", "counterexample-to"
+        ]
+      },
+      "description": "本视图渲染哪些关系类型。空数组 = 只显示 personalEdges 与记忆线索。"
+    },
+    "positions": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^n\\.[a-z0-9-]+$" },
+      "additionalProperties": { "$ref": "#/$defs/position" }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/layer" },
+      "description": "层级由 kb.json 的 outline 决定，不由布局算法决定。"
+    },
+    "groups": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/group" }
+    },
+    "hyperEdges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/hyperEdge" },
+      "description": "多前提推导的可视化。必须与 graph.json 的 relationGroups 同 id，不压成两条二元边。"
+    },
+    "edgeStyle": { "$ref": "#/$defs/edgeStyle" },
+    "personalEdges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/personalEdge" },
+      "description": "用户手绘的记忆连线。不是 KnowledgeRelation，不受 ADR-0003 的 explanation/assumptions 强制；理由（meaning）选填。只存在于个人视图。"
+    },
+    "style": { "type": "object", "additionalProperties": true }
+  },
+  "allOf": [
+    {
+      "description": "结构视图必须分层——它的语义就是「学科客观上如何组织」。",
+      "if": {
+        "type": "object",
+        "properties": { "viewType": { "const": "structure" } },
+        "required": ["viewType"]
+      },
+      "then": {
+        "type": "object",
+        "properties": { "layers": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/layer" } } },
+        "required": ["layers"]
+      }
+    },
+    {
+      "description": "逻辑视图必须给出六档 epistemic 的线型，否则推导强度看不出来。",
+      "if": {
+        "type": "object",
+        "properties": { "viewType": { "const": "logic" } },
+        "required": ["viewType"]
+      },
+      "then": {
+        "type": "object",
+        "properties": { "edgeStyle": { "$ref": "#/$defs/edgeStyle" } },
+        "required": ["edgeStyle"]
+      }
+    },
+    {
+      "description": "手绘边只允许出现在个人视图。出现在结构或逻辑视图 = 个人联想冒充客观结论（ADR-0006）。",
+      "if": {
+        "type": "object",
+        "properties": { "viewType": { "enum": ["structure", "logic"] } },
+        "required": ["viewType"]
+      },
+      "then": { "type": "object", "properties": { "personalEdges": false } }
+    }
+  ],
+  "$defs": {
+    "position": {
+      "type": "object",
+      "required": ["x", "y"],
+      "additionalProperties": true,
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "layer": { "type": "integer", "minimum": 0 },
+        "collapsed": { "type": "boolean" },
+        "label": { "type": "string", "description": "个人视图里用户给自己的位置注记，不是节点标题。" }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "required": ["layer", "label", "nodeIds"],
+      "additionalProperties": true,
+      "properties": {
+        "layer": { "type": "integer", "minimum": 0 },
+        "label": { "type": "string", "minLength": 1 },
+        "nodeIds": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^n\\.[a-z0-9-]+$" } }
+      }
+    },
+    "group": {
+      "type": "object",
+      "required": ["id", "label", "nodeIds"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string", "minLength": 1 },
+        "nodeIds": { "type": "array", "items": { "type": "string", "pattern": "^n\\.[a-z0-9-]+$" } },
+        "render": { "type": "string", "enum": ["numbered-path", "box", "none"] },
+        "note": { "type": "string" }
+      }
+    },
+    "hyperEdge": {
+      "type": "object",
+      "required": ["id", "premiseIds", "conclusionIds", "label"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "pattern": "^g\\.[a-z0-9-]+$" },
+        "premiseIds": { "type": "array", "minItems": 2, "items": { "type": "string", "pattern": "^n\\.[a-z0-9-]+$" } },
+        "conclusionIds": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^n\\.[a-z0-9-]+$" } },
+        "label": { "type": "string", "minLength": 1 },
+        "renderAs": { "type": "string", "enum": ["junction", "bundle"] }
+      }
+    },
+    "edgeStyleEntry": {
+      "type": "object",
+      "required": ["stroke"],
+      "additionalProperties": true,
+      "properties": {
+        "stroke": { "type": "string", "enum": ["solid", "dashed", "dotted", "double"] },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "label": { "type": "string", "minLength": 1 }
+      }
+    },
+    "labelledEdgeStyleEntry": {
+      "description": "类比 / 猜想 / 个人联想这三档是弱断言，只有线型不够——必须带文字标签（无障碍三重区分）。",
+      "allOf": [
+        { "$ref": "#/$defs/edgeStyleEntry" },
+        {
+          "type": "object",
+          "properties": { "label": { "type": "string", "minLength": 1 } },
+          "required": ["label"]
+        }
+      ]
+    },
+    "edgeStyle": {
+      "type": "object",
+      "description": "epistemic → 线型。六档必须齐全，因为可达性要求「颜色 + 线型 + 文字」三重区分（GLOSSARY）。",
+      "required": [
+        "source-backed", "logically-derived", "pedagogical-inference",
+        "analogy", "hypothesis", "user-personal"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "source-backed": { "$ref": "#/$defs/edgeStyleEntry" },
+        "logically-derived": { "$ref": "#/$defs/edgeStyleEntry" },
+        "pedagogical-inference": { "$ref": "#/$defs/edgeStyleEntry" },
+        "analogy": { "$ref": "#/$defs/labelledEdgeStyleEntry" },
+        "hypothesis": { "$ref": "#/$defs/labelledEdgeStyleEntry" },
+        "user-personal": { "$ref": "#/$defs/labelledEdgeStyleEntry" }
+      }
+    },
+    "personalEdge": {
+      "type": "object",
+      "required": ["id", "from", "to", "label"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "pattern": "^pe\\.[0-9a-z-]+$" },
+        "from": { "type": "string", "pattern": "^n\\.[a-z0-9-]+$" },
+        "to": { "type": "string", "pattern": "^n\\.[a-z0-9-]+$" },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "线上显示的那句话。必填——看得见的内容不能空，空着就成了「related」那种伪装。"
+        },
+        "meaning": {
+          "type": "string",
+          "description": "为什么对我成立（ADR-0006 下选填）。写了就在详情面板显示，不写不阻塞保存。"
+        }
+      }
+    }
+  }
+}
