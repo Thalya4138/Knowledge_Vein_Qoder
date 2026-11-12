@@ -1,6 +1,6 @@
 # 领域模型 · 知识不是一张随意连线的图
 
-**状态：v1.0 契约。** TypeScript 类型由 Qoder 落地；本文件与 `schemas/*.json` 是权威。
+**状态：v1.0 契约。** TypeScript 类型在 `apps/web/src/domain/` 落地；本文件与 `schemas/*.json` 是权威。
 真实实例见 `content/demo/linear-algebra/`——**写代码前先读那几份 JSON，它们比本表更精确。**
 
 术语统一见 [GLOSSARY.md](GLOSSARY.md)。产品约束的来源见 [PRODUCT_SPEC.md](PRODUCT_SPEC.md) §6.3。

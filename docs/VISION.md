@@ -1,17 +1,17 @@
 # 产品愿景原文（用户意图的原件）
 
-> **这是什么**：用户与 ChatGPT 讨论后定稿的信息架构（第一部分），加上用户本人的补充要求（第二、三部分）。
-> **原话保留，不改写、不润色。** 以后不需要再把这段粘贴给任何 agent——让它读这个文件。
+> **这是什么**：经讨论定稿的信息架构（第一部分），加上用户本人的补充要求（第二、三部分）。
+> **原话保留，不改写、不润色。** 需要了解用户需求时，以本文件为准。
 >
 > **与其他文档的关系**：本文件是**意图**；`PRODUCT_SPEC.md` 是对它的**工程翻译**（加了约束、分期、取舍）。
 > 两者冲突时**不要自行裁决**——去问用户，然后改 `PRODUCT_SPEC.md` 并在 `DEVELOPMENT_LOG.md` 记一行。
 > 每条需求落到了规格哪一节、哪一期：见 `REQUIREMENTS_TRACE.md`。
 >
-> 原文中的示意图链接（OpenAI 临时图片）已失效，只保留了参照网站名；参照网站本身见 `REFERENCES.md`。
+> 原文中的示意图链接（临时图片）已失效，只保留了参照网站名；参照网站本身见 `REFERENCES.md`。
 
 ---
 
-## 第一部分：信息架构（ChatGPT 定稿，用户认可）
+## 第一部分：信息架构（讨论定稿，用户认可）
 
 我觉得现在需要做的是一次真正的产品信息架构设计（Information Architecture）：合并重复功能，明确每个板块解决什么问题、它们如何相互协作，同时保留你最重视的自由探索、底层联系和个人认知过程。
 
@@ -340,7 +340,7 @@ Cognitive Atlas        学习   实验   探索   图谱
 我给的这个文件就是我们学校很厉害的团队做的做笔记的 AI，这产出的才是真正人看的笔记（至少是看得懂的，不管在分层，在语言，在内容，在完整度，在终点上，而且这只是基于课程回放生成的），我可能需要你学习并生成 prompt。
 （→ 该样本即 notebrick，分析见 `NOTE_SAMPLE_ANALYSIS.md`）
 
-参照网页（ChatGPT 当时给的）：notasand、Thinki、3Blue1Brown change-of-basis、calculus.berrry.app、TensorX、WiseGraph、ClassPulse（Devpost）。（→ 见 `REFERENCES.md`）
+参照网页：notasand、Thinki、3Blue1Brown change-of-basis、calculus.berrry.app、TensorX、WiseGraph、ClassPulse（Devpost）。（→ 见 `REFERENCES.md`）
 
 ---
 

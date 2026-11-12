@@ -10,7 +10,7 @@
   },
   "scripts": {
     "verify:content": "node scripts/verify-content.mjs",
-    "dev": "echo \"[未实现] apps/web 尚未创建，见 prompts/QODER_KICKOFF.md 的 T0 任务\" && exit 1",
+    "dev": "echo \"[未实现] apps/web 尚未创建，见 docs/TASK_T0.md\" && exit 1",
     "build": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
     "typecheck": "echo \"[未实现] apps/web 尚未创建\" && exit 1",
     "test": "echo \"[未实现] apps/web 尚未创建\" && exit 1",

@@ -6,7 +6,7 @@
 > **状态：骨架 + 契约 + 样例数据 + 一张讲义视觉样张，业务功能未实现。**
 > 样张 `preview/textbook-demo/index.html`（双击即开）只覆盖「01 学习工作台」里的讲义阅读这一格，
 > 而且是人工写的静态 HTML。全貌与每块的分期见 [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md)。
-> 本仓库当前不含可用的学习产品。它的作用是让 Qoder 在无歧义的前提下开始写第一行功能代码。
+> 本仓库当前不含可用的学习产品。它的作用是让第一行功能代码在无歧义的前提下开始。
 > 任何“已完成”的说法必须以 `docs/DEVELOPMENT_LOG.md` 中的测试证据为准。
 
 ---
@@ -27,7 +27,7 @@ npm run dev
 ```
 
 **仓库里没有任何应用代码。** 文档里的界面、流程、验收标准都是**目标契约**，
-不是现状。Qoder 的 T0 任务（见 `prompts/QODER_KICKOFF.md`）才把它变成能跑的东西。
+不是现状。T0 任务（见 [docs/TASK_T0.md](docs/TASK_T0.md)）才把它变成能跑的东西。
 
 > 之所以先把契约和数据写完再写代码，是因为本项目最容易崩的地方不是技术，
 > 是"生成的图没有理由"。这条约束必须写在 schema 里，不能写在产品文档里靠自觉。
@@ -38,8 +38,8 @@ npm run dev
 
 | 你是 | 读这个 | 为什么 |
 | --- | --- | --- |
-| **Qoder（实现者）** | [AGENTS.md](AGENTS.md) → [prompts/QODER_KICKOFF.md](prompts/QODER_KICKOFF.md) | 规则 + 第一轮可粘贴指令 |
-| **任何 agent / 想知道用户到底要什么** | [docs/VISION.md](docs/VISION.md) | 用户愿景**原文**（不必再让用户粘贴）；规格是它的工程翻译 |
+| **开发者** | [AGENTS.md](AGENTS.md) → [docs/TASK_T0.md](docs/TASK_T0.md) | 开发规范 + 第一轮任务说明 |
+| **想知道用户到底要什么** | [docs/VISION.md](docs/VISION.md) | 用户愿景**原文**；规格是它的工程翻译 |
 | **想知道"做到哪了"的人** | [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md) | 每条需求 → 规格 → 分期 → 现状，含待拍板的决策 |
 | **要做阅读器的人** | [preview/README.md](preview/README.md) → `preview/textbook-demo/index.html` | 视觉验收样张，规格与之冲突时以样张为准 |
 | **评委 / 第一次打开仓库的人** | 本页 → [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) §2 | 3 分钟理解产品在做什么 |
@@ -133,7 +133,7 @@ Resource ──► SourceSpan ──► NoteDocument ──► KnowledgeNode
 ## 目录
 
 ```text
-apps/                 应用代码（Qoder 在其下实现）
+apps/                 应用代码
   web/                React + Vite 前端
 content/demo/         公开样例：课程、讲义、图谱、资源清单（唯一可提交的内容）
 docs/                 产品、数据、架构、验收、比赛（一文件一职责，不互相重述）

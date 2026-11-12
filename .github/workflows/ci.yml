@@ -1,6 +1,6 @@
 name: verify
 
-# 现在只有内容校验能跑。应用出现后，Qoder 应把 typecheck / test / build 加进来，
+# 现在只有内容校验能跑。应用出现后，需把 typecheck / test / build 加进来，
 # 并把 npm ci 换成 npm install。
 on:
   push:

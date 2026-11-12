@@ -1,6 +1,6 @@
 # 技术架构与本地优先边界
 
-**状态**：提议架构。**Qoder 必须在 `DECISIONS.md` 写 ADR-0002 后才能开工**，
+**状态**：提议架构。**必须先在 `DECISIONS.md` 写完 ADR-0002 再开工**，
 不得跳过选型直接写代码——选型漂移会让领域模型全部作废。
 
 ---
@@ -29,12 +29,12 @@
 
 ---
 
-## 2. 技术选型建议（Qoder 可改，但须写 ADR）
+## 2. 技术选型建议（可改，但须写 ADR）
 
 | 关注点 | 建议 | 理由 | 备选 |
 | --- | --- | --- | --- |
 | 构建 | Vite | Qoder Sites 静态托管友好，零配置 | — |
-| UI | React + TS | 生态、图谱库支持、Qoder 熟悉度高 | Vue |
+| UI | React + TS | 生态成熟、图谱库支持好 | Vue |
 | Markdown 渲染 | `unified`/`remark` + `remark-math` + KaTeX | 可控 AST，能解析 Obsidian callout 与 wiki link | markdown-it |
 | 编辑 | CodeMirror 6（分栏预览） | 轻、可控、移动端尚可 | Tiptap（WYSIWYG 更友好但导出保真难） |
 | 图谱 | React Flow（编辑优先）或 Cytoscape（大图性能） | **本项目要"能编辑"，不是"能展示"** → 优先 React Flow | d3-force（完全自控） |
@@ -151,7 +151,7 @@ apps/web/src/
 
 ---
 
-## 9. 未验证项（Qoder 必须先验证再依赖）
+## 9. 未验证项（必须先验证再依赖）
 
 - [ ] Qoder Sites 是否支持 SPA 路由回退（deep link 404？）
 - [ ] 构建产物大小限制
