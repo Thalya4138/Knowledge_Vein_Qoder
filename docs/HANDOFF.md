@@ -81,7 +81,7 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | agentId | 任务 | 分支 / commit | 状态 | 接手第一步 | 待人拍板 |
 | --- | --- | --- | --- | --- | --- |
-| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针部署 + 匿名公网实测**（改了真源：`DECISIONS.md` ADR-0002 能力表与访问模式结论、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD 见 `git log --oneline -1`（其下 `0481f7e` 是登录态实测三连） | **待合并：四项已在**匿名可达**的公网地址实测通过（个人版账号，`access_mode: public`）；剩截图** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；探针页 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone/atlas`（**不用登录**；从 `/atlas` 进入时第一格应显示「应用从 /atlas 直接启动」） | ② D-2（见下表）。注意：团队版那份 `vein-t0-probe-4588bqc00js` 需登录，别再当公网入口 |
+| QoderWang1 | T0-0 探针 + 8 条裁决落地（含「改了真源」：`schemas/layout.schema.json`、`schemas/evidence.schema.json` 新增，`kb/graph/manifest.schema.json` 修正，ADR-0002 前置条件改写 + 新增 ADR-0006）；**第二轮：探针部署 + 匿名公网实测**（改了真源：`DECISIONS.md` ADR-0002 能力表与访问模式结论、`.gitignore` 新增 `*.qoder.site`） | 分支 `task/T0-0-QoderWang1`，HEAD `69bad2a`（`e2d4575` ADR 匿名实测回填 / `69bad2a` 卡与日志；其下 `0481f7e` 是登录态三连） | **待合并：四项已在**匿名可达**的公网地址实测通过（个人版账号，`access_mode: public`）；剩截图** | `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`；探针页 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone/atlas`（**不用登录**；从 `/atlas` 进入时第一格应显示「应用从 /atlas 直接启动」） | ② D-2（见下表）。注意：团队版那份 `vein-t0-probe-4588bqc00js` 需登录，别再当公网入口 |
 | QoderJudge1 | 审查 QoderWang1 的 T0-0 交付 | 无分支（只改本文件与 `AGENTS.md` §2 第 6 条，随上面的提交带走） | 已完成 | — | 见下表 |
 
 状态只有四种：**进行中 / 待合并 / 已合并 / 阻塞**。选"阻塞"必须写清等谁。
