@@ -47,43 +47,44 @@
 
 **Qoder Sites 能力实测结果**
 
-实测条件：探针页修正深链测法后重新构建发布（`prepare_site` 新 action，`spa: true` 主动开启），
-地址 `https://vein-t0-probe-4588bqc00js.qoder.zone`。**四项均在部署后的公网地址上跑**，
-但注意：站点 `access_mode` 为 `organization`，实测是在**已登录 Qoder 账号的浏览器**里完成的。
-匿名可达性仍未验证（见下方"表外的收获"）。
+实测条件：探针页（深链测法修正版）发布到**个人版账号**下的站点
+`https://vein-probe-personal-dx7phlm8g8e.qoder.zone`，`access_mode: public`、
+`auth_integration_status: not_required`。构建自干净工作树的 commit `0dd380b`，
+`prepare_site` 新 action + `createNewSite: true`、`spa: true` 主动开启。
+**匿名性由不带 cookie 的 curl 证明**，四项自检在浏览器里跑（浏览器恰好登录，但站点已不需要登录）。
 
 | 问题 | 探针里怎么测 | 结果 |
 | --- | --- | --- |
-| SPA 深链是否 404 | 从 `/atlas` 整页导航，看应用是否启动 | **通过**：应用从 `/atlas` 直接启动，文档请求被回退到 `index.html` → **BrowserRouter 可行**，HashRouter 不是硬约束 |
-| 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | **通过（下界）**：整包 523.9 KB 上传与校验通过；`probe/large.txt` 256 KB 下载完整，456 ms。**上限未测**——没探到边界就不能写上限 |
-| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | **通过**：`load` 事件 437 ms，且 `https://www.desmos.com/calculator?lang=zh-CN` 返回 200 `text/html`（网络面板核对）。肉眼确认截图仍缺 |
-| IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | **通过**：写 200,000 字符，跨 4 次加载首次时间戳不变、内容完整。**"不会被清理"没测到**——那需要隔天再访问 |
-| 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | **未启用**：探针刻意不带 Function/数据库。平台确有 `functionDirectory` / `databaseAccess` / Storage 能力入口，是否允许由后续 ADR 决定 |
+| SPA 深链是否 404 | 从 `/atlas` 整页导航，看应用是否启动 | **通过（匿名）**：`/atlas` 与任意不存在路径在 `Accept: text/html` 下都返回 200 + 应用外壳 → **BrowserRouter 可行**。`Accept: */*` 是 404，见下方测法说明 |
+| 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | **通过（下界）**：整包 523.9 KB 上传与校验通过；`probe/large.txt` 256 KB 匿名下载完整（262144 B，439 ms）。**上限未测**——没探到边界就不能写上限 |
+| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | **通过**：`load` 事件 3.2–6.0 s（首次较慢），网络面板 `calculator?lang=zh-CN` → 200 `text/html`。肉眼截图仍缺（见剩余问题） |
+| IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | **通过**：写 200,000 字符，重载后首次时间戳不变、累计次数递增、内容完整。**"不会被清理"没测到**——那需要隔天再访问 |
+| 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | **未启用**：探针刻意不带 Function/数据库。平台确有 `functionDirectory` / `databaseAccess` / Storage 入口，是否允许由后续 ADR 决定 |
 
 **测法本身踩过一个坑，值得记进决策依据**：第一版探针用 `fetch('/no-such-route')` 判回退，
 在同一个 `/atlas` 上得到 404，而浏览器导航得到应用外壳——**回退只给文档请求**
 （`Sec-Fetch-Dest: document`），资源请求一律 404。据此差点写下"必须用 HashRouter"的错误结论。
 判据改成"应用是从哪个 `pathname` 启动的"之后才测对。这条已写进 `HANDOFF.md` §6。
 
-**表外的收获（对比赛更关键）**：`access_mode` 从 `private` 变成了 `organization`（用户登录后），
-`available_modes` 里依然**没有 `public`**。也就是说站点现在要 Qoder 登录才能打开，
-而比赛要求"公网可用、匿名可访问"（`CONTEST_SUBMISSION.md`）。
+**访问模式由订阅套餐决定（已解决，但留作决策依据）**：团队版账号下 `available_modes` 里没有
+`public`，站点只能 `organization`/`selected`（评委打不开）。用户账号套餐是「团队版 · 成员」，
+官方文档原文："Individual plans offer 'Anyone can access' (public) or 'Only invited users'.
+**Teams/Enterprise only allow organization members.**"
+换到个人版账号重新发布（新 action + `createNewSite: true` + 新 slug、不带 `projectId`）后
+`public` 立刻可选，`update_access_policy` 置为 `public` 后 `auth_integration_status` 变 `not_required`，
+匿名 curl 全部通过。**结论：比赛用的公网链接必须出自个人版账号**，团队版那份只能内部预览。
 
-**根因已确认，不是平台故障**：用户账号截图显示订阅套餐为「**团队版 · 成员**」。
-官方文档（`docs.qoder.com/qoder/sites`）原文："Individual plans offer 'Anyone can access' (public)
-or 'Only invited users'. **Teams/Enterprise only allow organization members.**"
-所以 `public` 缺席是**套餐决定的**，与站点配置、`governance_status`（normal）、`lifecycle`（active）无关。
-组织管理员能否放开公开站点，文档未提，**记为未知**，不要当成可依赖的路径。
+两份站点并存，别混：
 
-三条出路（代价从低到高）：
+| 账号 | 地址 | 访问 | 用途 |
+| --- | --- | --- | --- |
+| 个人版 | `vein-probe-personal-dx7phlm8g8e.qoder.zone` | `public`，匿名可开 | 比赛口径的公网入口，ADR 结论以它为准 |
+| 团队版 | `vein-t0-probe-4588bqc00js.qoder.zone` | `organization`，需登录 | 内部预览；它的 action/描述符不属于当前账号，换回来要重新登录 |
 
-1. **用个人版 Qoder 账号再发布一份**——保持"部署到 Qoder Sites"这个交付形态不变。
-   同一份源码，新 `actionId` + `createNewSite: true` + 新 slug、不带 `projectId`（换账号的规定路径）。
-   现在这份 `organization` 站点保留作内部预览，两份站点在交接卡里分开记。
-2. **向组委会确认口径**：评委用 Qoder 账号登录后打开，算不算"公网可用"。
-   算的话本条不改代码就能交付；不算就回到路径 1。
-3. **换静态托管**：与 `README.md` 写的交付形态（Qoder 开发 → Qoder Sites → 天池发帖）冲突，
-   而且 `HANDOFF.md` 部署须知 #5 明确禁止绕路换平台。**默认不走**，要走近路径 2 先问。
+**顺带测到一件会影响 T1 的事**：托管站会把我们的 `index.html`（418 B）扩成约 57 KB 再吐出来，
+注入的是 `<qoder-sites-badge>`（`id="qoder-sites-watermark"`，独立 shadow root，`:host { all: initial }`，
+`position: fixed`）。影子 DOM 意味着它**不会污染我们的排版与样式**，但它是页面上的一层固定浮标——
+阅读器验收截图里会出现它，视觉底线里的"不出现装饰性元素"不能算到平台头上，写验收说明时要讲清楚。
 
 ---
 
