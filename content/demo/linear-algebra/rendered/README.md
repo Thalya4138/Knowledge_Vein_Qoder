@@ -9,7 +9,7 @@
 | --- | --- |
 | `index.html` | 样张成品（公式已用 KaTeX 预渲染，离线可开） |
 | `src.html` | 样张源文件（含 `$…$` 公式原文） |
-| `app.js` | 旁栏资源抽屉；`RESOURCES` 表与 `../resources/manifest.json` 的 span 一一对应 |
+| `app.js` | 旁栏资源抽屉（左侧滑出，ADR-0007）；`RESOURCES` 表与 `../resources/manifest.json` 的 span 一一对应。它是资源抽屉两层交互的**行为基准**，规格见 `docs/UX_AND_FLOWS.md` §3"资源抽屉"，验收见 `docs/QUALITY_GATES.md` §2.5 |
 | `style.css` / `katex.min.css` / `fonts/` | 版式与公式字体 |
 | `build.mjs` | 把 `src.html` 的公式预渲染进 `index.html` |
 | `shot-full.png` | 整页截图（4 页：问题探讨 → 本节聚焦 → 主栏+旁栏正文 → 表 2-1 → 思维训练 → 练习与应用） |

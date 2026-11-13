@@ -153,11 +153,11 @@ a.res.inline { display: inline-block; padding: 0 6px; margin-left: 6px; border-l
 .pr-sub { font: 600 14.5px var(--sans); margin-bottom: 4px; }
 .paren { float: right; }
 
-/* ---------- 资源抽屉 ---------- */
+/* ---------- 资源抽屉（左侧滑出，与右侧 AI 侧栏分居两侧，ADR-0007） ---------- */
 #drawer {
-  position: fixed; top: 0; right: 0; bottom: 0; width: 520px; z-index: 40;
-  background: #fff; box-shadow: -4px 0 18px rgba(0,0,0,.2);
-  transform: translateX(105%); transition: transform .25s ease;
+  position: fixed; top: 0; left: 0; bottom: 0; width: 520px; max-width: 100vw; z-index: 40;
+  background: #fff; box-shadow: 4px 0 18px rgba(0,0,0,.2);
+  transform: translateX(-105%); transition: transform .25s ease;
   overflow-y: auto; font: 14px/1.7 var(--sans); padding: 22px 26px 30px;
 }
 #drawer.open { transform: none; }
