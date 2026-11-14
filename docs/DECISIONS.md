@@ -154,7 +154,7 @@
 | --- | --- | --- |
 | SPA 深链是否 404 | 从 `/atlas` 整页导航，看应用是否启动 | **通过（匿名）**：`/atlas` 与任意不存在路径在 `Accept: text/html` 下都返回 200 + 应用外壳 → **BrowserRouter 可行**。`Accept: */*` 是 404，见下方测法说明 |
 | 构建产物 / 单资源大小限制 | 放一个较大的静态资源并加载 | **通过（下界）**：整包 523.9 KB 上传与校验通过；`probe/large.txt` 256 KB 匿名下载完整（262144 B，439 ms）。**上限未测**——没探到边界就不能写上限 |
-| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | **通过**：`load` 事件 3.2–6.0 s（首次较慢），网络面板 `calculator?lang=zh-CN` → 200 `text/html`。肉眼截图仍缺（见剩余问题） |
+| 可否 iframe 嵌入 GeoGebra/Desmos | 嵌一次 Desmos | **通过**：`load` 事件 3.2–6.0 s（首次较慢），网络面板 `calculator?lang=zh-CN` → 200 `text/html`。2026-11-14 补视觉证据：四项整页 `docs/evidence/t0-0-sites-atlas.png`（agent 截）；Desmos 坐标系 `docs/evidence/t0-0-sites-desmos.png`（**用户截图**——in-app 截图对跨源 iframe 只出空白，见 `HANDOFF.md` §6） |
 | IndexedDB 可否读写、是否被清理 | 写一条、刷新、再读 | **通过**：写 200,000 字符，重载后首次时间戳不变、累计次数递增、内容完整。**"不会被清理"没测到**——那需要隔天再访问 |
 | 是否有任何持久化后端能力 | 看 Sites 是否给存储/函数能力 | **未启用**：探针刻意不带 Function/数据库。平台确有 `functionDirectory` / `databaseAccess` / Storage 入口，是否允许由后续 ADR 决定 |
 

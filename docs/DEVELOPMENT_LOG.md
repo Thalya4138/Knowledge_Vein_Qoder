@@ -11,6 +11,26 @@
 
 ---
 
+## 2026-11-14 · QoderWang1 · ⑦ 收尾：Obsidian 排除 + 公网截图补证
+
+**目标**：把交接卡 ⑦ 的两件"人类专属收尾"做掉。**明确不做**：不删团队版站点、不重新部署、不动 `main`。
+
+**做了什么**
+
+1. Obsidian：确认进程未运行后，直接写 `.obsidian/app.json` 的 `excludedFiles`
+   （`node_modules/**`、`apps/web/dist/**`），JSON 校验通过；`.obsidian/` 在 `.gitignore` 里，不进仓库。
+2. 截图：in-app 面板打开公网探针页 `/atlas`，整页截图存 `docs/evidence/t0-0-sites-atlas.png`
+   （四项"通过"与证据文字都在画面里）。
+3. Desmos：agent 的整页/元素截图都是**空白**——跨源 iframe 抓不到；面板隐藏后截图接口直接报
+   `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`。**用户目视确认坐标系已画出并提供截图**，存
+   `docs/evidence/t0-0-sites-desmos.png`。这条限制写进 `HANDOFF.md` §6，ADR-0002 iframe 格补视觉证据。
+
+**验证**：两张 PNG 落盘且内容核对（四项结论文字 / Desmos 坐标系与工具栏）；`app.json` 用 node 解析通过。
+**已知缺陷**：Desmos 那张的证据来源是用户截图，不是 agent 亲手截的（与 #7 的 CI 截图同口径，已标注）。
+**下一步**：T0-1 外壳。
+
+---
+
 ## 2026-11-14 · QoderWang1 · T0-2：ADR-0002 五项选型定稿
 
 **目标**：按 `TASK_T0.md` §3 把框架 / Markdown / 编辑器 / 图谱 / 存储五项连同被排除方案写进 ADR-0002，
