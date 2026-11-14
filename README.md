@@ -3,7 +3,7 @@
 把课程材料变成**人愿意读、能长期维护**的讲义；把抽象概念变成**能动手验证**的实验；
 把已学知识之间**有依据的联系**发现出来；把这些沉淀成**自己能编辑、能回忆**的知识网络。
 
-> **状态：契约 + 样例数据 + 讲义视觉样张 + 一个部署探针（T0-0）。学习产品本身仍未实现。**
+> **状态：契约 + 样例数据 + 讲义视觉样张 + 部署探针（T0-0）+ 讲义解析器（T1-1，待合并）。学习产品的界面仍未实现。**
 > 样张 `content/demo/linear-algebra/rendered/index.html`（双击即开）只覆盖「01 学习工作台」里的讲义阅读这一格，
 > 而且是人工写的静态 HTML。全貌与每块的分期见 [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md)。
 > 现在能跑的代码是**探针**，不是产品：它只回答"Qoder Sites 能不能撑住这个架构"。
@@ -17,8 +17,8 @@
 npm install
 npm run verify:content   # ✓ 样例数据 + 引用完整性 + 讲义链接 + 布局与证据
 npm run typecheck        # ✓
-npm run test             # ✓ 18 项：schema↔数据一致性（A13）、A8 满列秩反例
-npm run build            # ✓ 271 KB / gzip 88 KB
+npm run test             # ✓ 领域校验；T1-1 合入后加讲义解析（用例数看 CI 实跑，不写死）
+npm run build            # ✓ 产物大小看 build 输出，预算见 ADR-0002
 npm run dev              # ✓ T0-0 探针页 + 四个视口的深链占位
 ```
 
@@ -29,7 +29,8 @@ npm run dev              # ✓ T0-0 探针页 + 四个视口的深链占位
 （深链回退 / 大静态资源 / 外部 iframe / IndexedDB），每项都同时给出结论、证据，
 以及"这个结论会以什么方式骗人"。它的四个路由只是深链测试面，**不是外壳**（外壳是 T0-1）。
 
-**学习产品仍然没有代码**：阅读器、检索、图谱、实验（T1–T5）都还没开始。
+**学习产品的界面仍然没有代码**：阅读器 UI、检索、图谱、实验（T1-2 起）都还没开始。
+讲义解析器（T1-1）已交付待合并——它是纯函数，还没接进任何界面。
 文档里的界面、流程、验收标准是**目标契约**，不是现状。
 
 > 之所以先把契约和数据写完再写代码，是因为本项目最容易崩的地方不是技术，
@@ -138,7 +139,7 @@ Resource ──► SourceSpan ──► NoteDocument ──► KnowledgeNode
 
 ```text
 apps/                 应用代码
-  web/                React + Vite 前端 —— 目前只有 T0-0 探针（src/probe/）与深链占位路由
+  web/                React + Vite 前端 —— T0-0 探针（src/probe/）+ 深链占位路由 + T1-1 讲义解析器（src/content/，待合并）
 content/demo/         公开样例知识库：讲义、图谱、资源清单、学习证据 + rendered/（讲义的期望渲染结果）
 docs/                 产品、数据、架构、验收、比赛、多 agent 交接（一文件一职责，不互相重述）
 prompts/              给模型的契约（带版本与 I/O schema）
