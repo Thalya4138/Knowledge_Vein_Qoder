@@ -11,7 +11,46 @@
 
 ---
 
-## 2026-11-12（晚 6）· QoderWang1 · 复查推送状态时发现 PR #1 已合并
+## 2026-11-14 · QoderWang1 · T0-2：ADR-0002 五项选型定稿
+
+**目标**：按 `TASK_T0.md` §3 把框架 / Markdown / 编辑器 / 图谱 / 存储五项连同被排除方案写进 ADR-0002，
+让 T0-1 外壳有据可依。**明确不做**：不装 CodeMirror / React Flow / Dexie，不写业务代码，不部署，不动 `main`。
+
+**做了什么**
+
+1. ADR-0002 从"选型仍待填"改为"已定稿"：五项各写"选择 / 为什么 / 被排除方案 / 验证方式"，
+   外加共同前提（来自探针实测）、"尚未验证的假设"清单和"何时重审"。
+2. 三条关键取舍：**编辑器选 CodeMirror 6 不选 Tiptap**（Markdown 是真源，富文本回写会丢 callout /
+   details / wiki link，踩 A7 红线）；**图谱选 React Flow**，判据是能编辑而不是能展示；**Markdown 选
+   remark 系**，因为检索与锚点跳转需要源码行号（`node.position`）。
+3. `ARCHITECTURE.md` §2 顶部加指针：与 ADR-0002 冲突时以 ADR 为准。
+4. 包体预算首次写死：首屏 gzip ≤ 300 kB、单路由懒加载块 ≤ 300 kB、整包 ≤ 2 MB——超了先查重复打包。
+
+**验证**（本轮实跑）
+
+```text
+$ npm run verify:content → ✓ 通过（节点/关系/引用/讲义链接/资源来源/覆盖矩阵/布局与证据）
+$ npm run typecheck     → 无输出
+$ npm run test          → 2 files / 18 tests passed（388 ms）
+$ npm run build         → JS 271.42 kB │ gzip 88.10 kB（26 modules，168 ms）
+```
+
+**已知缺陷**：五项里真正实测过的只有栈本身与托管能力；React Flow 300 节点性能、CodeMirror 移动端、
+Dexie 打包体积都**未测**，ADR 已把它们单列成"未验证"。本轮纯文档，无新依赖。
+
+**下一步**：T0-1 外壳（BrowserRouter、四路由、三栏 + 状态条、错误边界、统计数字运行时算）。
+
+---
+
+## 2026-11-13 晚 · QoderWang1 · 资源抽屉升格为规格（ADR-0007，补记）
+
+> 本条按 `HANDOFF.md` §4.5 #8 补记，不是当轮日志原文；当轮漏写日志已在 #8 的"已知缺陷"里认过。
+
+**内容**：抽屉两层交互从样张 `app.js` 升格为规格与验收清单——ADR-0007（左侧抽屉、视频不内嵌、
+`unavailable` 不得退化成资源主页链接）、`UX_AND_FLOWS.md` §3/§7、`QUALITY_GATES.md` §2.5 九项手测、
+`IMPLEMENTATION_PLAN.md` T1-2 验收口径改为"逐条点过"。**当轮门**：`verify:content` 与 `typecheck`
+实跑通过；`test` / `build` 未跑（纯文档 + 样张一行 CSS 的滑出方向）。
+
 
 **目标**：回答"都 push 过了吧"——不靠记忆，用 `git fetch` + 比对本地/远端。
 **明确不做**：不 rebase（分支已 push，重写历史会影响别人）、不动 `main`、不再部署。
