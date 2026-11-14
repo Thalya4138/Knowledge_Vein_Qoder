@@ -89,11 +89,11 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #7（QoderWang1，2026-11-12 晚 8） |
-| 分支 | `task/T0-0-QoderWang1`，HEAD 取 `git log --oneline origin/task/T0-0-QoderWang1 -1` |
-| 合并状态 | PR #1（`08af8e8`）+ PR #2（`bff7892`）已进 `main`，`main` 上的 CI 首跑已验证（#7）。合并之后又产生了几条**文档提交**（接龙 #6/#7），差多少用 `git log --oneline origin/main..origin/task/T0-0-QoderWang1` 现取；要同步就开第三个 PR，别在文档里写条数 |
-| 下一位的入口 | §4.4 上手清单，从第 2 步的四道门开始（先 `git fetch`，基于 `main` 开新分支） |
-| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑦ 两件人类专属收尾（④ 已结案，见 #7） |
+| 最新接龙条目 | §4.5 #10（QoderWang1，2026-11-14，⑦ 结案） |
+| 分支 | `task/T0-2-QoderWang1`，HEAD 取 `git log --oneline origin/task/T0-2-QoderWang1 -1` |
+| 合并状态 | PR #1（`08af8e8`）+ PR #2（`bff7892`）+ PR #3（`f983a90`）已进 `main`，`main` 上的 CI 首跑已验证（#7）。**#8 的 ADR-0007 已随 PR #3 进入 `main`**，新分支从 `origin/main` 开即可，不必再为它 rebase；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
+| 下一位的入口 | **T0-1 外壳**（T0-2 已解锁它）：Vite + React + TS、BrowserRouter、四路由、三栏 + 状态条、错误边界、统计数字运行时算。做 T1-2 的话先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
+| 还欠谁的 | ② D-2、⑤ 团队版站点处置（④⑦ 已结案，见 #7 / #10）。#8 欠的 `DEVELOPMENT_LOG.md` 条目已由 #9 补记 |
 
 （旧版表格存档如下，保留原样以便追溯。）
 
@@ -141,9 +141,9 @@ CI 改写未经远端验证。
 | ② | **D-2**：用户在逻辑视图手写的推导，`epistemic` 默认值（`PRODUCT_SPEC.md` §6.1 末尾） | T3 图谱编辑要用；T0 不受影响 | 规格里的倾向是默认 `logically-derived`。反对理由：`epistemic` 回答的是"谁为这条边担保"，用户刚写下、没人核对的推导默认标"逻辑推出"，正是本项目要反对的"没理由的断言"换了个方向。倾向默认 `user-personal` 并标待核对，核对通过再升级。不急，T3 之前定即可 |
 | ③ | ~~探针站点能不能匿名可访问~~ | — | **已解决（2026-11-12，路径 ①）**：换个人版账号重新发布 → `public` 可选 → `update_access_policy` 置 public（`confirmPublic: true`）→ 匿名 curl 五个路径全对，四项自检全过。公网入口 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`。**根因留在 ADR-0002**：团队版根本不提供 `public`，所以比赛链接必须出自个人版账号。剩 ② D-2 待拍板 |
 | ④ | ~~谁把 `task/T0-0-QoderWang1` 合进 `main`，以及 CI 首跑是否通过~~ | — | **已结案（2026-11-12 晚 8，见 #7）**：仓库所有者已自行合并 PR #1（`08af8e8`）与 PR #2（`bff7892`）；用户截图显示 `main` 上的 `bff7892` 触发 `verify` 第 9 次运行，15 s 全绿，即 CI 首跑通过。**证据来源要说清**：这是用户截图，不是 agent 亲手跑的——仓库私有，未登录的 `api.github.com` 返回 404，本机也没有 `gh`。后续若需要自己确认，办法是 `git fetch` 后看 `main` 顶部 commit，或在 Actions 页按 commit 查。仍待做的只剩：合并之后的文档提交要开第三个 PR 才能同步（条数用 `git log --oneline origin/main..origin/task/T0-0-QoderWang1` 现取） |
-| ⑤ | **团队版那份站点怎么处置**：`vein-t0-probe-4588bqc00js.qoder.zone`（`organization`，需登录） | 它现在和公网那份内容重复，留着可能让人误贴错链接；删掉是不可逆的资源删除 | 默认**保留**作内部预览，ADR-0002 的两份站点对照表已经写清各自用途。要删需要所有者明确授权（`delete_project`，工具会先讲清影响），**不要顺手清理** |
+| ⑤ | **团队版那份站点怎么处置**：`vein-t0-probe-4588bqc00js.qoder.zone`（`organization`，需登录） | 它现在和公网那份内容重复，留着可能让人误贴错链接；删掉是不可逆的资源删除 | 默认**保留**作内部预览，ADR-0002 的两份站点对照表已经写清各自用途。要删需要所有者明确授权（`delete_project`，工具会先讲清影响），**不要顺手清理**。用户 2026-11-14 表示"不急，公网口径按个人版走" |
 | ⑥ | ~~公网链接绑定在哪个个人版账号上~~ | — | **已结案（用户 2026-11-12 确认）**：刚才发布用的个人版账号**就是参赛者本人**，账号归属没问题，公网链接可以直接进帖子。原判断留在这里供追溯：那份 `public` 站点属于"当时登录 Qoder 的账号"，所以**换人接手时必须重新确认一次**——如果下一位用别的账号登录再发布，链接的归属就跟着变了（做法见 §6"换账号发布的规定动作"） |
-| ⑦ | **两件只有人类能做的收尾** | agent 打不开面板、改不了 Obsidian 设置 | ① 打开右侧 in-app Browser 面板，让 agent 补拍 `docs/evidence/t0-0-sites-*.png`（探针四项 + Desmos 实嵌）；② 按 §6 的 Obsidian 提示，在"设置 → 文件与链接 → 排除的文件"里排除 `node_modules` 与 `apps/web/dist`——这个 vault 里现在装着整个依赖树 |
+| ⑦ | **两件只有人类能做的收尾** | agent 打不开面板；Obsidian 设置原以为只能人改 | **已结案（2026-11-14，#10）**。② agent 直接写了 `.obsidian/app.json` 的 `excludedFiles`（`node_modules/**`、`apps/web/dist/**`），当时 Obsidian 未运行，**下次启动生效**；`.obsidian/` 不进 Git。① 公网四项整页截图 `docs/evidence/t0-0-sites-atlas.png`（agent 截）+ Desmos 坐标系 `docs/evidence/t0-0-sites-desmos.png`（**用户截图**：in-app 截图对跨源 iframe 只出空白，新坑已进 §6）。**不再欠** |
 
 **部署须知（① 的执行要求）**
 
@@ -168,8 +168,8 @@ CI 改写未经远端验证。
 | 任务 | 状态 | 前置 |
 | --- | --- | --- |
 | T0-0 部署探针 | **四项在匿名可达的公网地址实测通过**（个人版账号，`public`）；探针修正版已发布 | 补拍 `t0-0-sites-*.png`（需打开 in-app Browser 面板） |
-| T0-2 ADR-0002 | 能力表已回填；**选型本身仍未填**（框架 / Markdown / 编辑器 / 图谱 / 存储 + 被排除方案） | 深链结论已可用：BrowserRouter 不被托管站阻挡 |
-| T0-1 外壳 | 未认领，阻塞 | T0-2 |
+| T0-2 ADR-0002 | **已完成**（2026-11-14，接龙 #9）：五项选型 + 被排除方案 + 包体预算已定稿 | — |
+| T0-1 外壳 | 未认领（T0-2 已解锁） | 无 |
 | T0-3 zod 领域类型 | 未认领 | T0-1（`TASK_T0.md` §3 的顺序） |
 | T0-4 内容校验接入 | 大部分已由 QoderWang1 完成（`verify:content` 覆盖布局与证据、Vitest、ajv schema 测试）；**CI 已在 `main` 上首跑通过**（#7） | — |
 | T1–T7 | 未认领 | T0 全部合并 |
@@ -211,8 +211,13 @@ CI 改写未经远端验证。
 | 5 | 2026-11-12 晚 6 | QoderWang1 | **更正 #3/#4 的合并状态**：用户问"都 push 过了吧"，`git fetch` 后查出 PR #1 已合并进 `main`（`08af8e8`），而 §4.0 还写着"`main` 停在 `883ea7a`"。本分支已 merge 回 `origin/main`（用 merge 不用 rebase：分支已 push，不能重写别人可能拉走的历史） | 已提交并 push | ④ 缩为"第二个 PR + CI 首跑确认" | `git log --oneline origin/main -1` |
 | 6 | 2026-11-12 晚 7 | QoderWang1 | 用户合了 **PR #2**（`bff7892`）后担心"最新的没了"。查证：**什么都没丢**——`93af27a` 是 `origin/main` 的祖先、`git diff main task/T0-0-QoderWang1` 为空、main 上的 HANDOFF 有接龙 #5。他看到的"上一版"是**本地 `main` 指针落后 22 个提交**（还停在合并前的 `883ea7a`）；已用 `git fetch origin main:main` 快进（只动指针，不碰工作目录，非快进会自动拒绝） | 已提交并 push | ④ 只剩 CI 首跑结果确认；工作分支可删——删除不可逆，归用户执行，且建议先看 CI 再删 | `git branch -vv` |
 | 7 | 2026-11-12 晚 8 | QoderWang1 | **④ 结案**：用户截图显示 `main` 上的 `bff7892` 触发 `verify` 第 9 次运行、15 s 全绿 → CI 首跑通过（`npm ci → verify:content → typecheck → test → build`）。诚实标注：证据是用户截图，agent 未独立复核（仓库私有 → 未登录 API 404，本机无 `gh`）。同时纠正 §4.0 的"分支与 main 完全一致"：合并后又产生文档提交，已改为"用命令现取条数 + 第三个 PR 同步" | 已提交并 push | 余量：② D-2、⑤ 团队版站点处置、⑦ 截图与 Obsidian 排除；另需仓库所有者开第三个 PR 同步文档提交 | 本文件 §4.0 / §4.2 ④ / §4.3 |
+| 8 | 2026-11-13 晚 | QoderWang1 | **规则变更：ADR-0007 与 `QUALITY_GATES.md` §2.5 生效**——资源抽屉的两层交互从"只写在样张 `app.js` 里"升格为规格 + 可验收清单。动到三处：`UX_AND_FLOWS.md` §3 新增"资源抽屉"小节、§7 响应式补两侧同开；`QUALITY_GATES.md` §2.5 九项手测清单；`IMPLEMENTATION_PLAN.md` T1-2 的验收口径由"并排截图"改为"逐条点过"（理由见 ADR-0007 背景）。三条裁决：**抽屉移到左侧**（原与 §5 的 AI 侧栏争同一块位置）、**视频不内嵌播放器**、`unavailable` 定位不得退化成只到资源主页的链接。**标「改了真源」：`docs/DECISIONS.md` 新增 ADR-0007**，其他人先 rebase 再动工；本轮真源与其余文档落在同一个 commit `a4d76f3`，未按 §3 第三条拆分——别照抄这个合并法。门：`verify:content` 与 `typecheck` 实跑通过；`test` / `build` 未跑（本轮纯文档 + 样张一行 CSS 的滑出方向） | 已提交并 push（`a4d76f3`）；本条与 §4.0 指针随下一个文档提交带走 | 无新增待拍板项，ADR-0007 自带"何时重审"两条。**给 T1-2 接手人**：行为基准是样张 `content/demo/linear-algebra/rendered/app.js`，验收证据要 `?open=<spanId>` 的**打开态**截图——关闭态截图验不了交互。**已知缺陷**：`DEVELOPMENT_LOG.md` 本轮条目还欠着 | ADR-0007 / `QUALITY_GATES.md` §2.5 / `UX_AND_FLOWS.md` §3、§7 |
 
-**下一位从这里接第 8 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 9 | 2026-11-14 | QoderWang1 | **T0-2 定稿**：ADR-0002 五项选型 + 被排除方案 + 包体预算 + "未验证"清单 + 重审条件；`ARCHITECTURE.md` §2 加指针；顺带补记 #8 欠的日志。四道门实跑通过（18 tests；JS 271.42 kB / gzip 88.10 kB）。**未装任何新依赖** | 已提交（`task/T0-2-QoderWang1`，待 PR） | 无新增待拍板；⑤ 用户 2026-11-14 表示不急、公网口径按个人版走 | `DEVELOPMENT_LOG.md`「T0-2：ADR-0002 五项选型定稿」 / ADR-0002 |
+
+| 10 | 2026-11-14 | QoderWang1 | **⑦ 结案**：Obsidian 排除写入 `.obsidian/app.json`（未运行时写，下次启动生效）；公网四项整页截图 `t0-0-sites-atlas.png`（agent 截）；Desmos 实嵌视觉证据 `t0-0-sites-desmos.png`（**用户截图**）。新坑进 §6：in-app 截图对跨源 iframe 只出空白、面板隐藏时截图不可用。ADR-0002 iframe 格补视觉证据 | 已提交（`task/T0-2-QoderWang1`） | ⑦ 不再欠；余 ② D-2、⑤ | `docs/evidence/t0-0-sites-*.png` / 本文件 §6 / ADR-0002 |
+
+**下一位从这里接第 11 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
@@ -235,7 +240,9 @@ CI 改写未经远端验证。
 - **本目录同时是 Obsidian vault + git 仓库。** 构建产物、日志、大批临时输出不落在这里；
   临时副本放 `$HOME` 下再删。历史上有个探针在这里写出 15 GB 文件，把 Obsidian 打瘫。
   **Obsidian 不读 `.gitignore`**：`node_modules/`（含上百个 `.md`）与 `apps/web/dist/` 会被它索引，
-  搜索和关系图里会混进依赖包的 README。用 Obsidian 时在"设置 → 文件与链接 → 排除的文件"里加上这两个目录。
+  搜索和关系图里会混进依赖包的 README。**2026-11-14 已配置**：`.obsidian/app.json` 的 `excludedFiles`
+  已含 `node_modules/**` 与 `apps/web/dist/**`（Obsidian 未运行时由 agent 写入，下次启动生效）。
+  Obsidian **运行中**时别从外部改这个文件——它退出时会用自己的内存状态覆盖回去。
 - **`vite.config.ts` 里 `root: 'apps/web'`。** Vitest 的 `include` 相对 root 写（`src/**/*.test.ts`），
   写成 `apps/web/src/...` 会"找不到测试文件"。
 - **工具链是新大版本**：React 19、Vite 8、Vitest 5、TypeScript 7、react-router-dom 7。
@@ -269,6 +276,10 @@ CI 改写未经远端验证。
   `<qoder-sites-badge>`（`id="qoder-sites-watermark"`，独立 shadow root、`:host{all:initial}`、`position:fixed`）。
   样式不会串进来，但**它是页面上的一层固定浮标**：T1 的视觉验收截图必须把它算进去，
   别把它当成我们违反"不出现装饰性元素"的缺陷，也别试图去删它。
+- **in-app 面板的截图抓不到跨源 iframe**：Desmos 嵌入在面板里肉眼可见，但 `take_screenshot`
+  （整页或元素）截出来是**空白**；面板隐藏时更直接报 `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`。
+  所以"iframe 真的画出内容"要靠人眼或外部浏览器截图——`docs/evidence/t0-0-sites-desmos.png`
+  就是用户截图。别把空白截图读成"嵌入失败"，也别把 `load` 事件读成"画出来了"（探针页自己就写了这条）。
 - **`.qoder.site` 描述符是 host-local 的**，里面带冻结的 `index.html` 与内部 ID，已加进 `.gitignore`。
   换机器或换 agent 必须 `prepare_site` 新 action，不要复用别人机器上的 actionId。
 - **`prepare_site` 返回 `descriptorStatus: pending` 不是失败**：等 readiness 完成后用
