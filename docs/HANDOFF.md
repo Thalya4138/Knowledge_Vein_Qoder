@@ -89,11 +89,11 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #7（QoderWang1，2026-11-12 晚 8） |
+| 最新接龙条目 | §4.5 #8（QoderWang1，2026-11-13 晚） |
 | 分支 | `task/T0-0-QoderWang1`，HEAD 取 `git log --oneline origin/task/T0-0-QoderWang1 -1` |
-| 合并状态 | PR #1（`08af8e8`）+ PR #2（`bff7892`）已进 `main`，`main` 上的 CI 首跑已验证（#7）。合并之后又产生了几条**文档提交**（接龙 #6/#7），差多少用 `git log --oneline origin/main..origin/task/T0-0-QoderWang1` 现取；要同步就开第三个 PR，别在文档里写条数 |
-| 下一位的入口 | §4.4 上手清单，从第 2 步的四道门开始（先 `git fetch`，基于 `main` 开新分支） |
-| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑦ 两件人类专属收尾（④ 已结案，见 #7） |
+| 合并状态 | PR #1（`08af8e8`）+ PR #2（`bff7892`）已进 `main`，`main` 上的 CI 首跑已验证（#7）。合并之后又产生了几条**文档提交**，其中 **#8 改了真源（ADR-0007）——别人动工前先 rebase**；差多少用 `git log --oneline origin/main..origin/task/T0-0-QoderWang1` 现取；要同步就开第三个 PR，别在文档里写条数 |
+| 下一位的入口 | §4.4 上手清单，从第 2 步的四道门开始（先 `git fetch`，基于 `main` 开新分支）。做 T1-2 的话先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
+| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑦ 两件人类专属收尾（④ 已结案，见 #7）；另欠 #8 本轮一条 `DEVELOPMENT_LOG.md` 条目（见 #8 的已知缺陷） |
 
 （旧版表格存档如下，保留原样以便追溯。）
 
@@ -211,8 +211,9 @@ CI 改写未经远端验证。
 | 5 | 2026-11-12 晚 6 | QoderWang1 | **更正 #3/#4 的合并状态**：用户问"都 push 过了吧"，`git fetch` 后查出 PR #1 已合并进 `main`（`08af8e8`），而 §4.0 还写着"`main` 停在 `883ea7a`"。本分支已 merge 回 `origin/main`（用 merge 不用 rebase：分支已 push，不能重写别人可能拉走的历史） | 已提交并 push | ④ 缩为"第二个 PR + CI 首跑确认" | `git log --oneline origin/main -1` |
 | 6 | 2026-11-12 晚 7 | QoderWang1 | 用户合了 **PR #2**（`bff7892`）后担心"最新的没了"。查证：**什么都没丢**——`93af27a` 是 `origin/main` 的祖先、`git diff main task/T0-0-QoderWang1` 为空、main 上的 HANDOFF 有接龙 #5。他看到的"上一版"是**本地 `main` 指针落后 22 个提交**（还停在合并前的 `883ea7a`）；已用 `git fetch origin main:main` 快进（只动指针，不碰工作目录，非快进会自动拒绝） | 已提交并 push | ④ 只剩 CI 首跑结果确认；工作分支可删——删除不可逆，归用户执行，且建议先看 CI 再删 | `git branch -vv` |
 | 7 | 2026-11-12 晚 8 | QoderWang1 | **④ 结案**：用户截图显示 `main` 上的 `bff7892` 触发 `verify` 第 9 次运行、15 s 全绿 → CI 首跑通过（`npm ci → verify:content → typecheck → test → build`）。诚实标注：证据是用户截图，agent 未独立复核（仓库私有 → 未登录 API 404，本机无 `gh`）。同时纠正 §4.0 的"分支与 main 完全一致"：合并后又产生文档提交，已改为"用命令现取条数 + 第三个 PR 同步" | 已提交并 push | 余量：② D-2、⑤ 团队版站点处置、⑦ 截图与 Obsidian 排除；另需仓库所有者开第三个 PR 同步文档提交 | 本文件 §4.0 / §4.2 ④ / §4.3 |
+| 8 | 2026-11-13 晚 | QoderWang1 | **规则变更：ADR-0007 与 `QUALITY_GATES.md` §2.5 生效**——资源抽屉的两层交互从"只写在样张 `app.js` 里"升格为规格 + 可验收清单。动到三处：`UX_AND_FLOWS.md` §3 新增"资源抽屉"小节、§7 响应式补两侧同开；`QUALITY_GATES.md` §2.5 九项手测清单；`IMPLEMENTATION_PLAN.md` T1-2 的验收口径由"并排截图"改为"逐条点过"（理由见 ADR-0007 背景）。三条裁决：**抽屉移到左侧**（原与 §5 的 AI 侧栏争同一块位置）、**视频不内嵌播放器**、`unavailable` 定位不得退化成只到资源主页的链接。**标「改了真源」：`docs/DECISIONS.md` 新增 ADR-0007**，其他人先 rebase 再动工；本轮真源与其余文档落在同一个 commit `a4d76f3`，未按 §3 第三条拆分——别照抄这个合并法。门：`verify:content` 与 `typecheck` 实跑通过；`test` / `build` 未跑（本轮纯文档 + 样张一行 CSS 的滑出方向） | 已提交并 push（`a4d76f3`）；本条与 §4.0 指针随下一个文档提交带走 | 无新增待拍板项，ADR-0007 自带"何时重审"两条。**给 T1-2 接手人**：行为基准是样张 `content/demo/linear-algebra/rendered/app.js`，验收证据要 `?open=<spanId>` 的**打开态**截图——关闭态截图验不了交互。**已知缺陷**：`DEVELOPMENT_LOG.md` 本轮条目还欠着 | ADR-0007 / `QUALITY_GATES.md` §2.5 / `UX_AND_FLOWS.md` §3、§7 |
 
-**下一位从这里接第 8 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+**下一位从这里接第 9 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
