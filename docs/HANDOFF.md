@@ -89,10 +89,10 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #10（QoderWang1，2026-11-14，⑦ 结案） |
+| 最新接龙条目 | §4.5 #11（QoderWang1，2026-11-14 晚，T1-1 交付） |
 | 分支 | `task/T0-2-QoderWang1`，HEAD 取 `git log --oneline origin/task/T0-2-QoderWang1 -1` |
 | 合并状态 | PR #1（`08af8e8`）+ PR #2（`bff7892`）+ PR #3（`f983a90`）已进 `main`，`main` 上的 CI 首跑已验证（#7）。**#8 的 ADR-0007 已随 PR #3 进入 `main`**，新分支从 `origin/main` 开即可，不必再为它 rebase；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
-| 下一位的入口 | **T0-1 外壳**（T0-2 已解锁它）：Vite + React + TS、BrowserRouter、四路由、三栏 + 状态条、错误边界、统计数字运行时算。做 T1-2 的话先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
+| 下一位的入口 | **T0-1 外壳**（T0-2 已解锁它）：Vite + React + TS、BrowserRouter、四路由、三栏 + 状态条、错误边界、统计数字运行时算。**外壳从第一天就按路由拆代码**——T1-1 解析器单独 gzip 195 kB，不分路由 T1-2 接进来必超预算（#11）。做 T1-2 的话先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
 | 还欠谁的 | ② D-2、⑤ 团队版站点处置（④⑦ 已结案，见 #7 / #10）。#8 欠的 `DEVELOPMENT_LOG.md` 条目已由 #9 补记 |
 
 （旧版表格存档如下，保留原样以便追溯。）
@@ -172,7 +172,9 @@ CI 改写未经远端验证。
 | T0-1 外壳 | 未认领（T0-2 已解锁） | 无 |
 | T0-3 zod 领域类型 | 未认领 | T0-1（`TASK_T0.md` §3 的顺序） |
 | T0-4 内容校验接入 | 大部分已由 QoderWang1 完成（`verify:content` 覆盖布局与证据、Vitest、ajv schema 测试）；**CI 已在 `main` 上首跑通过**（#7） | — |
-| T1–T7 | 未认领 | T0 全部合并 |
+| T1-1 解析器 | **已交付待合并**（#11；worktree `QODER-T1-1`，64 tests，四道门实跑） | T0-2 |
+| T1-2 阅读器 UI | 未认领 | T0-1 + T1-1 合入 |
+| T1-3 / T2–T7 | 未认领 | 各自前置 |
 | 合并 + CI 首跑 | **已完成**（PR #1/#2 + `verify` 15 s 绿，见 #7）；只剩把之后的文档提交并入 `main` | 谁能 push `main` 谁开第三个 PR |
 
 范围与验收看 `IMPLEMENTATION_PLAN.md` §2 与 `TASK_T0.md`，别在这里抄。
@@ -188,9 +190,9 @@ CI 改写未经远端验证。
    「应用从 /atlas 直接启动」。**这一步是校准，不是验收**——它证明你手上的站点和文档描述的是同一个。
 4. **账号归属已确认，不用再做**：⑥ 已结案——发布用的个人版账号就是参赛者本人（用户 2026-11-12）。
    但**如果你换了账号再发布，这条要重新确认一次**，链接归属跟着账号走。
-5. **下一件该做的**：**T0-2 选型填写**。能力表现在四项齐了（ADR-0002），
-   可以正面回答框架 / Markdown 解析器 / 编辑器 / 图谱库 / 存储，并写清被排除方案的代价。
-   选完才轮到 T0-1 外壳——`ARCHITECTURE.md` 顶部那句"选型漂移会让领域模型作废"仍然有效。
+5. **下一件该做的**：**T0-1 外壳**（T0-2 已定稿，见 ADR-0002）。**从第一天就按路由拆代码**：
+   T1-1 解析器单独 gzip 195 kB，占单路由预算（300 kB）的三分之二；外壳不分路由，T1-2 接进来必超。
+   合并顺序 **T0-2 → T0-1 → T1-1**（lockfile 冲突只解一次）；T1-2 等 T0-1 与 T1-1 都合入再开工。
 6. **不要做**：不 push `main`；不删团队版站点（⑤）；不改 `content/demo` 的数学内容与 `prompts/*.md`
    的 rubric；不在仓库里堆构建产物（§6 第一条）；不拿 `fetch` 判深链（§6）；
    不把团队版链接当公网入口贴进帖子。
@@ -217,7 +219,9 @@ CI 改写未经远端验证。
 
 | 10 | 2026-11-14 | QoderWang1 | **⑦ 结案**：Obsidian 排除写入 `.obsidian/app.json`（未运行时写，下次启动生效）；公网四项整页截图 `t0-0-sites-atlas.png`（agent 截）；Desmos 实嵌视觉证据 `t0-0-sites-desmos.png`（**用户截图**）。新坑进 §6：in-app 截图对跨源 iframe 只出空白、面板隐藏时截图不可用。ADR-0002 iframe 格补视觉证据 | 已提交（`task/T0-2-QoderWang1`） | ⑦ 不再欠；余 ② D-2、⑤ | `docs/evidence/t0-0-sites-*.png` / 本文件 §6 / ADR-0002 |
 
-**下一位从这里接第 11 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 11 | 2026-11-14 晚 | QoderWang1（T1-1 worktree；本条由主 worktree 代写，接龙链在 `task/T0-2` 上） | **T1-1 交付**：`apps/web/src/content/` 纯函数解析器（`parseNote` / `renderNodes`），四道门在 worktree 实跑通过、64 tests（新增 46）；修两个"拼起来才错"的 bug：单行 `$$…$$` 被 remark-math 当行内（按样张 9 个独立公式对数抓出）、白名单同名规则覆盖导致 wiki link class 被清空。**包体警告：解析器单独 801 kB min / 195 kB gzip，占单路由预算 2/3 → T0-1 外壳必须从第一天按路由拆代码**。分支 `task/T1-1-QoderWang1`（`7f9b406` / `bcfa54c`）已 push。**合并顺序 T0-2 → T0-1 → T1-1**：lockfile 冲突只解一次；`DEVELOPMENT_LOG.md` 顶部也会撞，保留双方条目按日期排 | 已 push，待 PR（本机无 `gh`，PR 由所有者在网页开） | 无新增待拍板 | worktree `C:\Users\Wang\Desktop\QODER-T1-1` / `apps/web/src/content/README.md` / 该分支日志条目 |
+
+**下一位从这里接第 12 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
