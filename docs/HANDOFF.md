@@ -19,10 +19,23 @@
 | 角色 | id 形如 | 做什么 | 不做什么 |
 | --- | --- | --- | --- |
 | 实现者 | `QoderWang<N>` | 认领 T 任务、写代码与文档、跑四道门、交付 | 不自行裁决契约冲突 |
-| 审查者 | `QoderJudge<N>` | 复验交付声明（亲自重跑命令、抽查文件）；对矛盾给出**裁决建议**；维护本文件 | 不认领 T 任务、不写业务代码、**不替用户拍板** |
+| 审查者 | `QoderJudge<N>` | 复验交付声明（亲自重跑命令、抽查文件）；对矛盾给出**裁决建议**；维护本文件 | 不认领 T 任务、不写业务代码（收尾阶段例外见下）、**不替用户拍板** |
 
 **裁决只有用户能做。** 审查者的建议经用户确认后才生效，生效后写进对应 ADR 或契约文档，
 并在 `DEVELOPMENT_LOG.md` 记下用户原话。
+
+**QoderJudge1 的收尾职责（用户 2026-11-15 指派）**
+
+启动条件：**公网网址可用、大部分功能完成，并由用户宣布进入收尾**。在此之前不动下面两项，
+以免和实现者改同一批文件。
+
+1. **作品帖协作**：按 `CONTEST_SUBMISSION.md` §2 的结构起草、修改帖子与截图清单，
+   素材取自 `DEVELOPMENT_LOG.md` 与 `docs/evidence/`。帖子由用户定稿，也由用户发布。
+2. **视觉与页面打磨**：排版、字体、配色、间距、首屏、交互细节、移动端适配等审美层面的优化。
+   这是「不写业务代码」的**唯一例外**，边界如下：
+   - 只改展示层（样式、布局组件、界面文案），不改数据流、`domain/`、`schemas/`、`content/` 的知识内容；
+   - 和实现者一样走流程：开分支 `task/polish-QoderJudge1`、跑四道门、在 §4.5 追加交付条目，合并由用户做；
+   - 打磨时发现功能缺陷，记进交接卡交回实现者，不顺手修。
 
 署名出现在三处：
 
@@ -214,14 +227,12 @@ CI 改写未经远端验证。
 | 6 | 2026-11-12 晚 7 | QoderWang1 | 用户合了 **PR #2**（`bff7892`）后担心"最新的没了"。查证：**什么都没丢**——`93af27a` 是 `origin/main` 的祖先、`git diff main task/T0-0-QoderWang1` 为空、main 上的 HANDOFF 有接龙 #5。他看到的"上一版"是**本地 `main` 指针落后 22 个提交**（还停在合并前的 `883ea7a`）；已用 `git fetch origin main:main` 快进（只动指针，不碰工作目录，非快进会自动拒绝） | 已提交并 push | ④ 只剩 CI 首跑结果确认；工作分支可删——删除不可逆，归用户执行，且建议先看 CI 再删 | `git branch -vv` |
 | 7 | 2026-11-12 晚 8 | QoderWang1 | **④ 结案**：用户截图显示 `main` 上的 `bff7892` 触发 `verify` 第 9 次运行、15 s 全绿 → CI 首跑通过（`npm ci → verify:content → typecheck → test → build`）。诚实标注：证据是用户截图，agent 未独立复核（仓库私有 → 未登录 API 404，本机无 `gh`）。同时纠正 §4.0 的"分支与 main 完全一致"：合并后又产生文档提交，已改为"用命令现取条数 + 第三个 PR 同步" | 已提交并 push | 余量：② D-2、⑤ 团队版站点处置、⑦ 截图与 Obsidian 排除；另需仓库所有者开第三个 PR 同步文档提交 | 本文件 §4.0 / §4.2 ④ / §4.3 |
 | 8 | 2026-11-13 晚 | QoderWang1 | **规则变更：ADR-0007 与 `QUALITY_GATES.md` §2.5 生效**——资源抽屉的两层交互从"只写在样张 `app.js` 里"升格为规格 + 可验收清单。动到三处：`UX_AND_FLOWS.md` §3 新增"资源抽屉"小节、§7 响应式补两侧同开；`QUALITY_GATES.md` §2.5 九项手测清单；`IMPLEMENTATION_PLAN.md` T1-2 的验收口径由"并排截图"改为"逐条点过"（理由见 ADR-0007 背景）。三条裁决：**抽屉移到左侧**（原与 §5 的 AI 侧栏争同一块位置）、**视频不内嵌播放器**、`unavailable` 定位不得退化成只到资源主页的链接。**标「改了真源」：`docs/DECISIONS.md` 新增 ADR-0007**，其他人先 rebase 再动工；本轮真源与其余文档落在同一个 commit `a4d76f3`，未按 §3 第三条拆分——别照抄这个合并法。门：`verify:content` 与 `typecheck` 实跑通过；`test` / `build` 未跑（本轮纯文档 + 样张一行 CSS 的滑出方向） | 已提交并 push（`a4d76f3`）；本条与 §4.0 指针随下一个文档提交带走 | 无新增待拍板项，ADR-0007 自带"何时重审"两条。**给 T1-2 接手人**：行为基准是样张 `content/demo/linear-algebra/rendered/app.js`，验收证据要 `?open=<spanId>` 的**打开态**截图——关闭态截图验不了交互。**已知缺陷**：`DEVELOPMENT_LOG.md` 本轮条目还欠着 | ADR-0007 / `QUALITY_GATES.md` §2.5 / `UX_AND_FLOWS.md` §3、§7 |
-
 | 9 | 2026-11-14 | QoderWang1 | **T0-2 定稿**：ADR-0002 五项选型 + 被排除方案 + 包体预算 + "未验证"清单 + 重审条件；`ARCHITECTURE.md` §2 加指针；顺带补记 #8 欠的日志。四道门实跑通过（18 tests；JS 271.42 kB / gzip 88.10 kB）。**未装任何新依赖** | 已提交（`task/T0-2-QoderWang1`，待 PR） | 无新增待拍板；⑤ 用户 2026-11-14 表示不急、公网口径按个人版走 | `DEVELOPMENT_LOG.md`「T0-2：ADR-0002 五项选型定稿」 / ADR-0002 |
-
 | 10 | 2026-11-14 | QoderWang1 | **⑦ 结案**：Obsidian 排除写入 `.obsidian/app.json`（未运行时写，下次启动生效）；公网四项整页截图 `t0-0-sites-atlas.png`（agent 截）；Desmos 实嵌视觉证据 `t0-0-sites-desmos.png`（**用户截图**）。新坑进 §6：in-app 截图对跨源 iframe 只出空白、面板隐藏时截图不可用。ADR-0002 iframe 格补视觉证据 | 已提交（`task/T0-2-QoderWang1`） | ⑦ 不再欠；余 ② D-2、⑤ | `docs/evidence/t0-0-sites-*.png` / 本文件 §6 / ADR-0002 |
-
 | 11 | 2026-11-14 晚 | QoderWang1（T1-1 worktree；本条由主 worktree 代写，接龙链在 `task/T0-2` 上） | **T1-1 交付**：`apps/web/src/content/` 纯函数解析器（`parseNote` / `renderNodes`），四道门在 worktree 实跑通过、64 tests（新增 46）；修两个"拼起来才错"的 bug：单行 `$$…$$` 被 remark-math 当行内（按样张 9 个独立公式对数抓出）、白名单同名规则覆盖导致 wiki link class 被清空。**包体警告：解析器单独 801 kB min / 195 kB gzip，占单路由预算 2/3 → T0-1 外壳必须从第一天按路由拆代码**。分支 `task/T1-1-QoderWang1`（`7f9b406` / `bcfa54c`）已 push。**合并顺序 T0-2 → T0-1 → T1-1**：lockfile 冲突只解一次；`DEVELOPMENT_LOG.md` 顶部也会撞，保留双方条目按日期排 | 已 push，待 PR（本机无 `gh`，PR 由所有者在网页开） | 无新增待拍板 | worktree `C:\Users\Wang\Desktop\QODER-T1-1` / `apps/web/src/content/README.md` / 该分支日志条目 |
+| 12 | 2026-11-14 晚 | QoderWang1 | **全仓状态面核对**（用户指出计划表没标已完成）：`IMPLEMENTATION_PLAN.md` §1/§2 加交付标记（T0-0 / T0-2 / T1-0 / T1-1 ✅，T0-4 ◐，T0-1 下一件）；`TASK_T0.md` §2 现状改写（`dev` 不再是占位）；`ARCHITECTURE.md` 顶部改"选型已定稿"+ BrowserRouter 结论；`README.md` 状态块与目录补解析器、测试数与包体数去写死；`REQUIREMENTS_TRACE.md` §0 与 1.7 记"解析器待合并、未进界面不算 ✓"；本文件 §4.4 基线注明分支差异。**`QUALITY_GATES.md` 与 `CONTEST_SUBMISSION.md` 的勾是待验证清单，功能没做不提前勾** | 已提交（`task/T0-2-QoderWang1`） | 无新增待拍板 | 各文件本轮 diff；标记依据 #3 / #7 / #9 / #10 / #11 |
 
-**下一位从这里接第 12 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+**下一位从这里接第 13 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
