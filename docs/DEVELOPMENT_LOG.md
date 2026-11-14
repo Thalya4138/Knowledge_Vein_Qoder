@@ -71,6 +71,9 @@ Dexie 打包体积都**未测**，ADR 已把它们单列成"未验证"。本轮�
 `IMPLEMENTATION_PLAN.md` T1-2 验收口径改为"逐条点过"。**当轮门**：`verify:content` 与 `typecheck`
 实跑通过；`test` / `build` 未跑（纯文档 + 样张一行 CSS 的滑出方向）。
 
+---
+
+## 2026-11-12（晚 6）· QoderWang1 · 复查推送状态时发现 PR #1 已合并
 
 **目标**：回答"都 push 过了吧"——不靠记忆，用 `git fetch` + 比对本地/远端。
 **明确不做**：不 rebase（分支已 push，重写历史会影响别人）、不动 `main`、不再部署。
