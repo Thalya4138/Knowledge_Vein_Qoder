@@ -5,6 +5,46 @@
 
 ---
 
+## 2026-11-14（晚）· QoderWang1 · T1-1：讲义 Markdown 解析器
+
+**目标**：把 `notes/2.1-列空间中的最近点.md` 解析成阅读器、检索、锚点跳转共用的结构，并能把每块内容渲染成
+带 KaTeX 的 HTML 树。与 T0-1 外壳并行开发，因此**只做纯函数，不碰界面**。
+**明确不做**：不接路由、不写 React 组件、不改 `content/demo`、不改 `verify-content.mjs`。
+
+**做了什么**
+
+1. `apps/web/src/content/`：`parseNote()` 产出块 / 栏目 / `^锚` / 旁栏对齐 / 版式行 / wiki link / 行号 / 诊断；
+   `renderNodes()` 走 remark-rehype → rehype-raw → rehype-sanitize → rehype-katex。接口与限制见该目录 `README.md`。
+2. 旁栏对齐按样张取规则：没写 `@` 的"本节聚焦"前面没有正文段，与**后一段** `^p-intro` 同行——
+   规格原文只写了"对齐前一段"，样张补全了这个边界。
+3. **发现并修复一处方言差异**：讲义的独立公式都写成单行 `$$…$$`，Obsidian 视为独立公式，
+   remark-math 却按行内公式解析——全篇 9 个独立公式会挤进行内，带 `\tag{2-1}` 的直接报错。
+   解析器把"独占一段的 `$$…$$`"提升为公式块，测试按样张逐一对数（9 个 `katex-display`）。
+4. 白名单合并：GitHub 默认 schema 对 `<a>` 已有一条 `className` 规则，追加第二条不生效，
+   wiki link 的 class 会被清空；改为合并成一条。
+5. 防漂移测试：callout 白名单、锚点集合与 `verify-content.mjs` 逐项比对；资源卡 span 必须在 manifest 里且带 `why`。
+6. 新增依赖（均为 ADR-0002 §2 已定的 remark 系）：`unified` `remark-parse` `remark-gfm` `remark-math`
+   `remark-frontmatter` `remark-rehype` `rehype-raw` `rehype-sanitize` `rehype-katex` `vfile`；
+   开发依赖 `@types/mdast` `@types/hast` `hast-util-to-html`（测试里把 hast 转成字符串比对）。
+
+**验证**（本轮实跑）
+
+```text
+$ npm run verify:content → ✓ 通过
+$ npm run typecheck     → 无输出
+$ npm run test          → 4 files / 64 tests passed（新增 46：demo 讲义 20 + 边界与反例 26）
+$ npm run build         → JS 271.42 kB │ gzip 88.10 kB（外壳尚未引用解析器，包体不变）
+解析器单独打包         → 801.4 kB min / 195.4 kB gzip
+```
+
+**已知缺陷**：解析器单独就占单路由预算（gzip ≤ 300 kB）的三分之二，T1-2 必须懒加载；parse5（`rehype-raw`）
+只为 `<details>` 服务，若预算吃紧可评估改为只放行 `<details>`/`<summary>` 的轻量处理。
+`verify-content.mjs` 尚未改为调用本模块，两边靠测试对齐。其余限制列在 `apps/web/src/content/README.md`。
+
+**下一步**：T1-2 阅读器 UI 接 `doc.rows`（等 T0-1 外壳合入后开工）；T1-3 锚点跳转直接用 `headings[].slug` 与 `anchors`。
+
+---
+
 ---
 
 ---
