@@ -1,11 +1,30 @@
-import { useState } from 'react';
-import { Link, NavLink, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense, useState } from 'react';
+import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { HomePage } from './app/HomePage';
 import { demoKb } from './app/demo';
-import { WorkspacePage } from './features/workspace/WorkspacePage';
-import { LabPage } from './features/lab/LabPage';
-import { ConnectionPage } from './features/connection/ConnectionPage';
-import { AtlasPage } from './features/atlas/AtlasPage';
+import { ErrorBoundary } from './ui/ErrorBoundary';
+
+// 首页直接打包：评委落地即见，不多等一次请求。
+// 四个视口按路由懒加载：进哪个页面才下载哪个页面的代码。
+// T1-1 解析器 gzip 约 195 kB，接进工作台后只落在工作台那一块，不拖慢首页（ADR-0002 包体预算）。
+const WorkspacePage = lazy(() =>
+  import('./features/workspace/WorkspacePage').then((m) => ({ default: m.WorkspacePage })),
+);
+const LabPage = lazy(() => import('./features/lab/LabPage').then((m) => ({ default: m.LabPage })));
+const ConnectionPage = lazy(() =>
+  import('./features/connection/ConnectionPage').then((m) => ({ default: m.ConnectionPage })),
+);
+const AtlasPage = lazy(() =>
+  import('./features/atlas/AtlasPage').then((m) => ({ default: m.AtlasPage })),
+);
+
+function PageLoading() {
+  return (
+    <div className="page" role="status" aria-live="polite">
+      <p className="lede">正在载入页面…</p>
+    </div>
+  );
+}
 
 const SECTIONS = [
   { path: '/workspace', no: '01', name: '学习工作台' },
@@ -56,6 +75,7 @@ function NotFound() {
 
 export default function App() {
   const [aiOpen, setAiOpen] = useState(() => window.matchMedia('(min-width: 1280px)').matches);
+  const { pathname } = useLocation();
   return (
     <div className="shell">
       <header className="topbar">
@@ -85,14 +105,20 @@ export default function App() {
         </nav>
 
         <main className="main">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/workspace" element={<WorkspacePage />} />
-            <Route path="/lab" element={<LabPage />} />
-            <Route path="/connection" element={<ConnectionPage />} />
-            <Route path="/atlas" element={<AtlasPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          {/* 页面级错误边界：页面内部出错或代码块下载失败（如重新部署后旧文件已不存在）时，
+              导航与状态条仍在；换路由即重置（key）。外层 main.tsx 那一层只兜外壳自身。 */}
+          <ErrorBoundary key={pathname}>
+            <Suspense fallback={<PageLoading />}>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/workspace" element={<WorkspacePage />} />
+                <Route path="/lab" element={<LabPage />} />
+                <Route path="/connection" element={<ConnectionPage />} />
+                <Route path="/atlas" element={<AtlasPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </main>
 
         <AiSidebar open={aiOpen} onToggle={() => setAiOpen((v) => !v)} />

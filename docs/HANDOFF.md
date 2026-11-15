@@ -19,10 +19,26 @@
 | 角色 | id 形如 | 做什么 | 不做什么 |
 | --- | --- | --- | --- |
 | 实现者 | `QoderWang<N>` | 认领 T 任务、写代码与文档、跑四道门、交付 | 不自行裁决契约冲突 |
-| 审查者 | `QoderJudge<N>` | 复验交付声明（亲自重跑命令、抽查文件）；对矛盾给出**裁决建议**；维护本文件 | 不认领 T 任务、不写业务代码、**不替用户拍板** |
+| 审查者 | `QoderJudge<N>` | 复验交付声明（亲自重跑命令、抽查文件）；对矛盾给出**裁决建议**；维护本文件 | 不认领 T 任务、不写业务代码（收尾阶段例外见下）、**不替用户拍板** |
 
 **裁决只有用户能做。** 审查者的建议经用户确认后才生效，生效后写进对应 ADR 或契约文档，
 并在 `DEVELOPMENT_LOG.md` 记下用户原话。
+
+**QoderJudge1 的收尾职责（用户 2026-11-15 指派）**
+
+启动条件：**公网网址可用、大部分功能完成，并由用户宣布进入收尾**。在此之前不动下面三项，
+以免和实现者改同一批文件。
+
+1. **作品帖协作**：按 `CONTEST_SUBMISSION.md` §2 的结构起草、修改帖子与截图清单，
+   素材取自 `DEVELOPMENT_LOG.md` 与 `docs/evidence/`。帖子由用户定稿，也由用户发布。
+2. **视觉与页面打磨**：排版、字体、配色、间距、首屏、交互细节、移动端适配等审美层面的优化。
+   这是「不写业务代码」的**唯一例外**，边界如下：
+   - 只改展示层（样式、布局组件、界面文案），不改数据流、`domain/`、`schemas/`、`content/` 的知识内容；
+   - 和实现者一样走流程：开分支 `task/polish-QoderJudge1`、跑四道门、在 §4.5 追加交付条目，合并由用户做；
+   - 打磨时发现功能缺陷，记进交接卡交回实现者，不顺手修。
+3. **入门文档**（用户 2026-11-15 追加）：站内 `/guide` 页面，形式类似 API 服务站的文档站
+   （快速开始 / 功能介绍 / 常见问题），给卡住或想深挖的评委看。它**跟随评委路线写，不另起一套**
+   （路线见 §4.2 ⑧）：路线、`/guide`、帖子第 4 段、路演演示共用同一套 5 步，只写一次、四处复用。
 
 署名出现在三处：
 
@@ -89,11 +105,11 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #14（QoderWang1，2026-11-15，修 PR #6 CI：补回被 .gitignore 吞掉的 WorkspacePage） |
-| 分支 | `task/T0-1-QoderPeng1`（PR #6：GitHub `main` `b70cb87` + T0-1 外壳 + WorkspacePage 补回，待 PR 合并）；HEAD 取 `git log --oneline origin/task/T0-1-QoderPeng1 -1` |
-| 合并状态 | **2026-11-15 用户授权同步**：本地 `main` 已重建为 GitHub `main` + T0-1（线性叠加）。同步前的本地旧历史存于 `backup/local-main-pre-sync`（连同 `task/T0-1-QoderPeng1`、`task/T0-2-QoderPeng1` 两个本地分支，**勿再推送**）。PR #1–#3 与 T0-2/T1-1 均已含在 `origin/main` 里，新分支从 `origin/main` 开即可 |
-| 下一位的入口 | **T0-3 zod 领域类型**（T0-1、T0-2 已完成，见 §4.3）。做 T1-2 的话先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
-| 还欠谁的 | ② D-2、⑤ 团队版站点处置；同步分支的 PR 由用户合并（④⑦ 已结案，见 #7 / #10） |
+| 最新接龙条目 | §4.5 #19（QoderWang1，2026-11-15，judge-fixes 代提交 + 懒加载/错误边界浏览器实测） |
+| 分支 | `task/judge-fixes-QoderJudge1`（已 push，文档/代码两提交；PR 与合并按用户本轮指派由 agent 执行，不成则用户开）；HEAD 取 `git log --oneline origin/task/judge-fixes-QoderJudge1 -1` |
+| 合并状态 | PR #1–#6 已进 `main`（T0-0 / T0-2 / T1-1 / T0-1 全部在内）。`task/T0-2-QoderWang1` 上未合并的 5 个文档提交已由 #18 并入，**该分支不必再开 PR**；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
+| 下一位的入口 | **T1-2 阅读器 UI** 或 **T0-3 zod 领域类型**（前置都已满足，见 §4.3）。路由已按页懒加载（#18），T1-2 接解析器时只进工作台那一块；做 T1-2 先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
+| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线（待用户设计）（④⑦ 已结案，见 #7 / #10） |
 
 （旧版表格存档如下，保留原样以便追溯。）
 
@@ -144,6 +160,8 @@ CI 改写未经远端验证。
 | ⑤ | **团队版那份站点怎么处置**：`vein-t0-probe-4588bqc00js.qoder.zone`（`organization`，需登录） | 它现在和公网那份内容重复，留着可能让人误贴错链接；删掉是不可逆的资源删除 | 默认**保留**作内部预览，ADR-0002 的两份站点对照表已经写清各自用途。要删需要所有者明确授权（`delete_project`，工具会先讲清影响），**不要顺手清理**。用户 2026-11-14 表示"不急，公网口径按个人版走" |
 | ⑥ | ~~公网链接绑定在哪个个人版账号上~~ | — | **已结案（用户 2026-11-12 确认）**：刚才发布用的个人版账号**就是参赛者本人**，账号归属没问题，公网链接可以直接进帖子。原判断留在这里供追溯：那份 `public` 站点属于"当时登录 Qoder 的账号"，所以**换人接手时必须重新确认一次**——如果下一位用别的账号登录再发布，链接的归属就跟着变了（做法见 §6"换账号发布的规定动作"） |
 | ⑦ | **两件只有人类能做的收尾** | agent 打不开面板；Obsidian 设置原以为只能人改 | **已结案（2026-11-14，#10）**。② agent 直接写了 `.obsidian/app.json` 的 `excludedFiles`（`node_modules/**`、`apps/web/dist/**`），当时 Obsidian 未运行，**下次启动生效**；`.obsidian/` 不进 Git。① 公网四项整页截图 `docs/evidence/t0-0-sites-atlas.png`（agent 截）+ Desmos 坐标系 `docs/evidence/t0-0-sites-desmos.png`（**用户截图**：in-app 截图对跨源 iframe 只出空白，新坑已进 §6）。**不再欠** |
+| ⑧ | **评委路线的落地设计**（用户 2026-11-15 提出：评委拿到网址就能快速上手，并感受到产品的核心能力） | 5 步草稿已有（`CONTEST_SUBMISSION.md` §2 第 4 段、`AGENTS.md` §0），缺落地设计：第一屏看到什么、几秒内看到第一条带理由的边、跑偏后怎么回到路线、走完后手里留下什么。**它决定实现者先把哪条路径做通，收尾时再设计就来不及改** | 现在定，作为 T1-2 之后各任务的验收标准。原则：路线只证明一个主张（边有理由、有条件，网归用户自己），其余能力沿路自然出现，**不做功能墙**；引导放在产品内部（落地即在示例课程中，可关闭的「导览 1/5」），`/guide` 文档只作兜底。**设计由用户定**，QoderJudge1 以提问方式协助 |
+| ⑨ | ~~AI 功能怎么分层、要不要 API、谁付费~~ | — | **已裁决（用户 2026-11-15）**。分三层：**0 确定性**（无 AI：阅读、检索、图谱编辑、布局、导出导入、实验）/ **1 预置**（构建时离线生成、人工审核、作为数据随站发布，界面标「示例结果」）/ **2 实时**（仅 BYOK，key 只存内存，`AGENTS.md` §1 第 7 条）。**不放项目自己的 key**：没有后端（ADR-0002），写进前端就等于公开。**BYOK 要做**，但排在第 0、1 层做扎实之后，最后看时间。**无 key 时**：评委从若干预置问题中挑选，看到离线答案；界面说明接入自己的 API key 即可实时使用。仍待定：预置问题的数量（评委路线第 ④ 步那一题必须包含在内）；各家 API 能否从浏览器直连（CORS 跨域限制，需实测）；无 key 时自由输入框怎么处理。落地时由实现者写进 `PRODUCT_SPEC.md` 与对应 ADR |
 
 **部署须知（① 的执行要求）**
 
@@ -169,11 +187,13 @@ CI 改写未经远端验证。
 | --- | --- | --- |
 | T0-0 部署探针 | **四项在匿名可达的公网地址实测通过**（个人版账号，`public`）；探针修正版已发布 | 补拍 `t0-0-sites-*.png`（需打开 in-app Browser 面板） |
 | T0-2 ADR-0002 | **已完成**（2026-11-14，接龙 #9）：五项选型 + 被排除方案 + 包体预算已定稿 | — |
-| T0-1 外壳 | **已完成**（2026-11-15，接龙 #11–#13；代码随本次同步并入 `main`） | 无 |
+| T0-1 外壳 | **已合并**（PR #6，接龙 #11–#14）。路由懒加载由 #18 补上 | 无 |
 | T0-3 zod 领域类型 | 未认领 | T0-1（`TASK_T0.md` §3 的顺序） |
 | T0-4 内容校验接入 | 大部分已由 QoderWang1 完成（`verify:content` 覆盖布局与证据、Vitest、ajv schema 测试）；**CI 已在 `main` 上首跑通过**（#7） | — |
-| T1–T7 | 未认领 | T0 全部合并 |
-| 合并 + CI 首跑 | **已完成**（PR #1/#2 + `verify` 15 s 绿，见 #7）；只剩把之后的文档提交并入 `main` | 谁能 push `main` 谁开第三个 PR |
+| T1-1 解析器 | **已合并**（PR #5，接龙 #15；worktree `QODER-T1-1` 已由用户删除） | — |
+| T1-2 阅读器 UI | 未认领（前置已满足） | — |
+| T1-3 / T2–T7 | 未认领 | 各自前置 |
+| 合并 + CI 首跑 | **已完成**（PR #1–#6；CI 首跑见 #7）；T0-2 分支余下的文档提交已由 #18 并入 | — |
 
 范围与验收看 `IMPLEMENTATION_PLAN.md` §2 与 `TASK_T0.md`，别在这里抄。
 
@@ -183,6 +203,7 @@ CI 改写未经远端验证。
 2. **验**：`git fetch && git checkout task/T0-0-QoderWang1`，跑
    `npm ci && npm run verify:content && npm run typecheck && npm run test && npm run build`。
    预期：校验通过、`tsc` 无输出、**18 条测试全过**、JS 产物约 271 KB（gzip 88 KB）。
+   （这是 `main` 的基线；T1-1 合入后为 64 条。**以你拉到的分支实跑为准**，别拿文档数字当验收。）
    跑不出这些数字就先别动工——说明你拉的分支或依赖状态和卡上写的不一致。
 3. **看**：浏览器打开公网探针页（地址在 §4.2 ③），从 `/atlas` 进入，第一格应显示
    「应用从 /atlas 直接启动」。**这一步是校准，不是验收**——它证明你手上的站点和文档描述的是同一个。
@@ -211,20 +232,19 @@ CI 改写未经远端验证。
 | 6 | 2026-11-12 晚 7 | QoderWang1 | 用户合了 **PR #2**（`bff7892`）后担心"最新的没了"。查证：**什么都没丢**——`93af27a` 是 `origin/main` 的祖先、`git diff main task/T0-0-QoderWang1` 为空、main 上的 HANDOFF 有接龙 #5。他看到的"上一版"是**本地 `main` 指针落后 22 个提交**（还停在合并前的 `883ea7a`）；已用 `git fetch origin main:main` 快进（只动指针，不碰工作目录，非快进会自动拒绝） | 已提交并 push | ④ 只剩 CI 首跑结果确认；工作分支可删——删除不可逆，归用户执行，且建议先看 CI 再删 | `git branch -vv` |
 | 7 | 2026-11-12 晚 8 | QoderWang1 | **④ 结案**：用户截图显示 `main` 上的 `bff7892` 触发 `verify` 第 9 次运行、15 s 全绿 → CI 首跑通过（`npm ci → verify:content → typecheck → test → build`）。诚实标注：证据是用户截图，agent 未独立复核（仓库私有 → 未登录 API 404，本机无 `gh`）。同时纠正 §4.0 的"分支与 main 完全一致"：合并后又产生文档提交，已改为"用命令现取条数 + 第三个 PR 同步" | 已提交并 push | 余量：② D-2、⑤ 团队版站点处置、⑦ 截图与 Obsidian 排除；另需仓库所有者开第三个 PR 同步文档提交 | 本文件 §4.0 / §4.2 ④ / §4.3 |
 | 8 | 2026-11-13 晚 | QoderWang1 | **规则变更：ADR-0007 与 `QUALITY_GATES.md` §2.5 生效**——资源抽屉的两层交互从"只写在样张 `app.js` 里"升格为规格 + 可验收清单。动到三处：`UX_AND_FLOWS.md` §3 新增"资源抽屉"小节、§7 响应式补两侧同开；`QUALITY_GATES.md` §2.5 九项手测清单；`IMPLEMENTATION_PLAN.md` T1-2 的验收口径由"并排截图"改为"逐条点过"（理由见 ADR-0007 背景）。三条裁决：**抽屉移到左侧**（原与 §5 的 AI 侧栏争同一块位置）、**视频不内嵌播放器**、`unavailable` 定位不得退化成只到资源主页的链接。**标「改了真源」：`docs/DECISIONS.md` 新增 ADR-0007**，其他人先 rebase 再动工；本轮真源与其余文档落在同一个 commit `a4d76f3`，未按 §3 第三条拆分——别照抄这个合并法。门：`verify:content` 与 `typecheck` 实跑通过；`test` / `build` 未跑（本轮纯文档 + 样张一行 CSS 的滑出方向） | 已提交并 push（`a4d76f3`）；本条与 §4.0 指针随下一个文档提交带走 | 无新增待拍板项，ADR-0007 自带"何时重审"两条。**给 T1-2 接手人**：行为基准是样张 `content/demo/linear-algebra/rendered/app.js`，验收证据要 `?open=<spanId>` 的**打开态**截图——关闭态截图验不了交互。**已知缺陷**：`DEVELOPMENT_LOG.md` 本轮条目还欠着 | ADR-0007 / `QUALITY_GATES.md` §2.5 / `UX_AND_FLOWS.md` §3、§7 |
-
 | 9 | 2026-11-14 | QoderWang1 | **T0-2 定稿**：ADR-0002 五项选型 + 被排除方案 + 包体预算 + "未验证"清单 + 重审条件；`ARCHITECTURE.md` §2 加指针；顺带补记 #8 欠的日志。四道门实跑通过（18 tests；JS 271.42 kB / gzip 88.10 kB）。**未装任何新依赖** | 已提交（`task/T0-2-QoderWang1`，待 PR） | 无新增待拍板；⑤ 用户 2026-11-14 表示不急、公网口径按个人版走 | `DEVELOPMENT_LOG.md`「T0-2：ADR-0002 五项选型定稿」 / ADR-0002 |
-
 | 10 | 2026-11-14 | QoderWang1 | **⑦ 结案**：Obsidian 排除写入 `.obsidian/app.json`（未运行时写，下次启动生效）；公网四项整页截图 `t0-0-sites-atlas.png`（agent 截）；Desmos 实嵌视觉证据 `t0-0-sites-desmos.png`（**用户截图**）。新坑进 §6：in-app 截图对跨源 iframe 只出空白、面板隐藏时截图不可用。ADR-0002 iframe 格补视觉证据 | 已提交（`task/T0-2-QoderWang1`） | ⑦ 不再欠；余 ② D-2、⑤ | `docs/evidence/t0-0-sites-*.png` / 本文件 §6 / ADR-0002 |
-
 | 11 | 2026-11-15 | QoderPeng1 | T0-1 交付：脚手架完成（BrowserRouter 四路由；三栏外壳 + 状态条；错误边界；首屏三按钮有动作 + 统计运行时从 `content/demo` 算出 + 讲义第一屏真实样张 iframe；四视口占位页带下一步动作；断点三档响应式）。**注**：本条目原编号 #9，与本表 GitHub 侧的 #9 撞号，2026-11-15 同步时改为 #11，内容未动 | 已提交（3 个 commit + 2 张截图，本地分支；已随 #13 的同步并入 `main`） | ② D-2 仍开放 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderPeng1 · T0-1 交付」；截图 `docs/evidence/t0-1-{desktop,narrow}.png` |
-
 | 12 | 2026-11-15 | QoderPeng1 | T0-1 复验（用户指派为检查者）：四道门重跑全绿（verify:content ✓ / typecheck ✓ / 24 测试全过 / build 281.30 kB gzip 90.72 kB，产物哈希与交付时 dist 一致）；浏览器实测首页、四路由、深链 `/atlas`、404 全可达，控制台 0 错误；源码抽查与两张截图逐条吻合。**注**：本条目原编号 #10，同步时改为 #12，内容未动；文中"T0-2/T0-1 尚未合并进 `main`"是当时的本机状态，已于 #13 由同步解决 | 已完成 | 缺陷：T0-1 四 commit 缺 `Agent:` trailer（不改写历史，后续提交补署名）；② D-2 仍开放 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderPeng1 · T0-1 复验（用户指派为检查者）」 |
-
 | 13 | 2026-11-15 | QoderPeng1 | **GitHub 同步**（用户授权「根据 GitHub 上的库同步本地文件，保留 T0-1 成果」）：两边历史不连通、42 个文件不同——按用户选定的**线性叠加**方案，新分支 `task/sync-main-T0-1-QoderPeng1` 从 `origin/main`（`b70cb87`）出发叠入 T0-1 的 17 个文件；两份 ADR-0002 选型实质一致，取 GitHub 文本并补用户 2026-11-15「选型可行」采纳确认；本表两边 #9/#10 撞号 → 本地两条改为 #11/#12；DEVELOPMENT_LOG 保留远端全部条目 + 本地 11-15 三条（本地两条 T0-2 日志按用户决定丢弃）；`ci.yml`/依赖取远端（本地那份 `ci.yml` 缺 `on:` 且 action 名拼错）。旧本地历史存 `backup/local-main-pre-sync`。四道门实跑：verify ✓ / typecheck ✓ / **70 tests**（远端 64 + stats 6）/ build 281.30 kB gzip 90.72 kB | 已提交（`task/sync-main-T0-1-QoderPeng1`，待 PR，由用户合并） | ② D-2、⑤；**更正 §4.0**（本地旧卡曾写「由用户在本地合并进 `main`」） | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderPeng1 · GitHub 同步」 |
-
 | 14 | 2026-11-15 | QoderWang1 | **修 PR #6 CI TS2307**：根因是 `.gitignore` 未锚定的 `workspace/` 在同步提交时静默跳过 `features/workspace/`（文件只在本地、从未进 commit）；按 T0-1 交付契约重建 `WorkspacePage.tsx`（大纲 + 状态徽章 + 空状态下一步动作），`.gitignore` 加精确例外 `!apps/web/src/features/workspace/`（隐私覆盖面不变）；四道门实跑 70 tests / 281.32 kB gzip 90.65 kB；桌面/窄屏截图两张。**更正 #13**：同步分支实际推送名是 `task/T0-1-QoderPeng1`（PR #6），不是 `task/sync-main-T0-1-QoderPeng1`；T0-1 代码尚未进 `main`，待 PR #6 合并 | 已提交并 push（`task/T0-1-QoderPeng1`） | ② D-2、⑤；PR #6 由用户合并 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderWang1 · 修 PR #6 CI TS2307」；截图 `docs/evidence/t0-1-workspace-*.png` |
+| 15 | 2026-11-14 晚       | QoderWang1（T1-1 worktree；本条由主 worktree 代写，接龙链在 `task/T0-2` 上） | **注**：本条目原编号 #11（写在 `task/T0-2-QoderWang1` 上），与 `main` 侧 #11 撞号，2026-11-15 并入 `main` 时改为 #15，内容未动。**T1-1 交付**：`apps/web/src/content/` 纯函数解析器（`parseNote` / `renderNodes`），四道门在 worktree 实跑通过、64 tests（新增 46）；修两个"拼起来才错"的 bug：单行 `$$…$$` 被 remark-math 当行内（按样张 9 个独立公式对数抓出）、白名单同名规则覆盖导致 wiki link class 被清空。**包体警告：解析器单独 801 kB min / 195 kB gzip，占单路由预算 2/3 → T0-1 外壳必须从第一天按路由拆代码**。分支 `task/T1-1-QoderWang1`（`7f9b406` / `bcfa54c`）已 push。**合并顺序 T0-2 → T0-1 → T1-1**：lockfile 冲突只解一次；`DEVELOPMENT_LOG.md` 顶部也会撞，保留双方条目按日期排 | 已 push，待 PR（本机无 `gh`，PR 由所有者在网页开）          | 无新增待拍板                                                                                                                                                                               | worktree `C:\Users\Wang\Desktop\QODER-T1-1` / `apps/web/src/content/README.md` / 该分支日志条目 |
+| 16 | 2026-11-14 晚       | QoderWang1                                                    | **注**：本条目原编号 #12（写在 `task/T0-2-QoderWang1` 上），与 `main` 侧 #12 撞号，2026-11-15 并入 `main` 时改为 #16，内容未动。**全仓状态面核对**（用户指出计划表没标已完成）：`IMPLEMENTATION_PLAN.md` §1/§2 加交付标记（T0-0 / T0-2 / T1-0 / T1-1 ✅，T0-4 ◐，T0-1 下一件）；`TASK_T0.md` §2 现状改写（`dev` 不再是占位）；`ARCHITECTURE.md` 顶部改"选型已定稿"+ BrowserRouter 结论；`README.md` 状态块与目录补解析器、测试数与包体数去写死；`REQUIREMENTS_TRACE.md` §0 与 1.7 记"解析器待合并、未进界面不算 ✓"；本文件 §4.4 基线注明分支差异。**`QUALITY_GATES.md` 与 `CONTEST_SUBMISSION.md` 的勾是待验证清单，功能没做不提前勾**。**约定：每轮交付顺手核对自己动过的状态面**——标记会随合并过期，不核就再次失真 | 已提交（`task/T0-2-QoderWang1`）                | 无新增待拍板                                                                                                                                                                               | 各文件本轮 diff；标记依据 #3 / #7 / #9 / #10 / #11                                                 |
+| 17 | 2026-11-15 | QoderJudge1 | **注**：本条目原编号 #13（写在 `task/T0-2-QoderWang1` 上），与 `main` 侧 #13 撞号，2026-11-15 并入 `main` 时改为 #17，内容未动。**两项用户裁决与一项待设计入卡**：§1 收尾职责加第 3 项「入门文档 `/guide`」；§4.2 新增 ⑧ 评委路线落地设计（待用户）、⑨ AI 三层与 BYOK（已裁决）。未改代码、未改契约真源 | 未提交（工作区改动，交 QoderWang1 分批提交） | ⑧ 待用户设计；⑨ 余三个待定点（见 ⑨） | §4.2 ⑧ ⑨ / `DEVELOPMENT_LOG.md`「2026-11-15 · QoderJudge1 · AI 分层与评委路线」 |
+| 18 | 2026-11-15 | QoderJudge1 | **两项修复（用户 2026-11-15 指派：「你说的问题都改一下。你帮我做」）**：① `task/T0-2-QoderWang1` 上 5 个未进 `main` 的文档提交并入 `main`，两处冲突（§4.0 指针、本表）手工解决：本表 #1–#14 取 `main` 侧，T0-2 侧三条改为 #15–#17，去掉表内空行；§4.0、§4.3 按 PR #6 合并后的实际状态改写。② **路由懒加载**：`App.tsx` 五个页面改 `React.lazy` + `Suspense`，首页不再背其他页面的代码（详见日志）。四道门实跑见日志 | 未提交（工作区改动，文档与 `apps/` 两组路径不重叠，可拆两次提交） | 无新增；⑧ 仍待用户 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderJudge1 · T0-2 文档并入与路由懒加载」 |
+| 19 | 2026-11-15 | QoderWang1 | **代提交并推送 #18（用户指派）**：文档/代码两提交 push 到 `task/judge-fixes-QoderJudge1`；四道门自跑与 #18 一致；补浏览器实测：懒加载 chunk 正常渲染、chunk 404/停服务后页面级错误边界接住且导航与状态条完好、换路由重置；**已知限制**：chunk 失败后重试无效（React.lazy 缓存拒绝），恢复靠换路由或刷新，文案已指引；截图 `route-split-error-desktop.png` / `route-split-narrow.png`。代码与文档改动作者 QoderJudge1，本轮代提交 | 已提交并 push；PR 与合并按用户本轮指派由 agent 执行，不成则用户点 compare 链接 | 无新增 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderWang1 · judge-fixes 代提交与懒加载/错误边界浏览器实测」 |
 
-**下一位从这里接第 15 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+**下一位从这里接第 20 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 

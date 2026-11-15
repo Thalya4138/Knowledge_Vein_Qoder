@@ -21,12 +21,15 @@ T0 只做地基；阅读器、检索、图谱、实验分别是 T1–T5（见 `I
 | 9 | `content/demo/linear-algebra/rendered/README.md` + `content/demo/linear-algebra/rendered/index.html` | 阅读器的视觉验收样张 |
 | 10 | `docs/REQUIREMENTS_TRACE.md` | 全部需求与分期；T0 只覆盖其中一小块 |
 
-## 2. 现状
+## 2. 现状（2026-11-14 更新）
 
-- **仓库里没有应用代码。** 只有契约文档、JSON Schema、样例数据、校验脚本，
-  以及知识库内 `rendered/` 下的静态视觉样张（手写 HTML，不在其上扩展；T1 在 `apps/web` 里重做）。
-- `npm run dev` 等脚本目前是占位，会直接报"未实现"。
-- 样例数据已通过 `node scripts/verify-content.mjs`。
+- **应用代码只有两块**：T0-0 探针（`apps/web/src/probe/`）与 T1-1 讲义解析器
+  （`apps/web/src/content/`，纯函数，已合入）；外壳（T0-1，PR #6）已合入，四视口为占位页。其余功能仍无代码。
+  契约文档、JSON Schema、样例数据、校验脚本，以及知识库内 `rendered/` 下的静态视觉样张照旧
+  （手写 HTML，不在其上扩展；T1 在 `apps/web` 里重做）。
+- `npm run dev` 跑的是 **T0-0 探针页**（Vite）；它的四个路由是深链测试面，**不是外壳**（外壳是 T0-1）。
+- 样例数据已通过 `node scripts/verify-content.mjs`；四道门基线在 `main` 上是 18 条测试，
+  T1-1 合入后 64 条——**以你拉到的分支实跑为准**。
 - 任何功能在有测试或截图之前，都不记为"已实现"。
 
 ## 3. 任务

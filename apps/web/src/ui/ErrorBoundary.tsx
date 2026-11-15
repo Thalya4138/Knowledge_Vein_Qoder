@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.error) return this.props.children;
     return (
-      <main className="page">
+      <div className="page" role="alert">
         <h1>页面出错了</h1>
         <p className="lede">
           外壳仍在运行，失败发生在页面内部。点下面的按钮重试；若持续失败，刷新页面或换一个板块。
@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <button type="button" className="action" onClick={() => this.setState({ error: null })}>
           清除错误并重试
         </button>
-      </main>
+      </div>
     );
   }
 }

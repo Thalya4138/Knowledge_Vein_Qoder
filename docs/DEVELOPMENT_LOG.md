@@ -5,6 +5,67 @@
 
 ---
 
+## 2026-11-15 · QoderWang1 · judge-fixes 代提交与懒加载/错误边界浏览器实测
+
+- **目标**：按用户指派把 QoderJudge1 #18 的工作区改动分两次提交并推送（文档一次、代码一次），
+  并补做 #18 遗留的浏览器手测。**明确不做**：不改 Judge 的代码与文档结论、不碰 `content/`。
+- **做了什么**
+  1. 四道门自己重跑一遍，数字与 #18 声明一致（见下）。
+  2. 浏览器实测（in-app 面板脚本点击 + headless Chrome；面板隐藏时指针动作不可用，改用脚本点击）：
+     懒加载 chunk 正常渲染；dev 停服务与**生产构建 chunk 404**（临时静态服务只挡
+     `WorkspacePage-*.js`）两种注入下，深链与页内导航都触发页面级错误边界，导航与状态条完好；
+     换路由即重置（`key={pathname}`）后正常渲染。
+  3. **已知限制（实测）**：chunk 下载失败后「清除错误并重试」无效——React.lazy 缓存被拒绝的
+     Promise，恢复只能换路由或刷新；UI 文案已如此指引，本轮不改代码。dev 下 vite 重连自动刷新
+     会掩盖该路径，故用生产构建验证。
+  4. 证据截图 `docs/evidence/route-split-error-desktop.png`（错误态三栏）、
+     `docs/evidence/route-split-narrow.png`（窄屏正常）。
+  5. 两次提交（文档 / 代码）push 到 `task/judge-fixes-QoderJudge1`；接龙 #19。
+     代码与文档改动作者为 QoderJudge1（#18），本轮由 QoderWang1 代提交推送（用户指派）。
+- **验证**（本轮实跑）
+
+  ```text
+  npm run verify:content  ✓ 内容校验通过
+  npm run typecheck       无输出（退出码 0）
+  npm run test            Test Files 5 passed (5) / Tests 70 passed (70)
+  npm run build           index 278.71 kB (gzip 90.10) + LabPage 0.91 / ConnectionPage 0.98 /
+                          WorkspacePage 1.71 / AtlasPage 1.72 kB
+  浏览器控制台：仅注入的 404 与错误边界自身日志，无意外错误
+  ```
+
+- **下一步**：PR 与合并按用户本轮指派由 agent 执行；若 agent 无通道开 PR，由用户点 compare 链接。
+  `task/T0-2-QoderWang1` 不必再开 PR（#18 已并入其内容）。
+
+---
+
+## 2026-11-15 · QoderJudge1 · T0-2 文档并入与路由懒加载
+
+- **目标**：修复审查 PR #6 合并后的 `main` 时发现的两个问题；**明确不做**：不碰页面内容、数据流与 `content/`。
+- **开发输入**：用户原话「首先你说的问题都改一下。你帮我做。」审查者原本不写业务代码，本轮代码改动由用户明确指派。
+- **实际改动**
+  - **问题 1：接龙编号撞车 + 文档没进 `main`。** `task/T0-2-QoderWang1` 上有 5 个文档提交不在 `main`，其接龙 #11–#13 与 `main` 侧 QoderPeng1 的 #11–#13 撞号，直接合并会在 `HANDOFF.md` 与本文件冲突。处理：从 `main`（`95addc3`）开本地分支 `task/judge-fixes-QoderJudge1`，用 `git diff 3471aac origin/task/T0-2-QoderWang1 | git apply --3way` 搬入改动，手工解冲突——
+    - `HANDOFF.md` 接龙表：#1–#14 取 `main` 侧；T0-2 侧三条改为 #15–#17，每条注明原编号；**去掉表内空行**（`main` 侧 #9 起每行之间都有空行，表格在 Obsidian 与 GitHub 上都已断开）；新增 #18（本条）。
+    - `HANDOFF.md` §4.0 指针与 §4.3 看板：按 PR #6 合并后的实际状态重写（T0-1、T1-1 已合并，T1-2 前置已满足）。
+    - 本文件：保留两侧全部条目；3-way 搬运产生了一份重复的「2026-11-12（晚 6）」条目（两段逐字相同，两侧原本各只有一份），已删去重复的那份。
+    - 搬过来的状态面（`README.md`、`IMPLEMENTATION_PLAN.md`、`REQUIREMENTS_TRACE.md`、`TASK_T0.md`）写于 11-14 晚，「待合并」「脚手架 ⬜」已过时，逐处改为当前状态。
+    - `task/T0-2-QoderWang1` 的内容已全部并入，**该分支不必再开 PR**。
+  - **问题 2：外壳没有按路由拆代码**（HANDOFF #15 原 #11 的包体警告）。`App.tsx`：首页直接打包（评委落地即见）；四个视口改 `React.lazy` + `Suspense`，载入时显示「正在载入页面…」；主栏内加页面级 `ErrorBoundary`（`key={pathname}`，换路由即重置），页面出错或代码块下载失败时导航与状态条仍在。`ErrorBoundary.tsx`：出错页的根元素由 `<main>` 改为 `<div role="alert">`，避免放进主栏后出现 `<main>` 套 `<main>`。
+- **验证**（本分支工作区实跑）
+
+  ```text
+  npm run verify:content  ✓ 内容校验通过（…/ 布局与证据）
+  npm run typecheck       tsc --noEmit 无输出
+  npm run test            Test Files 5 passed (5) / Tests 70 passed (70)
+  npm run build           index 278.71 kB (gzip 90.10) + LabPage 0.91 / ConnectionPage 0.98 / WorkspacePage 1.71 / AtlasPage 1.72 kB
+  ```
+
+  拆分是否真能隔离解析器，做了一次临时实验：在 `WorkspacePage.tsx` 顶部临时引用 `parseNote` 后构建，得到 `index` 278.86 kB（gzip **90.17**）+ `WorkspacePage` 622.87 kB（gzip **183.78**）——解析器只落在工作台那一块，首页不背。实验后用 `git checkout` 恢复该文件，`git diff` 确认无残留。
+- **人工判断**：首页不懒加载。它是评委的落地页，懒加载只会多一次往返；四个视口才是体积会长大的地方。
+- **剩余问题**：页面级错误边界与「载入中」状态未做浏览器手测（无截图）；主包 90 kB 是 React、路由与示例数据，不是本轮能动的部分。
+- **提交建议**：文档（`README.md`、`docs/`）与代码（`apps/web/src/App.tsx`、`apps/web/src/ui/ErrorBoundary.tsx`）路径不重叠，拆两次提交。
+
+---
+
 ## 2026-11-15 · QoderWang1 · 修 PR #6 CI TS2307：补回被 .gitignore 吞掉的 WorkspacePage
 
 **目标**：修复 PR #6（`task/T0-1-QoderPeng1`）`verify` 工作流的类型检查失败
@@ -179,9 +240,42 @@ $ npm run build         → JS 271.42 kB │ gzip 88.10 kB（外壳尚未引用�
 
 ---
 
----
+## 2026-11-15 · QoderJudge1 · AI 分层与评委路线
+
+- **目标**：把两项用户裁决和一项待设计事项写进交接卡；**明确不做**：不改代码，不改契约真源（`PRODUCT_SPEC.md` 与 ADR 留给实现者在 T4 落地时写）。
+- **用户原话**：
+  - 「最终收工的时候我觉得我们还可以写一个入门文档和介绍（有点像很多现在的中转站的文档）就是介绍功能。并且呢要设计出来一条能够让裁判快速体验上手和感受到我们产品的全部能力和强大功能的flow」
+  - 「这个网站的API和非API的功能怎么划分？……不能大规模需要API，不然别人还得自掏腰包？」
+  - 裁决：「1、做。按你倾向的来。23我想的是，在demo的情况下，评委可以选择几个我们提前预制的问题看到它离线的答案。然后说明链接自己的API立刻就能够真实使用智能。」
+- **实际改动**：`HANDOFF.md` §1 收尾职责加第 3 项（入门文档 `/guide`）；§4.2 新增 ⑧（评委路线落地设计，待用户）与 ⑨（AI 三层与 BYOK，已裁决）；§4.5 追加 #13；§4.0 指针更新。
+- **人工判断**：
+  - 「快速上手」与「展示全部能力」互相冲突。处理方式是让路线只证明一个主张，其余能力沿路出现，避免做成功能墙。
+  - 评委路线不能等到收尾再设计：它决定实现者先做通哪条路径。所以记为现在待定的 ⑧，入门文档才放到收尾阶段。
+  - 「要不要 API」重述为「AI 的工作放在构建时还是运行时」：预置层的 AI 工作在构建时由我们完成并人工审核，评委不需要付费。
+- **剩余问题**：⑧ 待用户设计；⑨ 剩三个待定点（预置问题数量、浏览器直连各家 API 的 CORS 实测、无 key 时自由输入框的处理）。
 
 ---
+
+## 2026-11-15 · QoderWang1 · 全仓状态面核对：把"已交付"标回计划与现状文档
+
+**目标**：用户指出 `IMPLEMENTATION_PLAN.md` 没标已完成；排查全仓所有带状态的表与清单并补齐。
+**明确不做**：不改代码；不提前勾 `QUALITY_GATES.md` / `CONTEST_SUBMISSION.md` 的待验证项；
+不混提 QoderJudge1 的职责块（它单独提交为 `ed2f17d`；接龙 #12 行当时也随该提交进了仓库，本条是其补记）。
+
+**做了什么**
+
+1. `IMPLEMENTATION_PLAN.md` §1 时间表与 §2 任务加 ✅ / ◐ / ⬜：**只标交付，合并状态仍看 HANDOFF**；
+   T0-0 / T0-2 / T1-0 / T1-1 ✅，T0-4 ◐，T0-1 标为下一件并带上路由懒加载警告。
+2. `TASK_T0.md` §2 现状改写：`npm run dev` 不再是占位（跑探针页）；应用代码 = 探针 + 待合并的解析器。
+3. `ARCHITECTURE.md` 顶部改"选型已定稿"，HashRouter 临时措施段改为 BrowserRouter 实测结论。
+4. `README.md` 状态块与目录补解析器；**测试数与包体数不再写死**（会随合并过期，改为指向 CI 与 ADR-0002）。
+5. `REQUIREMENTS_TRACE.md` §0 与 1.7：解析器待合并、未进界面，矩阵"应用代码"格仍记 `—`。
+6. `HANDOFF.md` §4.4 基线注明"main 18 条 / T1-1 合入后 64 条，以实跑为准"；接龙 #12。
+
+**验证**：纯文档轮；`verify:content` 复跑通过。每个标记的依据是 HANDOFF #3 / #7 / #9 / #10 / #11
+与 T1-1 worktree 的实跑输出，不是记忆。
+**已知缺陷**：这些标记下次合并后还会过期一次——#12 已约定每轮交付顺手核对自己动过的状态面。
+**下一步**：T0-1 外壳。
 
 ---
 
@@ -244,46 +338,6 @@ Dexie 打包体积都**未测**，ADR 已把它们单列成"未验证"。本轮�
 `unavailable` 不得退化成资源主页链接）、`UX_AND_FLOWS.md` §3/§7、`QUALITY_GATES.md` §2.5 九项手测、
 `IMPLEMENTATION_PLAN.md` T1-2 验收口径改为"逐条点过"。**当轮门**：`verify:content` 与 `typecheck`
 实跑通过；`test` / `build` 未跑（纯文档 + 样张一行 CSS 的滑出方向）。
-
-
-**目标**：回答"都 push 过了吧"——不靠记忆，用 `git fetch` + 比对本地/远端。
-**明确不做**：不 rebase（分支已 push，重写历史会影响别人）、不动 `main`、不再部署。
-
-**发现（我上一条卡写错了）**
-
-```text
-$ git branch -vv
-  main   883ea7a [origin/main: behind 5]        ← 本地 main 落后，说明远端动过
-$ git log --oneline origin/main -1
-08af8e8 Merge pull request #1 from Thalya4138/task/T0-0-QoderWang1
-$ git log --oneline HEAD..origin/main
-08af8e8                                        ← 本分支缺那个 merge commit
-```
-
-**PR #1 已经被合并**：晚 5 之前的四个提交（8 条裁决 + schema/校验器 + 探针代码 + 日志）已进 `main`。
-而我在 §4.0 与 ④ 里写的是"`main` 还停在 `883ea7a`、整条分支待合并"——**过期结论写进了权威文件**。
-
-**处理**
-
-1. `git merge origin/main` 进本分支（merge 而非 rebase：分支已 push，不能重写别人可能拉走的历史）。
-2. §4.0 指针更正为"部分已合并，剩第二个 PR（部署与实测 13 个提交）"。
-3. §4.2 ④ 按接龙规则**追加更正**，原文不删；并提醒 CI 首跑结果没人确认过，别默认它是绿的。
-4. §4.5 追加 **#5 更正 #3/#4**，把这次的错判写成一条历史记录而不是抹掉。
-
-**教训（接上一条）**：卡里凡是"远端现在处于什么状态"这类断言，必须是**刚 fetch 过的**结果；
-`main` 是共享分支，别人（或用户）随时会推进它。写"停在某个 commit"就等于埋了一颗过期雷——
-更好的做法是像 ④ 那样给出取法命令。
-
-**验证**
-
-```text
-$ git merge origin/main → Merge made by the 'ort' strategy（无内容冲突）
-$ git status --short --branch → ahead 2
-$ npm run verify:content / typecheck / test / build → 通过（18 tests）
-$ git log --oneline HEAD..origin/main → 空（不再分叉）
-```
-
-**剩余问题**：④ 变成"开第二个 PR + 确认 CI 首跑"；②⑤⑦ 不变。
 
 ---
 
@@ -918,6 +972,15 @@ $ node scripts/verify-content.mjs
   讲义样张页眉（index.html / src.html）、manifest 作者字段、.env.example、package.json `name`、Obsidian css 注释。
 - **明确不改**：VISION.md 原文（只在第三部分追加说明）；本日志历史条目；GitHub 仓库地址；
   schema `$id` 与 `cognitive-atlas.css` 文件名（技术标识符，改动会断引用）。04 板块英文名仍为 Cognitive Atlas。
+
+## 2026-11-15 · QoderJudge1 · 角色调整
+
+- **目标**：给审查者增加收尾阶段职责；**明确不做**：本轮不改任何代码与内容。
+- **用户原话**：「帖子我们肯定需要你的协助来完成制作。等网址和大部分功能完成之后我们肯定需要你的美工和审美加工优化以及页面优化。这个你可以提前写进handoff里你的职责里去。」
+- **实际改动**：`HANDOFF.md` §1 角色表注明例外，新增「QoderJudge1 的收尾职责」小节（启动条件、作品帖协作、视觉打磨的边界）。
+- **人工判断**：§1 原本规定审查者「不写业务代码」，页面优化与这条冲突。处理办法是给出有边界的例外：只改展示层、照常走分支和四道门、启动时间由用户宣布，避免和实现者同时改一批文件。
+
+---
 
 ## 条目模板（之后照此追加）
 
