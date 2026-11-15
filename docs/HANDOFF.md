@@ -89,8 +89,8 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #13（QoderPeng1，2026-11-15，GitHub 同步：T0-1 并入 `main`） |
-| 分支 | `task/sync-main-T0-1-QoderPeng1`（GitHub `main` `b70cb87` + T0-1 外壳，待 PR 合并）；HEAD 取 `git log --oneline task/sync-main-T0-1-QoderPeng1 -1` |
+| 最新接龙条目 | §4.5 #14（QoderWang1，2026-11-15，修 PR #6 CI：补回被 .gitignore 吞掉的 WorkspacePage） |
+| 分支 | `task/T0-1-QoderPeng1`（PR #6：GitHub `main` `b70cb87` + T0-1 外壳 + WorkspacePage 补回，待 PR 合并）；HEAD 取 `git log --oneline origin/task/T0-1-QoderPeng1 -1` |
 | 合并状态 | **2026-11-15 用户授权同步**：本地 `main` 已重建为 GitHub `main` + T0-1（线性叠加）。同步前的本地旧历史存于 `backup/local-main-pre-sync`（连同 `task/T0-1-QoderPeng1`、`task/T0-2-QoderPeng1` 两个本地分支，**勿再推送**）。PR #1–#3 与 T0-2/T1-1 均已含在 `origin/main` 里，新分支从 `origin/main` 开即可 |
 | 下一位的入口 | **T0-3 zod 领域类型**（T0-1、T0-2 已完成，见 §4.3）。做 T1-2 的话先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
 | 还欠谁的 | ② D-2、⑤ 团队版站点处置；同步分支的 PR 由用户合并（④⑦ 已结案，见 #7 / #10） |
@@ -222,7 +222,9 @@ CI 改写未经远端验证。
 
 | 13 | 2026-11-15 | QoderPeng1 | **GitHub 同步**（用户授权「根据 GitHub 上的库同步本地文件，保留 T0-1 成果」）：两边历史不连通、42 个文件不同——按用户选定的**线性叠加**方案，新分支 `task/sync-main-T0-1-QoderPeng1` 从 `origin/main`（`b70cb87`）出发叠入 T0-1 的 17 个文件；两份 ADR-0002 选型实质一致，取 GitHub 文本并补用户 2026-11-15「选型可行」采纳确认；本表两边 #9/#10 撞号 → 本地两条改为 #11/#12；DEVELOPMENT_LOG 保留远端全部条目 + 本地 11-15 三条（本地两条 T0-2 日志按用户决定丢弃）；`ci.yml`/依赖取远端（本地那份 `ci.yml` 缺 `on:` 且 action 名拼错）。旧本地历史存 `backup/local-main-pre-sync`。四道门实跑：verify ✓ / typecheck ✓ / **70 tests**（远端 64 + stats 6）/ build 281.30 kB gzip 90.72 kB | 已提交（`task/sync-main-T0-1-QoderPeng1`，待 PR，由用户合并） | ② D-2、⑤；**更正 §4.0**（本地旧卡曾写「由用户在本地合并进 `main`」） | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderPeng1 · GitHub 同步」 |
 
-**下一位从这里接第 14 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 14 | 2026-11-15 | QoderWang1 | **修 PR #6 CI TS2307**：根因是 `.gitignore` 未锚定的 `workspace/` 在同步提交时静默跳过 `features/workspace/`（文件只在本地、从未进 commit）；按 T0-1 交付契约重建 `WorkspacePage.tsx`（大纲 + 状态徽章 + 空状态下一步动作），`.gitignore` 加精确例外 `!apps/web/src/features/workspace/`（隐私覆盖面不变）；四道门实跑 70 tests / 281.32 kB gzip 90.65 kB；桌面/窄屏截图两张。**更正 #13**：同步分支实际推送名是 `task/T0-1-QoderPeng1`（PR #6），不是 `task/sync-main-T0-1-QoderPeng1`；T0-1 代码尚未进 `main`，待 PR #6 合并 | 已提交并 push（`task/T0-1-QoderPeng1`） | ② D-2、⑤；PR #6 由用户合并 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderWang1 · 修 PR #6 CI TS2307」；截图 `docs/evidence/t0-1-workspace-*.png` |
+
+**下一位从这里接第 15 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 

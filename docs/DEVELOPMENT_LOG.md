@@ -5,6 +5,53 @@
 
 ---
 
+## 2026-11-15 · QoderWang1 · 修 PR #6 CI TS2307：补回被 .gitignore 吞掉的 WorkspacePage
+
+**目标**：修复 PR #6（`task/T0-1-QoderPeng1`）`verify` 工作流的类型检查失败
+（`App.tsx(5,31) TS2307: Cannot find module './features/workspace/WorkspacePage'`）。
+**明确不做**：不碰 `main`、不改其余三视口页与外壳、不削弱隐私规则、不删功能或加空壳骗 CI。
+
+**根因**（两层）：
+
+1. `.gitignore` 私有知识库规则里的 `workspace/` **未锚定**，匹配任意层级同名目录，含
+   `apps/web/src/features/workspace/`。11-15 同步提交（`8bf6857`）时 `git add` 静默跳过该目录：
+   文件在 QoderPeng1 本地工作区存在（故本地 typecheck / test / 截图全过），但从未进入 commit。
+   CI 在 Linux checkout 提交树 → 缺文件 → TS2307。其余三视口目录不同名，未受影响。
+2. 该文件在 git 全历史任何 ref 中都不存在（`git log --all -S 'WorkspacePage'` 只命中 App.tsx 的
+   import），原实现不可恢复，按交付契约重建。
+
+**做了什么**：
+
+1. 按 T0-1 交付契约重建 `apps/web/src/features/workspace/WorkspacePage.tsx`（本日志「T0-1 交付」：
+   「工作台列大纲（状态徽章）」；接龙 #11）：大纲运行时取自 `demoKb.outline`，`written/planned`
+   状态徽章复用已提交的 `.outline-list` / `.badge.written` / `.badge.planned` 样式；空状态如实说明
+   阅读器未接入并给下一步动作；成稿节链接静态样张；统计走 `homeStats()`。文案结构对齐其余三视口占位页。
+2. `.gitignore` 加一条精确例外 `!apps/web/src/features/workspace/`（置于私有规则块之后），
+   **隐私规则覆盖面不变**；`git check-ignore -v` 验证该文件不再被忽略。
+3. 证据截图 `docs/evidence/t0-1-workspace-{desktop,narrow}.png`（headless Chrome 1440×900 / 414×896）。
+4. HANDOFF 接龙 #14 + §4.0 指针；更正 #13 的分支名（实际推送名 `task/T0-1-QoderPeng1`，即 PR #6）。
+
+**验证**（本分支实跑）：
+
+```text
+$ npm ci（首跑 EPERM：上一会话遗留 vite dev server PID 1584 锁住 @rolldown 原生绑定；
+  经用户授权结束它与遗留 preview PID 11388 后重装成功）
+$ npm run verify:content → ✓ 内容校验通过
+$ npm run typecheck     → 无输出（退出码 0）
+$ npm run test          → Test Files 5 passed (5) / Tests 70 passed (70)
+$ npm run build         → index-SH76PsvM.js 281.32 kB │ gzip 90.65 kB
+$ 浏览器（in-app 面板 + headless Chrome）：/workspace 深链可达，大纲 3 节 / 徽章 / 样张链接正确；
+  点「查看已接受的关系」→ /atlas 渲染 9 条带理由关系；控制台 0 错误 0 警告；
+  桌面三栏 / 窄屏单栏见 docs/evidence/t0-1-workspace-*.png
+```
+
+**已知缺陷**：重建文案与丢失原件不可能逐字相同（build 数字与 #13 声明的 281.30 kB / gzip 90.72 kB
+略有出入，系文案差异）；功能与交付声明逐条对齐。
+
+**下一步**：本次 push 后 PR #6 CI 应转绿，合并仍由用户做；T0-3 从合并后的 `main` 起。
+
+---
+
 ## 2026-11-15 · QoderPeng1 · GitHub 同步：本地 main 并入远端，保留 T0-1
 
 **目标**：按用户要求「根据 GitHub 上的库同步本地文件，保留今天 T0-1 的工作成果」——
