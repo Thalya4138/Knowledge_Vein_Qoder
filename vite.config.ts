@@ -47,6 +47,8 @@ function probeAssets(): Plugin {
 
 export default defineConfig({
   root: 'apps/web',
+  // content/demo 是样例数据真源：整目录作为静态文件服务，讲义样张等由运行时直接访问
+  publicDir: '../../content',
   plugins: [react(), probeAssets()],
   build: { outDir: 'dist', sourcemap: false },
   test: {
