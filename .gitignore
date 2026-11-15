@@ -39,6 +39,9 @@ inbox/
 *.local.md
 *.private.md
 *.private.pdf
+# 例外：四视口源码目录与上面的私有库规则同名，不解除会被 git add 静默跳过
+# （2026-11-15 T0-1 同步事故：文件在本地、commit 里没有，CI 报 TS2307）。
+!apps/web/src/features/workspace/
 
 # ---------- 密钥 / 运行时状态 ----------
 .env
