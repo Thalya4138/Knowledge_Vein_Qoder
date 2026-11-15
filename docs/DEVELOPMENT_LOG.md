@@ -5,6 +5,93 @@
 
 ---
 
+## 2026-11-15 · QoderPeng1 · GitHub 同步：本地 main 并入远端，保留 T0-1
+
+**目标**：按用户要求「根据 GitHub 上的库同步本地文件，保留今天 T0-1 的工作成果」——
+本地 `main` = GitHub `main`（`b70cb87`）+ T0-1 外壳。**明确不做**：不推 `main`（回推走 PR）、
+不改 `content/demo` 数学内容与 `prompts/*.md`、不部署。
+
+**做了什么**
+
+1. 对比：`origin/main` 与本地 `main`（`2f5a558`）历史不连通、42 个文件不同——远端多了 T0-2 选型定稿
+   （QoderWang1 版）、T1-1 解析器（`apps/web/src/content/`，remark 系新依赖）、T0-0 公网截图、修复版 `ci.yml`；
+   本地多了 T0-1 全套。两份 ADR-0002 选型**实质一致**（Vite+React+TS / unified+KaTeX / CodeMirror 6 /
+   React Flow / IndexedDB+Dexie），取 GitHub 文本，状态行补用户 2026-11-15「选型可行」采纳确认。
+2. 方案（用户选定**线性叠加**）：新分支 `task/sync-main-T0-1-QoderPeng1` 从 `origin/main` 出发，
+   叠入 T0-1 的 17 个文件（外壳代码 / 配置 / 证据截图）。
+3. 文档合并：HANDOFF 两边接龙 #9/#10 撞号且内容不同 → 远端 #1–#10 保留，本地两条改编号为 **#11/#12**，
+   追加 #13 本条；DEVELOPMENT_LOG 保留远端全部条目，另补本地独有的 11-12「晚 6」与 11-15 T0-1 三条
+   （本地两条 T0-2 日志按用户决定丢弃）；`ci.yml`、`package.json`/lock 取远端（本地那份 `ci.yml`
+   缺 `on:` 且有 `actioon:ns` 拼写错误，已被远端修复版替代）。
+4. 安全网：同步前的本地 `main` 存为 `backup/local-main-pre-sync`；本地 `task/T0-1-QoderPeng1`、
+   `task/T0-2-QoderPeng1` 保留但勿再推送。
+
+**验证**（本轮实跑）
+
+```text
+$ npm ci（按远端 lock 重装，含 T1-1 remark 系依赖）
+$ npm run verify:content → ✓ 通过
+$ npm run typecheck     → 无输出
+$ npm run test          → Test Files 5 passed (5) / Tests 70 passed (70)（远端 64 + T0-1 stats 6）
+$ npm run build         → index-19ssRwwN.js 281.30 kB │ gzip 90.72 kB（与 T0-1 交付数字一致；解析器未接外壳不入包）
+```
+
+**已知缺陷**：浏览器实测沿用 T0-1 交付时的两张截图（外壳代码未变）；`origin/main` 已含 T1-1 解析器
+但尚未接入界面（T1-2 的事）。
+
+**下一步**：同步分支开 PR 由用户合并；T0-3（zod 领域类型）从合并后的 `main` 起。
+
+---
+
+## 2026-11-15 · QoderPeng1 · T0-1 复验（用户指派为检查者）
+
+- **做什么**：按 HANDOFF §1 审查者职责复验 T0-1 交付声明——亲自重跑四道门、抽查 `apps/web` 源码、浏览器实测路由、核对截图与 commit 署名。**不做**：不改业务代码、不认领新任务、不替用户拍板。
+- **复验结果（全部真实输出）**：
+  - `npm run verify:content` ✓ `✓ 内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接 / 资源来源 / 覆盖矩阵 / 布局与证据）`
+  - `npm run typecheck` ✓ 无输出（退出码 0）
+  - `npm run test` ✓ `Test Files 3 passed (3) / Tests 24 passed (24)`——与卡上预期 24 条一致
+  - `npm run build` ✓ `index-19ssRwwN.js 281.30 kB │ gzip: 90.72 kB`——与交付声明数字一致，且产物哈希与交付时 `dist/` 里的文件**相同**（构建可复现）
+  - 浏览器（browser-use MCP，dev server 5175）：首页、`/workspace` `/lab` `/connection`、深链直访 `/atlas`、未知路径 404 页全部可达；控制台 0 错误 0 警告；`/atlas` 页实渲染 9 条 accepted 关系（中文类型标签 + explanation），数据确实穿过外壳
+  - 源码抽查：`main.tsx`（BrowserRouter + ErrorBoundary 包裹）、`App.tsx`（三栏 + 状态条 + 四路由 + 404）、`HomePage.tsx`（三按钮 + 运行时统计 + 真实样张 iframe 且诚实标注）、`stats.ts`/`stats.test.ts`（纯函数 + 防写死测试）、四视口占位页（空状态均给下一步动作）、`vite.config.ts`（publicDir 指向 `content/`）——与交付声明逐条吻合
+  - 截图实看：`t0-1-desktop.png`（三栏）、`t0-1-narrow.png`（单栏）与声明一致
+- **审查中发现的问题**：
+  1. **T0-1 的 4 个 commit（`276c9dd` `d308873` `e2e63fa` `76773af`）均缺 `Agent:` trailer**（HANDOFF §1 署名三处之一；T0-2 的 commit 都有）。已提交的本地历史不建议改写，**后续提交必须补 trailer**。
+  2. 交接卡 §4.0 合并状态曾写「均由用户在本地合并进 `main`」，与 git 实际不符（`main` 停在 `b1a44ec`）——本轮已在指针里更正。
+  3. `apps/web/node_modules/`（陈旧 vitest 缓存）存在，已被 `.gitignore` 挡住，但 Obsidian 会索引（HANDOFF §6 已知坑）——建议删除，未擅动。
+  4. 观察项（不构成缺陷）：外壳 UI 文案用 15px/1.6 sans——AGENTS §4 的「衬线 ≥16px / 行高 1.7」针对讲义正文，讲义正文目前由样张 iframe 自带样式，T1 阅读器需守住该底线。
+- **环境插曲（过程记录）**：复验开始时 `node_modules/.bin` 为空（tsc/vite/vitest shim 缺失，先于本次审查存在）；`npm ci` 恢复时遇 EPERM——上一会话遗留的本仓库 dev server（vite，端口 5175）锁住 `@rolldown` 原生绑定。经用户授权结束该进程（及其 supervisor 重启的实例 PID 9424/cmd 11120）后 `npm ci` 完成（55 packages，0 vulnerabilities），四道门重跑全绿。用户的另一个项目 `my-vite-app` 的 3 个 dev server 未触碰。
+- **裁决建议（待用户拍板）**：无新增。② D-2 仍开放；T0-2/T0-1 合并仍由用户在本地做；下一件该做的是 T0-3。
+
+## 2026-11-15 · QoderPeng1 · T0-1 交付（脚手架）
+
+- **目标**：T0-1 脚手架（见开工记录条目）。
+- **实际改动**（3 个 commit：认领 `276c9dd`、开工记录 `d308873`、实现 `e2e63fa`，均在本机分支 `task/T0-1-QoderPeng1`）：
+  - `main.tsx` HashRouter → **BrowserRouter**（Qoder Sites 回退已实测，ADR-0002 已采纳）。
+  - `App.tsx` 重写：左导航 / 主区 / 可收起 AI 侧栏三栏外壳 + 底部状态条；断点 ≥1280 三栏、768–1279 AI 变抽屉（浮动 AI 按钮）、<768 单栏（导航横滚）；404 页；AI 侧栏空状态如实说明"当前没有选区"。
+  - 首页（`src/app/HomePage.tsx`）：三个动作按钮（打开示例课程 / 导入我的资料 → /workspace，探索两个概念 → /connection）+ **运行时统计**（`stats.ts` 纯函数）+ **讲义第一屏 = 真实样张 iframe**（`/demo/linear-algebra/rendered/index.html`，可滚动可操作，非截图）。
+  - `vite.config.ts` `publicDir: '../../content'`：`content/demo` 是样例数据真源，整目录作静态文件服务（不复制进 `src/`），讲义样张、资源等运行时直接访问；`tsconfig.json` 开 `resolveJsonModule`。
+  - 四视口占位页（`features/{workspace,lab,connection,atlas}/`）：空状态均给下一步动作；工作台列大纲（状态徽章）；图谱页列出 9 条 accepted 关系（中文类型标签 + explanation），证明数据穿过外壳。
+  - `probe/` 保留但不进路由；错误边界文案通用化。
+- **统计口径**（UX §8，全部运行时）：讲义节数 = `kb.json` `status:"written"`；节点数 = `graph.nodes`；关系数 = `status:"accepted"`；实验数 = 工具注册表（`features/lab/tools.ts`，当前空）中 `status:'real'`。首页显示 1 / 15 / 9 / 0。
+- **验证**（四道门，全部真实输出）：
+  - `verify:content` ✓ 校验通过；`typecheck` ✓ 无输出
+  - `test` ✓ 3 文件 24 条全过（新增 stats 6 条：计数逻辑 + "与独立计数一致"防写死）
+  - `build` ✓ JS 281.30 kB / gzip 90.72 kB（比基线大 ~10 kB：路由外壳；另外 publicDir 使 dist 含 demo 内容 ~1.1 MB）
+  - 浏览器（browser-use MCP，dev server）：首页 / 四路由 / 深链 `/atlas` 直访 / 404 全部可达；控制台无错误；截图 `docs/evidence/t0-1-desktop.png`（1440×900，三栏）、`t0-1-narrow.png`（414×896，单栏）；1000px 两栏抽屉临时截图已人工确认（AI 面板默认收起、浮动按钮可见），未入库。
+- **已知缺陷 / 取舍**：① 讲义第一屏用静态样张 iframe，Markdown 阅读器（真源渲染、旁栏、折叠）是 T1，届时要替换掉这里并保留"阅读器尚未接入"的诚实标注；② AI 侧栏只有空状态，追问链路未接；③ 状态条声明"本地持久化未接入"，等 T6 接入后再改文案；④ 桌面端 AI 侧栏收起/展开只做了视觉确认（截图），未做脚本化交互测试。
+- **下一步**：T0-3 zod 领域类型与数据加载（`TASK_T0.md` §3）；交接卡 §4.4 第 2 步预期数字已更新为 24 测试 / 281.30 kB / gzip 90.72 kB。
+
+## 2026-11-15 · QoderPeng1 · T0-1 开工记录（脚手架）
+
+- **本轮做什么**：T0-1 脚手架——BrowserRouter + 四个一级路由（`/workspace` `/lab` `/connection` `/atlas`）；三栏外壳（左导航 / 主区 / 可收起 AI 侧栏）+ 底部状态条；错误边界；首屏三按钮有动作；首屏统计**运行时从 `content/demo/linear-algebra` 的 `kb.json` / `graph.json` 算出**（UX_AND_FLOWS §8），不写死。
+- **明确不做什么**：T0-3 的 zod 领域类型与加载器；四个视口的功能（只放带"下一步动作"的空状态页）；IndexedDB 持久化（T6）；AI 调用（无 Key 一律示例模式并明标）；探针代码（`src/probe/` 保留但不进路由，已部署的探针站不受影响）。
+- **关键取舍**：`main.tsx` 探针注释已预告"改动只在这一行"→ HashRouter 换 BrowserRouter（Qoder Sites 回退实测过）。统计口径：讲义节数 = `outline[]` 中 `status:"written"`；关系数 = `graph.relations` 中 `status:"accepted"`；实验数 = 工具注册表中 `status:'real'`（当前 0）。`tsconfig.json` 需开 `resolveJsonModule` 才能直接 import JSON。
+- **目录结构**（新文件）：`src/app/stats.ts`（纯函数）+ `stats.test.ts`；`src/features/{workspace,lab,connection,atlas}/` 各一占位页；`App.tsx` 重写为真外壳；`app.css` 按 UX §4 断点扩展。
+- **验证方式**：四道门 + 桌面/窄屏两张截图（`docs/evidence/t0-1-*.png`）。
+- **已知矛盾**：无。
+
+---
+
 ## 2026-11-14（晚）· QoderWang1 · T1-1：讲义 Markdown 解析器
 
 **目标**：把 `notes/2.1-列空间中的最近点.md` 解析成阅读器、检索、锚点跳转共用的结构，并能把每块内容渲染成
@@ -111,6 +198,49 @@ Dexie 打包体积都**未测**，ADR 已把它们单列成"未验证"。本轮�
 `IMPLEMENTATION_PLAN.md` T1-2 验收口径改为"逐条点过"。**当轮门**：`verify:content` 与 `typecheck`
 实跑通过；`test` / `build` 未跑（纯文档 + 样张一行 CSS 的滑出方向）。
 
+
+**目标**：回答"都 push 过了吧"——不靠记忆，用 `git fetch` + 比对本地/远端。
+**明确不做**：不 rebase（分支已 push，重写历史会影响别人）、不动 `main`、不再部署。
+
+**发现（我上一条卡写错了）**
+
+```text
+$ git branch -vv
+  main   883ea7a [origin/main: behind 5]        ← 本地 main 落后，说明远端动过
+$ git log --oneline origin/main -1
+08af8e8 Merge pull request #1 from Thalya4138/task/T0-0-QoderWang1
+$ git log --oneline HEAD..origin/main
+08af8e8                                        ← 本分支缺那个 merge commit
+```
+
+**PR #1 已经被合并**：晚 5 之前的四个提交（8 条裁决 + schema/校验器 + 探针代码 + 日志）已进 `main`。
+而我在 §4.0 与 ④ 里写的是"`main` 还停在 `883ea7a`、整条分支待合并"——**过期结论写进了权威文件**。
+
+**处理**
+
+1. `git merge origin/main` 进本分支（merge 而非 rebase：分支已 push，不能重写别人可能拉走的历史）。
+2. §4.0 指针更正为"部分已合并，剩第二个 PR（部署与实测 13 个提交）"。
+3. §4.2 ④ 按接龙规则**追加更正**，原文不删；并提醒 CI 首跑结果没人确认过，别默认它是绿的。
+4. §4.5 追加 **#5 更正 #3/#4**，把这次的错判写成一条历史记录而不是抹掉。
+
+**教训（接上一条）**：卡里凡是"远端现在处于什么状态"这类断言，必须是**刚 fetch 过的**结果；
+`main` 是共享分支，别人（或用户）随时会推进它。写"停在某个 commit"就等于埋了一颗过期雷——
+更好的做法是像 ④ 那样给出取法命令。
+
+**验证**
+
+```text
+$ git merge origin/main → Merge made by the 'ort' strategy（无内容冲突）
+$ git status --short --branch → ahead 2
+$ npm run verify:content / typecheck / test / build → 通过（18 tests）
+$ git log --oneline HEAD..origin/main → 空（不再分叉）
+```
+
+**剩余问题**：④ 变成"开第二个 PR + 确认 CI 首跑"；②⑤⑦ 不变。
+
+---
+
+## 2026-11-12（晚 6）· QoderWang1 · 复查推送状态时发现 PR #1 已合并
 
 **目标**：回答"都 push 过了吧"——不靠记忆，用 `git fetch` + 比对本地/远端。
 **明确不做**：不 rebase（分支已 push，重写历史会影响别人）、不动 `main`、不再部署。
