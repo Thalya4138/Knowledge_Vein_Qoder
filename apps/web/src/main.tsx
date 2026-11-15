@@ -1,18 +1,17 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import './app.css';
 
-// HashRouter 是 ADR-0002 结论出来之前的临时选择：它在任何静态托管上都能跑深链。
-// 探针实测支持回退后换 BrowserRouter，改动只在这一行。
+// BrowserRouter：Qoder Sites 的 SPA 回退已在 T0-0 探针实测（ADR-0002 已采纳）。
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <HashRouter>
+    <BrowserRouter>
       <ErrorBoundary>
         <App />
       </ErrorBoundary>
-    </HashRouter>
+    </BrowserRouter>
   </StrictMode>,
 );

@@ -89,11 +89,11 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #10（QoderWang1，2026-11-14，⑦ 结案） |
-| 分支 | `task/T0-2-QoderWang1`，HEAD 取 `git log --oneline origin/task/T0-2-QoderWang1 -1` |
-| 合并状态 | PR #1（`08af8e8`）+ PR #2（`bff7892`）+ PR #3（`f983a90`）已进 `main`，`main` 上的 CI 首跑已验证（#7）。**#8 的 ADR-0007 已随 PR #3 进入 `main`**，新分支从 `origin/main` 开即可，不必再为它 rebase；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
-| 下一位的入口 | **T0-1 外壳**（T0-2 已解锁它）：Vite + React + TS、BrowserRouter、四路由、三栏 + 状态条、错误边界、统计数字运行时算。做 T1-2 的话先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
-| 还欠谁的 | ② D-2、⑤ 团队版站点处置（④⑦ 已结案，见 #7 / #10）。#8 欠的 `DEVELOPMENT_LOG.md` 条目已由 #9 补记 |
+| 最新接龙条目 | §4.5 #14（QoderWang1，2026-11-15，修 PR #6 CI：补回被 .gitignore 吞掉的 WorkspacePage） |
+| 分支 | `task/T0-1-QoderPeng1`（PR #6：GitHub `main` `b70cb87` + T0-1 外壳 + WorkspacePage 补回，待 PR 合并）；HEAD 取 `git log --oneline origin/task/T0-1-QoderPeng1 -1` |
+| 合并状态 | **2026-11-15 用户授权同步**：本地 `main` 已重建为 GitHub `main` + T0-1（线性叠加）。同步前的本地旧历史存于 `backup/local-main-pre-sync`（连同 `task/T0-1-QoderPeng1`、`task/T0-2-QoderPeng1` 两个本地分支，**勿再推送**）。PR #1–#3 与 T0-2/T1-1 均已含在 `origin/main` 里，新分支从 `origin/main` 开即可 |
+| 下一位的入口 | **T0-3 zod 领域类型**（T0-1、T0-2 已完成，见 §4.3）。做 T1-2 的话先读 ADR-0007 与 `QUALITY_GATES.md` §2.5 |
+| 还欠谁的 | ② D-2、⑤ 团队版站点处置；同步分支的 PR 由用户合并（④⑦ 已结案，见 #7 / #10） |
 
 （旧版表格存档如下，保留原样以便追溯。）
 
@@ -169,7 +169,7 @@ CI 改写未经远端验证。
 | --- | --- | --- |
 | T0-0 部署探针 | **四项在匿名可达的公网地址实测通过**（个人版账号，`public`）；探针修正版已发布 | 补拍 `t0-0-sites-*.png`（需打开 in-app Browser 面板） |
 | T0-2 ADR-0002 | **已完成**（2026-11-14，接龙 #9）：五项选型 + 被排除方案 + 包体预算已定稿 | — |
-| T0-1 外壳 | 未认领（T0-2 已解锁） | 无 |
+| T0-1 外壳 | **已完成**（2026-11-15，接龙 #11–#13；代码随本次同步并入 `main`） | 无 |
 | T0-3 zod 领域类型 | 未认领 | T0-1（`TASK_T0.md` §3 的顺序） |
 | T0-4 内容校验接入 | 大部分已由 QoderWang1 完成（`verify:content` 覆盖布局与证据、Vitest、ajv schema 测试）；**CI 已在 `main` 上首跑通过**（#7） | — |
 | T1–T7 | 未认领 | T0 全部合并 |
@@ -188,9 +188,8 @@ CI 改写未经远端验证。
    「应用从 /atlas 直接启动」。**这一步是校准，不是验收**——它证明你手上的站点和文档描述的是同一个。
 4. **账号归属已确认，不用再做**：⑥ 已结案——发布用的个人版账号就是参赛者本人（用户 2026-11-12）。
    但**如果你换了账号再发布，这条要重新确认一次**，链接归属跟着账号走。
-5. **下一件该做的**：**T0-2 选型填写**。能力表现在四项齐了（ADR-0002），
-   可以正面回答框架 / Markdown 解析器 / 编辑器 / 图谱库 / 存储，并写清被排除方案的代价。
-   选完才轮到 T0-1 外壳——`ARCHITECTURE.md` 顶部那句"选型漂移会让领域模型作废"仍然有效。
+5. **下一件该做的**：**T0-3 zod 领域类型**（T0-1、T0-2 均已完成，见 §4.3），
+   按 `TASK_T0.md` §3 做。
 6. **不要做**：不 push `main`；不删团队版站点（⑤）；不改 `content/demo` 的数学内容与 `prompts/*.md`
    的 rubric；不在仓库里堆构建产物（§6 第一条）；不拿 `fetch` 判深链（§6）；
    不把团队版链接当公网入口贴进帖子。
@@ -217,7 +216,15 @@ CI 改写未经远端验证。
 
 | 10 | 2026-11-14 | QoderWang1 | **⑦ 结案**：Obsidian 排除写入 `.obsidian/app.json`（未运行时写，下次启动生效）；公网四项整页截图 `t0-0-sites-atlas.png`（agent 截）；Desmos 实嵌视觉证据 `t0-0-sites-desmos.png`（**用户截图**）。新坑进 §6：in-app 截图对跨源 iframe 只出空白、面板隐藏时截图不可用。ADR-0002 iframe 格补视觉证据 | 已提交（`task/T0-2-QoderWang1`） | ⑦ 不再欠；余 ② D-2、⑤ | `docs/evidence/t0-0-sites-*.png` / 本文件 §6 / ADR-0002 |
 
-**下一位从这里接第 11 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 11 | 2026-11-15 | QoderPeng1 | T0-1 交付：脚手架完成（BrowserRouter 四路由；三栏外壳 + 状态条；错误边界；首屏三按钮有动作 + 统计运行时从 `content/demo` 算出 + 讲义第一屏真实样张 iframe；四视口占位页带下一步动作；断点三档响应式）。**注**：本条目原编号 #9，与本表 GitHub 侧的 #9 撞号，2026-11-15 同步时改为 #11，内容未动 | 已提交（3 个 commit + 2 张截图，本地分支；已随 #13 的同步并入 `main`） | ② D-2 仍开放 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderPeng1 · T0-1 交付」；截图 `docs/evidence/t0-1-{desktop,narrow}.png` |
+
+| 12 | 2026-11-15 | QoderPeng1 | T0-1 复验（用户指派为检查者）：四道门重跑全绿（verify:content ✓ / typecheck ✓ / 24 测试全过 / build 281.30 kB gzip 90.72 kB，产物哈希与交付时 dist 一致）；浏览器实测首页、四路由、深链 `/atlas`、404 全可达，控制台 0 错误；源码抽查与两张截图逐条吻合。**注**：本条目原编号 #10，同步时改为 #12，内容未动；文中"T0-2/T0-1 尚未合并进 `main`"是当时的本机状态，已于 #13 由同步解决 | 已完成 | 缺陷：T0-1 四 commit 缺 `Agent:` trailer（不改写历史，后续提交补署名）；② D-2 仍开放 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderPeng1 · T0-1 复验（用户指派为检查者）」 |
+
+| 13 | 2026-11-15 | QoderPeng1 | **GitHub 同步**（用户授权「根据 GitHub 上的库同步本地文件，保留 T0-1 成果」）：两边历史不连通、42 个文件不同——按用户选定的**线性叠加**方案，新分支 `task/sync-main-T0-1-QoderPeng1` 从 `origin/main`（`b70cb87`）出发叠入 T0-1 的 17 个文件；两份 ADR-0002 选型实质一致，取 GitHub 文本并补用户 2026-11-15「选型可行」采纳确认；本表两边 #9/#10 撞号 → 本地两条改为 #11/#12；DEVELOPMENT_LOG 保留远端全部条目 + 本地 11-15 三条（本地两条 T0-2 日志按用户决定丢弃）；`ci.yml`/依赖取远端（本地那份 `ci.yml` 缺 `on:` 且 action 名拼错）。旧本地历史存 `backup/local-main-pre-sync`。四道门实跑：verify ✓ / typecheck ✓ / **70 tests**（远端 64 + stats 6）/ build 281.30 kB gzip 90.72 kB | 已提交（`task/sync-main-T0-1-QoderPeng1`，待 PR，由用户合并） | ② D-2、⑤；**更正 §4.0**（本地旧卡曾写「由用户在本地合并进 `main`」） | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderPeng1 · GitHub 同步」 |
+
+| 14 | 2026-11-15 | QoderWang1 | **修 PR #6 CI TS2307**：根因是 `.gitignore` 未锚定的 `workspace/` 在同步提交时静默跳过 `features/workspace/`（文件只在本地、从未进 commit）；按 T0-1 交付契约重建 `WorkspacePage.tsx`（大纲 + 状态徽章 + 空状态下一步动作），`.gitignore` 加精确例外 `!apps/web/src/features/workspace/`（隐私覆盖面不变）；四道门实跑 70 tests / 281.32 kB gzip 90.65 kB；桌面/窄屏截图两张。**更正 #13**：同步分支实际推送名是 `task/T0-1-QoderPeng1`（PR #6），不是 `task/sync-main-T0-1-QoderPeng1`；T0-1 代码尚未进 `main`，待 PR #6 合并 | 已提交并 push（`task/T0-1-QoderPeng1`） | ② D-2、⑤；PR #6 由用户合并 | `DEVELOPMENT_LOG.md`「2026-11-15 · QoderWang1 · 修 PR #6 CI TS2307」；截图 `docs/evidence/t0-1-workspace-*.png` |
+
+**下一位从这里接第 15 条。** 只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
