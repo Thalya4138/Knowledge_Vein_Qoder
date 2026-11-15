@@ -1,0 +1,172 @@
+/* 入门文档：左侧目录，右侧正文。 */
+
+.guide {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 720px);
+  justify-content: center;
+  gap: var(--s-64);
+  width: min(100% - 48px, 1100px);
+  margin: 0 auto;
+  padding: var(--s-64) 0 var(--s-96);
+}
+
+.guide-toc {
+  position: sticky;
+  top: calc(var(--header-h) + var(--s-40));
+  align-self: start;
+  display: grid;
+  gap: var(--s-8);
+}
+
+.guide-toc-title {
+  font-size: var(--t-13);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.guide-toc ol {
+  display: grid;
+  gap: 2px;
+  border-left: 1px solid var(--hairline);
+}
+
+.guide-toc a {
+  display: block;
+  margin-left: -1px;
+  padding: var(--s-4) var(--s-16);
+  border-left: 1px solid transparent;
+  color: var(--ink-2);
+  font-size: var(--t-13);
+}
+
+.guide-toc a:hover {
+  border-left-color: var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.guide-body {
+  display: grid;
+  gap: var(--s-40);
+  font-family: var(--font-text);
+  font-size: var(--t-17);
+  line-height: 1.85;
+}
+
+.guide-body h1 {
+  font-size: var(--t-56);
+  line-height: 1.1;
+}
+
+.guide-lede {
+  font-size: var(--t-17);
+  color: var(--ink-2);
+}
+
+.guide-body section {
+  display: grid;
+  gap: var(--s-16);
+  scroll-margin-top: calc(var(--header-h) + var(--s-24));
+}
+
+.guide-body h2 {
+  font-family: var(--font-display);
+  font-size: var(--t-32);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.guide-steps {
+  display: grid;
+  gap: var(--s-16);
+  counter-reset: step;
+}
+
+.guide-steps li {
+  position: relative;
+  padding-left: 40px;
+  counter-increment: step;
+}
+
+/* 编号单独定位，正文按普通段落排版（避免行内元素被拆成网格的格子） */
+.guide-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 3px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: var(--t-13);
+  font-weight: 600;
+}
+
+.guide-steps strong {
+  font-weight: 600;
+}
+
+.guide-dl {
+  display: grid;
+  gap: var(--s-16);
+  margin: 0;
+}
+
+.guide-dl dt {
+  font-weight: 600;
+}
+
+.guide-dl dd {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-15);
+}
+
+.guide-table th {
+  padding: var(--s-8) var(--s-12);
+  border-bottom: 1px solid var(--ink);
+  font-size: var(--t-13);
+  font-weight: 600;
+  text-align: left;
+}
+
+.guide-table td {
+  padding: var(--s-8) var(--s-12);
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: top;
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--hairline), inset 0 -1px 0 var(--hairline);
+  font: 600 12px var(--font-ui);
+}
+
+@media (max-width: 899px) {
+  .guide {
+    grid-template-columns: 1fr;
+    gap: var(--s-24);
+  }
+
+  .guide-toc {
+    position: static;
+  }
+
+  .guide-body h1 {
+    font-size: var(--t-32);
+  }
+}

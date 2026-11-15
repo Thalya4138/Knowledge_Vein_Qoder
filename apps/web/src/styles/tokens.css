@@ -1,0 +1,129 @@
+/* 知脉 Vein · 设计变量。规则与理由见 docs/DESIGN.md。页面样式只引用这里的变量。 */
+
+@font-face {
+  font-family: 'Vein Display';
+  src: url('./fonts/vein-display.woff') format('woff');
+  font-weight: 600;
+  font-display: swap;
+}
+
+/* 标题：站酷小薇；阅读文字：霞鹜文楷（均为 OFL，子集，见 fonts/NOTICE.md） */
+@font-face {
+  font-family: 'Vein Title';
+  src: url('./fonts/vein-title.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vein Text';
+  src: url('./fonts/vein-text.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  /* 颜色：银白为底，墨蓝为字，一个强调色 */
+  --bg: #edf0ea;
+  --surface: #fbfcf8;
+  --glass: rgb(237 240 234 / 0.78);
+  --glass-strong: rgb(251 252 248 / 0.9);
+  --ink: #1b2430;
+  --ink-2: #3f4a57;
+  --ink-3: #5d6672;
+  --hairline: rgb(27 36 48 / 0.14);
+  --fill: rgb(27 36 48 / 0.05);
+  --fill-strong: rgb(27 36 48 / 0.09);
+  --accent: #1f4e79;
+  --accent-ink: #fbfcf8;
+  --accent-hover: #173d60;
+  --accent-soft: rgb(31 78 121 / 0.12);
+  /* 朱批：当前步骤、高亮、提醒。用量要少，像老师的红笔。 */
+  --cinnabar: #b53c0b;
+  --cinnabar-soft: rgb(194 65 12 / 0.12);
+  --vein: #8f9a94;
+  --contour: #c2cbc3;
+  --contour-strong: #93a097;
+  --mark: rgb(181 60 11 / 0.16);
+  --danger: #b42318;
+
+  /* 实验室（深色） */
+  --lab-bg: #0a0e16;
+  --lab-surface: #121826;
+  --lab-ink: #e8ecf3;
+  --lab-ink-2: #9aa6ba;
+  --lab-hairline: rgb(232 236 243 / 0.12);
+  --lab-accent: #6f9bff;
+
+  /* 字体 */
+  --font-ui: 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-display: 'Vein Title', 'Vein Display', var(--font-ui);
+  --font-text: 'Vein Text', var(--font-ui);
+  --font-mono: 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+  --font-math: 'Cambria Math', 'Times New Roman', serif;
+
+  /* 字号阶梯 */
+  --t-13: 13px;
+  --t-15: 15px;
+  --t-17: 17px;
+  --t-22: 22px;
+  --t-32: 32px;
+  --t-56: 56px;
+  --t-96: 96px;
+
+  /* 间距 */
+  --s-4: 4px;
+  --s-8: 8px;
+  --s-12: 12px;
+  --s-16: 16px;
+  --s-24: 24px;
+  --s-40: 40px;
+  --s-64: 64px;
+  --s-96: 96px;
+
+  /* 形状与材质 */
+  --r-outer: 20px;
+  --r-mid: 14px;
+  --r-inner: 10px;
+  --r-small: 6px;
+  --r-pill: 999px;
+  --lift: 0 12px 40px rgb(14 23 38 / 0.1), 0 2px 6px rgb(14 23 38 / 0.06);
+  --blur: saturate(180%) blur(20px);
+
+  /* 动效 */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --d-micro: 120ms;
+  --d-short: 220ms;
+  --d-long: 420ms;
+
+  --header-h: 64px;
+  --page: 1200px;
+  color-scheme: light;
+}
+
+/* 夜间模式：同一组变量换一组值。深蓝黑底，不用纯黑；强调色提亮。 */
+:root[data-theme='dark'] {
+  --bg: #11181c;
+  --surface: #182126;
+  --glass: rgb(24 33 38 / 0.78);
+  --glass-strong: rgb(24 33 38 / 0.9);
+  --ink: #e5ebe6;
+  --ink-2: #b2bdb7;
+  --ink-3: #8c9892;
+  --hairline: rgb(229 235 230 / 0.14);
+  --fill: rgb(229 235 230 / 0.06);
+  --fill-strong: rgb(229 235 230 / 0.1);
+  --accent: #8fb6dc;
+  --accent-ink: #11181c;
+  --accent-hover: #a9c8e6;
+  --accent-soft: rgb(143 182 220 / 0.16);
+  --cinnabar: #f08a5d;
+  --cinnabar-soft: rgb(240 138 93 / 0.16);
+  --vein: #5e6b66;
+  --contour: #24302f;
+  --contour-strong: #364441;
+  --mark: rgb(240 138 93 / 0.22);
+  --danger: #f0866b;
+  --lift: 0 12px 40px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+}

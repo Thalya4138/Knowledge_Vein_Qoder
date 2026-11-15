@@ -200,7 +200,7 @@ export function ProbePage() {
           <li><Link to="/workspace">/workspace 学习工作台</Link></li>
           <li><Link to="/lab">/lab 可视化实验室</Link></li>
           <li><Link to="/connection">/connection 知识关联探索</Link></li>
-          <li><Link to="/atlas">/atlas 认知与记忆图谱</Link></li>
+          <li><Link to="/atlas">/atlas 认知记忆图谱</Link></li>
         </ul>
         <p className="manual">
           把这四个地址里的 <code>#/</code> 换成 <code>/</code> 直接访问：能打开说明站方支持 SPA 回退，

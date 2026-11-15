@@ -1,0 +1,35 @@
+import { useState, type FormEvent } from 'react';
+import { Icon } from './Icon';
+
+/** 悬浮的 AI 输入条（示例模式）：提交后如实说明需要接入 API key。 */
+export function AskBar({ placeholder }: { placeholder: string }) {
+  const [draft, setDraft] = useState('');
+  const [note, setNote] = useState(false);
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!draft.trim()) return;
+    setNote(true);
+    setDraft('');
+  };
+  return (
+    <div className="askbar">
+      {note && (
+        <p className="askbar-note" role="status">
+          示例模式不会调用模型。接入你自己的 API key 后，可以在这里提问，或让它代你编辑这张图。
+          <button type="button" onClick={() => setNote(false)} aria-label="关闭">
+            <Icon name="close" />
+          </button>
+        </p>
+      )}
+      <form className="askbar-bar" onSubmit={submit}>
+        <label className="sr-only" htmlFor="askbar-input">
+          {placeholder}
+        </label>
+        <input id="askbar-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} autoComplete="off" />
+        <button type="submit" aria-label="发送" disabled={!draft.trim()}>
+          <Icon name="send" />
+        </button>
+      </form>
+    </div>
+  );
+}

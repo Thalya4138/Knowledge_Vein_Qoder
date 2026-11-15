@@ -1,0 +1,128 @@
+import { demoKb, demoNoteUrl, demoResources } from '../../app/demo';
+
+/**
+ * 工作区的显示模型：文件夹与文件都用人能看懂的名字，背后指向知识库里的真实文件。
+ * 现在只有内置的示例工作区；接入本地文件夹 / GitHub 后，由存储适配器生成同样的结构
+ * （docs/SYNC_AND_API.md）。
+ */
+
+export type FileKind = 'lecture' | 'pdf' | 'source' | 'image' | 'link' | 'html';
+
+export interface WsFile {
+  id: string;
+  name: string;
+  kind: FileKind;
+  /** 站内地址；link 类型是外部地址 */
+  url: string;
+  /** 讲义的 Markdown 源文件 */
+  sourceUrl?: string;
+  /** 源文件的语言，用于源码视图 */
+  lang?: 'markdown' | 'json';
+  /** link：作者、许可、在讲义中的用途 */
+  meta?: { author?: string; license?: string; kind?: string; note?: string };
+  /** 来自本地文件夹：url 需要按需从文件句柄生成 */
+  local?: boolean;
+  /** 在工作区文件夹里的相对路径 */
+  path?: string;
+}
+
+export interface WsFolder {
+  id: string;
+  name: string;
+  files: WsFile[];
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  /** 工作区栏里的单字标识 */
+  glyph: string;
+  folders: WsFolder[];
+  /** 本地文件夹工作区 */
+  local?: boolean;
+}
+
+const BASE = '/demo/linear-algebra';
+
+const RESOURCE_KIND: Record<string, string> = {
+  video: '视频',
+  'video-course': '视频课程',
+  pdf: 'PDF',
+  web: '网页',
+};
+
+const links: WsFile[] = demoResources
+  .filter((r) => r.uri && r.kind !== 'pdf')
+  .map((r) => ({
+    id: r.id,
+    name: r.title,
+    kind: 'link' as const,
+    url: r.uri as string,
+    meta: { author: r.author, license: r.license, kind: RESOURCE_KIND[r.kind] ?? r.kind, note: r.note },
+  }));
+
+export const DEMO_WORKSPACE: Workspace = {
+  id: 'linear-algebra',
+  name: '线性代数',
+  glyph: '线',
+  folders: [
+    {
+      id: 'notes',
+      name: '讲义',
+      files: [
+        {
+          id: 'note-2-1',
+          name: demoKb.outline.find((e) => e.status === 'written')?.title.replace(/^第2章\s*/, '') ?? '第1节',
+          kind: 'lecture',
+          url: demoNoteUrl,
+          sourceUrl: encodeURI(`${BASE}/notes/2.1-列空间中的最近点.md`),
+          lang: 'markdown',
+        },
+      ],
+    },
+    {
+      id: 'materials',
+      name: '课程资料',
+      files: [
+        {
+          id: 'mit-ses22-pdf',
+          name: 'MIT 18.06SC 讲义摘要：子空间上的投影',
+          kind: 'pdf',
+          url: `${BASE}/resources/files/MIT18_06SCF11_Ses2.2sum.pdf`,
+        },
+        ...links,
+      ],
+    },
+    {
+      id: 'atlas',
+      name: '知识结构',
+      files: [
+        { id: 'kb', name: '课程大纲', kind: 'source', url: `${BASE}/kb.json`, lang: 'json' },
+        { id: 'graph', name: '知识关系', kind: 'source', url: `${BASE}/graph.json`, lang: 'json' },
+      ],
+    },
+    {
+      id: 'figures',
+      name: '插图',
+      files: [
+        { id: 'fig-2-0', name: '三个数据点与两条候选直线', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-0-问题探讨.svg`) },
+        { id: 'fig-2-1', name: '图 2-1 b 在列空间上的最近点', kind: 'image', url: `${BASE}/notes/figures/2-1.svg` },
+        { id: 'fig-2-2', name: '图 2-2 最佳直线与残差', kind: 'image', url: `${BASE}/notes/figures/2-2.svg` },
+      ],
+    },
+  ],
+};
+
+export const WORKSPACES: Workspace[] = [DEMO_WORKSPACE];
+
+export function findFile(ws: Workspace, id: string | null): WsFile | undefined {
+  for (const f of ws.folders) {
+    const hit = f.files.find((x) => x.id === id);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+export function folderOf(ws: Workspace, id: string): WsFolder | undefined {
+  return ws.folders.find((f) => f.files.some((x) => x.id === id));
+}

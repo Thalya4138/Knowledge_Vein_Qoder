@@ -1,0 +1,471 @@
+/* 可视化实验室：深色。对话气泡起手，结果是几扇可视化窗口。 */
+
+.lab {
+  flex: 1;
+  width: min(100% - 48px, 1080px);
+  margin: 0 auto;
+  padding: var(--s-64) 0 var(--s-96);
+  display: grid;
+  align-content: start;
+  gap: var(--s-40);
+  color: var(--ink);
+}
+
+.lab-stage {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-24);
+  padding-top: 8vh;
+  transition: padding var(--d-long) var(--ease);
+}
+
+.lab-stage.asked {
+  padding-top: 0;
+}
+
+.lab-bubble {
+  display: flex;
+  align-items: center;
+  gap: var(--s-16);
+  max-width: 720px;
+  padding: var(--s-16) var(--s-24);
+  border-radius: 28px 28px 28px 8px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--hairline), var(--lift);
+}
+
+.lab-bubble p {
+  font-family: var(--font-display);
+  font-size: var(--t-22);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.lab-mark {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.lab-mark::after {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.lab-composer {
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  width: min(680px, 100%);
+  padding: var(--s-4) var(--s-4) var(--s-4) var(--s-24);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--hairline);
+}
+
+.lab-composer:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.lab-composer input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-15);
+  outline: none;
+}
+
+.lab-composer input::placeholder {
+  color: var(--ink-2);
+}
+
+.lab-send {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+
+.lab-send:disabled {
+  background: var(--fill-strong);
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
+
+.lab-tools {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-12);
+  width: min(760px, 100%);
+}
+
+.lab-tools dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-16) var(--s-24);
+  width: 100%;
+  margin: 0;
+  padding-top: var(--s-12);
+  border-top: 1px solid var(--hairline);
+}
+
+.lab-tools dt {
+  margin-bottom: 2px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.lab-tools dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+  margin: 0;
+}
+
+
+.lab-presets {
+  display: grid;
+  gap: var(--s-4);
+  width: min(680px, 100%);
+}
+
+.lab-presets button {
+  width: 100%;
+  padding: var(--s-12) var(--s-16);
+  border: 0;
+  border-radius: var(--r-inner);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--t-15);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lab-presets button:hover {
+  background: var(--fill);
+  color: var(--ink);
+}
+
+/* 结果窗口 */
+.lab-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-16);
+  animation: rise var(--d-long) var(--ease) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lab-window {
+  display: grid;
+  align-content: start;
+  gap: var(--s-16);
+  padding: var(--s-24);
+  border-radius: var(--r-outer);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--hairline);
+}
+
+.lab-window.wide {
+  grid-column: 1 / -1;
+}
+
+.lab-window header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-12);
+}
+
+.lab-window h2 {
+  font-size: var(--t-17);
+  font-weight: 600;
+}
+
+.lab-tag {
+  flex-shrink: 0;
+  padding: 2px var(--s-8);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--t-13);
+}
+
+.lab-tag.muted {
+  background: var(--fill);
+  color: var(--ink-2);
+}
+
+.lab-caption {
+  font-family: var(--font-text);
+  font-size: var(--t-15);
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.lab-story {
+  display: grid;
+  gap: var(--s-8);
+  counter-reset: frame;
+}
+
+.lab-story li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  counter-increment: frame;
+  font-size: var(--t-15);
+  color: var(--ink);
+}
+
+.lab-story li::before {
+  content: counter(frame);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.lab-note {
+  justify-self: center;
+  max-width: 640px;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+.lab-link {
+  margin-left: var(--s-8);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* 交互实验 */
+.plab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  align-items: center;
+  gap: var(--s-24);
+}
+
+.plab-svg {
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.plab-axis {
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+.plab-line {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.plab-b,
+.plab-p,
+.plab-r,
+.plab-bq,
+.plab-right {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.plab-b {
+  stroke: var(--ink);
+  stroke-width: 2.4;
+}
+
+.plab-p {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.plab-r {
+  stroke: var(--ink-2);
+  stroke-width: 2;
+  stroke-dasharray: 6 6;
+}
+
+.plab-bq {
+  stroke: var(--vein);
+  stroke-width: 1.5;
+}
+
+.plab-right {
+  stroke: var(--ink-2);
+  stroke-width: 1.4;
+}
+
+.plab-dot.p {
+  fill: var(--accent);
+}
+
+.plab-handle {
+  cursor: grab;
+}
+
+.plab-handle circle:not(.hit) {
+  fill: var(--ink);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.plab-handle.q circle:not(.hit) {
+  fill: var(--bg);
+  stroke: var(--ink);
+}
+
+.plab-handle .hit {
+  fill: transparent;
+}
+
+.plab-label {
+  font: italic 18px var(--font-math);
+  fill: var(--ink);
+}
+
+.plab-tag {
+  font: italic 14px var(--font-math);
+  fill: var(--ink-2);
+}
+
+.plab-read {
+  display: grid;
+  gap: var(--s-16);
+  margin: 0;
+}
+
+.plab-read dt {
+  font: italic var(--t-15) var(--font-math);
+  color: var(--ink-2);
+}
+
+.plab-read dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-32);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.plab-read dd.eq {
+  color: var(--accent);
+}
+
+@media (max-width: 719px) {
+  .lab-tools dl {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lab {
+    width: calc(100% - 32px);
+    padding-top: var(--s-40);
+  }
+
+  .lab-results {
+    grid-template-columns: 1fr;
+  }
+
+  .plab {
+    grid-template-columns: 1fr;
+  }
+
+  .plab-read {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .plab-read dd {
+    font-size: var(--t-22);
+  }
+}
+
+/* ---------- 背景：透视坐标地面 + 轨道（科幻感来自数学空间，不来自黑底） ---------- */
+.lab {
+  position: relative;
+  isolation: isolate;
+}
+
+.lab-sky {
+  position: absolute;
+  inset: 0 calc(50% - 50vw);
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lab-floor {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: 34%;
+  height: 90%;
+  background-image: linear-gradient(var(--hairline) 1px, transparent 1px), linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
+  background-size: 56px 56px;
+  transform: perspective(700px) rotateX(64deg);
+  transform-origin: top center;
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.9), transparent 70%);
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.9), transparent 70%);
+}
+
+.lab-orbits {
+  position: absolute;
+  left: 50%;
+  top: -40px;
+  width: min(1100px, 120vw);
+  transform: translateX(-50%);
+  overflow: visible;
+}
+
+.lab-orbits {
+  opacity: 0.7;
+}
+
+.lab-orbits ellipse {
+  fill: none;
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+.lab-orbits ellipse:nth-child(2) {
+  stroke: var(--accent-soft);
+  stroke-width: 1.5;
+}
+
+.lab-sat {
+  fill: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-sat {
+    display: none;
+  }
+}
