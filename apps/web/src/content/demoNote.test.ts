@@ -23,17 +23,17 @@ describe('demo 讲义：结构', () => {
   });
 
   it('读出 frontmatter 与标题（含行尾注释、引号）', () => {
-    expect(doc.frontmatter.title).toBe('第2章 第1节 列空间中的最近点');
+    expect(doc.frontmatter.title).toBe('第2章 第1节 正交投影与最小二乘法');
     expect(doc.frontmatter.kb).toBe('kb.linear-algebra');
     expect(doc.frontmatter.style).toBe('textbook');
-    expect(doc.title).toBe('第1节　列空间中的最近点');
+    expect(doc.title).toBe('第1节　正交投影与最小二乘法');
   });
 
   it('标题锚点：四个小节，slug 去掉标点、保留中文', () => {
     expect(doc.headings.filter((h) => h.depth === 2).map((h) => h.slug)).toEqual([
       '从代数问题到几何问题', '最近点满足的条件', '法方程', '点唯一参数未必唯一',
     ]);
-    expect(doc.headings[0]).toMatchObject({ depth: 1, line: 11, slug: '第1节-列空间中的最近点' });
+    expect(doc.headings[0]).toMatchObject({ depth: 1, line: 11, slug: '第1节-正交投影与最小二乘法' });
   });
 
   it('栏目顺序与样张一致', () => {

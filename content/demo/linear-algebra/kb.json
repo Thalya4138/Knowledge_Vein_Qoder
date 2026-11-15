@@ -22,7 +22,7 @@
     },
     {
       "id": "sec.2-1",
-      "title": "第2章 第1节 列空间中的最近点",
+      "title": "第2章 第1节 正交投影与最小二乘法",
       "status": "written",
       "notePath": "notes/2.1-列空间中的最近点.md",
       "rendered": "rendered/index.html",
