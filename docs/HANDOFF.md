@@ -111,7 +111,7 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #35（QoderWang1，2026-11-19，登记本地工作区三项实测缺陷 + 代提交 R2-L 规划，已 push） |
+| 最新接龙条目 | §4.5 #36（QoderPeng1，2026-11-19，**认领**：R1b 阅读器 T1-2/T1-3 + R2-L L0–L3，进行中，本地 `branch-mindmap` 工作区，未 push） |
 | 分支 | `task/R5b-mindmap-QoderWang1`（**已 push**，三笔：代码 / 文档 / 证据，另合并 `origin/main` 的 README 版权行；HEAD 现取 `git log --oneline origin/task/R5b-mindmap-QoderWang1 -1`。起点 `c5e449d` 是 R0-R1 分支头，**尚未进 `main`**；PR 与合并由用户定）。上一条：`task/R0-R1-QoderWang1`（**已 push**，四笔：产物 / 文档 / 代码 / 示例更名。起点 `4817f13` 已经 PR #7 进 `main`） |
 | 合并状态 | PR #1–#6 已进 `main`（T0-0 / T0-2 / T1-1 / T0-1 全部在内）。`task/T0-2-QoderWang1` 上未合并的 5 个文档提交已由 #18 并入，**该分支不必再开 PR**；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
 | 下一位的入口 | 用户看过 #22 的界面后给方向反馈（⑩）。之后按 `IMPLEMENTATION_PLAN.md` §5：R1b 阅读器（= T1-2）、R2 存储、R3 AI 接入；三个板块已有骨架，接真实能力时只替换示例数据与占位窗口，样式只引用 `DESIGN.md` 的变量 |
@@ -268,7 +268,8 @@ CI 改写未经远端验证。
 | 34 | 2026-11-19 | QoderWang1 | **规划：工作区打通四个板块（R2-L）**（用户：「当然要打通啊……先写一下规划和任务」）。查证现状：四板块各自 import 示例数据，本地文件夹只在工作台内存、图谱只认 `linear-algebra`、导图存写死的 localStorage 键；根因是 `WorkspaceStore` 只有 `demo` 一种。拆为 L0 存储层 → L1 注册表 → L2 工作台 → L3 图谱 → L4 关联探索 → L5 实验室 → L6 双向跳转 → L7 GitHub。**只写文档，未改代码** | 规划（`docs/TASK_R2_LINKAGE.md`，未提交） | 新增三项：① 新工作区无 graph.json 时图谱从哪来（建议目录导图）② 导图是否默认写进工作区文件夹（建议是）③ 截止前做到哪一步（建议 L0–L3 必做） | `docs/TASK_R2_LINKAGE.md` |
 | 35 | 2026-11-19 | QoderWang1 | **登记本地工作区三项实测缺陷 + 代提交 R2-L 规划**（用户部署后实测「打开本地文件夹」报：① `.md` 不渲染 ② 刷新即失 ③ 无删除入口；要求写入交接与规划并 push）。根因经查证：① `localFolder.ts:24` 把 md 归 `source`、`FileViewer.tsx:314` 只走逐行原文、「阅读/源文件」切换只对 `lecture`（`WorkspacePage.tsx:181`），而站内渲染器 `content/render.ts` 的 `renderNodes` 已存在却**无任何板块组件引用**（R1b 未开工）；② `WorkspacePage.tsx:28` 的 `spaces` 仅 React state、`localFolder.ts:21` 句柄仅内存 Map；③ 工作区栏（`WorkspacePage.tsx:81-121`）无移除入口。落点：`TASK_R2_LINKAGE.md` 新增 §7（详情之家）、`IMPLEMENTATION_PLAN.md` §5.6 加索引行；②③ 归 R2-L L0–L2，① 归 R1b。**代提交 #34 的 R2-L 规划三件套**（本表 #34 / IMPLEMENTATION_PLAN 的 R2 行 / `TASK_R2_LINKAGE.md`），逐个路径 add，不含 `workspace/`。纯文档登记，未改代码 | 已提交并 push（文档）；三项缺陷修复待下一轮（① R1b、②③ R2-L L0–L2） | 无新增待拍板（R2-L §4 三项仍开放）；① 是否随 R1b 一并做、②③ 随 L0–L2，由下一轮排期。③ 的移除只断开本页引用，不删用户磁盘文件 | `TASK_R2_LINKAGE.md` §7 + `IMPLEMENTATION_PLAN.md` §5.6 |
 
-**下一位从这里接第 36 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 36 | 2026-11-19 | QoderPeng1 | **认领（用户指派）**：① R1b 阅读器 = T1-2 阅读器 UI（主栏+旁栏、左侧资源抽屉两层、图表编号、折叠、窄屏内联）+ T1-3 锚点跳转与复制，顺带修 #35 缺陷①（本地 md 不渲染）；② R2-L L0–L1 存储层与工作区注册表（修缺陷②刷新即失、③无删除入口）；③ L2/L3 工作台与图谱接入同一工作区数据，尽量推进。**明确不做**：L4–L7、R3 AI 接入、批注/高亮（PRODUCT_SPEC §3.7 另排）、不装新依赖（hast→React 自己写转换器）。R2-L §4 三项待拍板仍开放：非示例工作区的图谱先给引导空态，不擅自生成目录导图。工作区在本地克隆 `branch-mindmap`，分支 `task/R1b-R2L-QoderPeng1`（从 `task/R5b-mindmap-QoderWang1` 切出，含 main 全部内容） | 进行中（本地，未 push；push 与 PR 由用户定） | R2-L §4 ①②③ 待用户拍板 | 本条即范围声明；`DEVELOPMENT_LOG.md` 2026-11-19 QoderPeng1 条目 |
+**下一位从这里接第 37 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
