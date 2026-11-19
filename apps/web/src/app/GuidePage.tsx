@@ -73,7 +73,7 @@ export function GuidePage() {
             </div>
             <div>
               <dt>认知记忆图谱</dt>
-              <dd>思维导图可以编辑并自动保存；个人记忆图谱可以收起、遮盖、挖空自测，也可以关掉自动对齐，把节点摆成你记忆里的样子。</dd>
+              <dd>思维导图像 WPS 一样用 Tab、Enter 编辑，公式用 LaTeX，自动保存，可导出 Markdown；个人记忆图谱可以收起、遮盖、挖空自测，也可以关掉自动对齐，把节点摆成你记忆里的样子。</dd>
             </div>
           </dl>
         </section>
@@ -136,7 +136,7 @@ export function GuidePage() {
                 <td>
                   <kbd>F2</kbd>
                 </td>
-                <td>思维导图：修改选中节点的文字</td>
+                <td>思维导图：编辑选中主题的文字。Tab 加子主题、Enter 加同级主题，按 F1 看全部快捷键</td>
               </tr>
               <tr>
                 <td>

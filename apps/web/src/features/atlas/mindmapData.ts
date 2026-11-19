@@ -1,9 +1,9 @@
-import { demoGraph, demoKb, nodeTitle } from '../../app/demo';
+import { demoKb, nodeTitle } from '../../app/demo';
 
 /**
  * 示例思维导图：由示例知识库生成。
  * 第一层是课程主线（kb.json 的 subtitle），第二、三层是图谱节点按「先理解什么、再理解什么」的归组。
- * 归组是本示例的编排，不是新增的知识；跨分支连线只取图谱里已有的关系。
+ * 归组是本示例的编排，不是新增的知识。跨分支连线由思维导图画布从图谱的关系现算（mindDoc.ts）。
  */
 
 export interface MapNode {
@@ -38,36 +38,6 @@ export function buildDemoMap(): MapNode {
     ]),
     group('s4', spine[3] ?? '一阶最优条件', [leaf('n.first-order-cond')]),
   ]);
-}
-
-const SHORT_REL: Record<string, string> = {
-  prerequisite: '先修',
-  'derives-from': '推出',
-  'equivalent-under': '等价',
-  'shared-mechanism': '同一机制',
-  'contrasts-with': '对照',
-  'defined-by': '由它刻画',
-  'analogy-to': '类比',
-};
-
-export interface CrossLink {
-  id: string;
-  from: string;
-  to: string;
-  label: string;
-}
-
-/** 跨分支连线：两端落在不同的第一层分支下，才画出来（同一分支内的关系已由树表达）。 */
-export function crossLinks(root: MapNode): CrossLink[] {
-  const branch = new Map<string, string>();
-  const walk = (n: MapNode, top: string) => {
-    if (n.ref) branch.set(n.ref, top);
-    n.children.forEach((c) => walk(c, top));
-  };
-  root.children.forEach((c) => walk(c, c.id));
-  return demoGraph.relations
-    .filter((r) => branch.has(r.from) && branch.has(r.to) && branch.get(r.from) !== branch.get(r.to))
-    .map((r) => ({ id: r.id, from: r.from, to: r.to, label: SHORT_REL[r.type] ?? '' }));
 }
 
 export interface Placed {

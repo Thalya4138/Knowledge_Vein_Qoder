@@ -3,7 +3,8 @@ import { demoGraph, demoKb } from '../../app/demo';
 import { AskBar } from '../../ui/AskBar';
 import { MiniTerrain } from '../../ui/cover/Terrain';
 import { Icon } from '../../ui/Icon';
-import { MindMap } from './MindMap';
+import { MemoryMap } from './MemoryMap';
+import { MindEditor } from './MindEditor';
 import { buildDemoMap, mapNodeCount } from './mindmapData';
 import '../../styles/atlas.css';
 
@@ -12,7 +13,7 @@ import '../../styles/atlas.css';
  */
 
 const MAPS = [
-  { id: 'mind', name: '思维导图', line: '横向分层、纵向逻辑，可以编辑，改完自动保存。' },
+  { id: 'mind', name: '思维导图', line: '像 WPS 一样用 Tab、Enter 编辑，公式用 LaTeX，改完自动保存。' },
   { id: 'memory', name: '个人记忆图谱', line: '从思维导图出发：收起、遮盖、挖空，考考自己。' },
 ] as const;
 
@@ -123,7 +124,7 @@ export function AtlasPage() {
           ))}
         </div>
       </header>
-      <MindMap key={map.id} mode={map.id} />
+      {map.id === 'mind' ? <MindEditor /> : <MemoryMap />}
       <AskBar placeholder={map.id === 'mind' ? '问这张图，或让它帮你改：比如「把同一类问题合并成一支」' : '让它帮你出题，或照你的想法新建一张图'} />
     </div>
   );
