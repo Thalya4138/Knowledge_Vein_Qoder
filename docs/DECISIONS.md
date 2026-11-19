@@ -163,6 +163,17 @@
 （`Sec-Fetch-Dest: document`），资源请求一律 404。据此差点写下"必须用 HashRouter"的错误结论。
 判据改成"应用是从哪个 `pathname` 启动的"之后才测对。这条已写进 `HANDOFF.md` §6。
 
+**2026-11-19 完整应用发布（R5b 思维导图 + 记忆图谱 UI）**：同一站点（个人版
+`vein-probe-personal-dx7phlm8g8e.qoder.zone`，`public`）由旧 T0-0 探针替换为完整应用。
+发布时分支 HEAD `dc810b3`（应用代码 `8db03f9`），`prepare_site` 复用 projectId、新 action
+`d9a7ff42-4cf8-4d0f-a515-98dbff0c8e81`、`spa: true`、`databaseAccess: none`；`publish_site` 后
+`published: true`、`readiness: publication_completed`。**匿名 curl（不带 cookie，文档请求头
+`Accept: text/html` + `Sec-Fetch-Dest: document`）**：`/`、`/workspace`、
+`/atlas?ws=linear-algebra&map=memory`、`/guide`、任意不存在路径均 200 + 应用外壳（入口
+`index-B3o431L4.js`）；资源 200 且 content-type 正确。**再次踩到并验证上述测法坑**：默认
+`Accept: */*` 的 curl 对深链得 404（资源请求不回退），加文档头即 200——非缺陷。**未测**：
+设置里 BYOK「测试连接」在公网地址下的跨域结果（需浏览器与模型服务，留待用户）；IndexedDB 隔天清理仍未测。
+
 **访问模式由订阅套餐决定（已解决，但留作决策依据）**：团队版账号下 `available_modes` 里没有
 `public`，站点只能 `organization`/`selected`（评委打不开）。用户账号套餐是「团队版 · 成员」，
 官方文档原文："Individual plans offer 'Anyone can access' (public) or 'Only invited users'.
