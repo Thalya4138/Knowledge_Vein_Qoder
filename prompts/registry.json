@@ -52,6 +52,13 @@
       "output": "对图谱的 ProposedChange（不得自动重排个人记忆图谱）",
       "status": "未接入"
     },
+    "atlas.mindmap": {
+      "where": "认知记忆图谱 · 思维导图：生成与更新",
+      "prompt": "MINDMAP.md",
+      "input": "讲义原文片段 + 图谱节点与关系（含前提）+ 用户当前的导图（更新时）",
+      "output": "MDoc（树、公式、出处、角标、笔记）；更新时为 ProposedChange 列表",
+      "status": "未接入（示例导图由知识库确定性生成）"
+    },
     "atlas.quiz": {
       "where": "认知与记忆图谱 · 智能挖空与出题",
       "prompt": "GRAPH_ASSISTANT.md",

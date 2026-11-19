@@ -5,6 +5,33 @@
 
 ---
 
+## 2026-11-19 · QoderWang1 · 思维导图回炉（R5b）
+
+- **目标**：用户 11-16 登记的「思维导图回炉」待办；**明确不做**：关系过滤器、导图写入工作区 `maps/*.json`（等 R2 存储）、AI 生成导图（`prompts/MINDMAP.md` 已写，未接入）、提交与发布。
+- **用户原话要点**：「原本的那个 html 的 UI 审美也缺乏进步」；给出两张参考界面，「它那个思维导图的审美和渲染，以及功能的操作，以及操作按键，都做的好看一些」；「可以学习 WPS……做出来的思维导图我是可以继续编辑的（内置 latex），然后 WPS 思维导图增加子标题、同级标题等是有快捷键的」；看过力学样张后：「不错……放进 QODER 里面去」。
+- **过程**：先对照用户四份手作导图与笔记（生物、微观经济学、语文、高中物理；私人材料）与一份自动生成的力学导图，找出差距（见 `prompts/MINDMAP.md` §0）；做成单文件力学样张给用户看，认可后移植进站内。样张与其源码在 `workspace/mechanics-mindmap/`（已 gitignore，含教材页码，不进仓库）。
+- **实际改动**
+  - 新增 `features/atlas/mindDoc.ts`（文档模型与纯函数操作：增删、换父、上下移、展开到第 n 层、复制粘贴与缩进文本解析、Markdown 导出、导入校验、示例导图生成）与 `mindDoc.test.ts`（14 个测试）。
+  - 新增 `mindCanvas.ts`（画布：先量真实尺寸再排版，左右两侧或向右布局；WPS 式快捷键；拖拽换父；内置 LaTeX；知识关系与我的连线分开画；撤销重做；本机自动保存）与 `MindEditor.tsx`（外框：工具条、大纲与搜索、详情栏、底栏、快捷键与文件弹窗）。
+  - 知识关系只读、来自 `graph.json`，线型按认知状态（`GLOSSARY.md`），详情栏写理由、成立条件与等级；我的连线是朱色双线，理由选填（`AGENTS.md` §1 第 3 条）。叶子上的「前提 n」由关系的 `assumptions` 现算；叶子上的公式只取讲义 §2.1 原文。
+  - 记忆图谱拆为 `MemoryMap.tsx`，改读思维导图本身（`toMapNode`），原 `MindMap.tsx` 删除；`mindmapData.ts` 去掉已不用的跨分支连线代码。
+  - 样式：`atlas.css` 末尾新增 `.me-*`；`tokens.css` 新增画板、点阵与三组分区色（白天、夜间各一套）。`DESIGN.md` §12 记版式规则。
+  - 依赖：`katex` 原为 `rehype-katex` 的间接依赖（已在 `node_modules`，0.16.47），导图直接引用它，故在 `package.json` 显式声明；用 `npm install --offline` 写入，锁文件只多一行，未下载任何包。
+  - 文档：新增 `prompts/MINDMAP.md` 并登记 `registry.json` 的 `atlas.mindmap`；`QUALITY_BAR.md` §4 补四条；`IMPLEMENTATION_PLAN.md` R5 状态与回炉一行；入门页快捷键与说明。
+- **人工判断**
+  - 第一版样张里节点被挤成竖条：绝对定位元素的可用宽度取自宽度为 0 的容器，补 `width: max-content`。
+  - 站内第一版整页溢出（画布 970px 而不是 836px）：`main` 是 flex 容器，`.atlas-canvas` 的 `flex: 1` 让高度由伸缩决定、被内容撑高；改为 `flex: none`。旧版导图有自己的滚动容器，所以没暴露。
+  - 快捷键只在焦点位于导图内时接管，实测在 AskBar 输入框里打字不被抢键；快捷键弹窗原先被 AskBar（z-index 200）压住，提到 300。
+  - 样张的弹窗文案原写「按键与 WPS、XMind 一致」，实际只有 Tab、Enter、Shift+Tab、F2、Delete 与 WPS 相同，已改为如实的说法。
+  - 写本条日志时，一段含反引号的文本经 shell 双引号传给 node，被当成命令替换执行，其中一段误跑了 `npm install`。核查：`package.json` 与 `package-lock.json` 的差异仍只有 `katex` 一行，`npm` 报告依赖已是最新，只刷新了不进 git 的 `node_modules/.package-lock.json`；其余片段只报「找不到文件」。之后改为先写文件再插入，正文不经过 shell。
+- **验证**：`verify:content` 通过；`typecheck` 无输出；`test` 6 个文件 84 passed（新增 14）；`build` 通过，图谱页分包 319.01 kB / gzip 98.95 kB（含 KaTeX，只在打开图谱时加载），入口包 316.28 kB / gzip 105.67 kB（未变）。浏览器实测（Edge 无头，`vite preview` 4174）：选中、Tab 新建并输入带公式的主题、Enter 同级、Ctrl+K 画我的连线并填标签、两次撤销、显示全部连线、F1 弹窗、记忆图谱读到新主题；控制台唯一的错误是 `favicon.ico` 404（本轮之前就有）。截图：`docs/evidence/r5b-mindmap-selected.png`、`r5b-mindmap-edit-link.png`、`r5b-mindmap-dark-links.png`、`r5b-mindmap-sheet.png`、`r5b-mindmap-1024.png`、`r5b-mindmap-390.png`、`r5b-memory-from-mindmap.png`。
+- **未验证**：拖拽换父、粘贴缩进文本、导入 JSON、中文输入法下直接打字编辑只在纯函数测试或样张里验过，站内未手测；触屏未测。
+- **已知缺陷**：记忆图谱里含公式的主题只去掉了 `$`，LaTeX 命令原样显示（挖空比对按纯文本，改显示要连带改比对）；节点阅读字体是子集，未覆盖的字回退系统字体；整图放进窗口时字偏小（示例导图纵向 24 个主题），可用「展开到第 2 层」。
+- **补充（同日，用户追问「4 问题能解决吗」）**：记忆图谱改为保留 `$…$` 并渲染公式，挖空比对改用 `answerKey`（忽略 `$`、排版命令、空白与全角符号，新增 1 个测试，共 85 passed）；导图首屏若整图缩放低于 70%，改为 70% 并把中心主题放在左侧（「适应窗口」仍显示全图）。用户反映本地打不开：预览服务只监听 `[::1]`，`127.0.0.1:4173` 连不上（`localhost` 可以）；已改为 `vite preview --host 127.0.0.1 --port 4173` 在独立窗口运行，两种地址均返回 200。5173 的开发服务器有同样问题，未动。
+- **下一步**：用户手测拖拽、粘贴与输入法；R2 接入后把导图存进工作区 `maps/*.json`；`atlas.mindmap` 接入 BYOK 生成时按 `prompts/MINDMAP.md` §6 自检。
+
+---
+
 ## 2026-11-16（四）· QoderWang1 · 键帽、配色与封面避让
 
 - **目标**：用户第五轮反馈；**明确不做**：发布（已授权，但提交与发布须由参赛者账号在 Qoder 中完成）。
