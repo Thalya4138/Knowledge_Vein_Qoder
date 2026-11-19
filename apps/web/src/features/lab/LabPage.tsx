@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
+import { useWorkspace } from '../../app/WorkspaceProvider';
 import { Icon } from '../../ui/Icon';
+import { DEMO_WORKSPACE } from '../workspace/workspaceData';
 import { ProjectionLab } from './ProjectionLab';
 import '../../styles/lab.css';
 
@@ -29,6 +32,8 @@ const PRESETS = [
 ];
 
 export function LabPage() {
+  const { ready: workspacesReady, error, workspace } = useWorkspace();
+  const current = workspace ?? DEMO_WORKSPACE;
   const [tool, setTool] = useState(AUTO);
   const [draft, setDraft] = useState('');
   const [asked, setAsked] = useState<string | null>(null);
@@ -42,6 +47,29 @@ export function LabPage() {
     e.preventDefault();
     if (draft.trim()) ask(draft);
   };
+
+  if (!workspacesReady) return <div className="lab"><p role="status">正在读取工作区…</p></div>;
+
+  if (current.origin !== 'demo') {
+    const fileCount = current.folders.reduce((n, f) => n + f.files.length, 0);
+    return (
+      <div className="lab">
+        <section className="lab-stage" aria-label="工作区可视化">
+          <div className="lab-bubble">
+            <span className="lab-mark" aria-hidden="true" />
+            <p>当前工作区 · {current.name}</p>
+          </div>
+          <p className="lab-note">
+            已识别这个工作区的 {fileCount} 个文件；实验室尚未从这里收集公式，也不会套用线性代数示例。
+          </p>
+          {error && <p role="alert">工作区存储异常：{error}</p>}
+          <Link className="btn primary" to={`/workspace?ws=${encodeURIComponent(current.id)}`} viewTransition>
+            回工作台选择讲义
+          </Link>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="lab">

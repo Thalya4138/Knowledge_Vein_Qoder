@@ -1,46 +1,7 @@
 import { demoKb, demoNoteUrl, demoResources } from '../../app/demo';
+import type { FileKind, Workspace, WsFile, WsFolder } from '../../store/types';
 
-/**
- * 工作区的显示模型：文件夹与文件都用人能看懂的名字，背后指向知识库里的真实文件。
- * 现在只有内置的示例工作区；接入本地文件夹 / GitHub 后，由存储适配器生成同样的结构
- * （docs/SYNC_AND_API.md）。
- */
-
-export type FileKind = 'lecture' | 'pdf' | 'source' | 'image' | 'link' | 'html';
-
-export interface WsFile {
-  id: string;
-  name: string;
-  kind: FileKind;
-  /** 站内地址；link 类型是外部地址 */
-  url: string;
-  /** 讲义的 Markdown 源文件 */
-  sourceUrl?: string;
-  /** 源文件的语言，用于源码视图 */
-  lang?: 'markdown' | 'json';
-  /** link：作者、许可、在讲义中的用途 */
-  meta?: { author?: string; license?: string; kind?: string; note?: string };
-  /** 来自本地文件夹：url 需要按需从文件句柄生成 */
-  local?: boolean;
-  /** 在工作区文件夹里的相对路径 */
-  path?: string;
-}
-
-export interface WsFolder {
-  id: string;
-  name: string;
-  files: WsFile[];
-}
-
-export interface Workspace {
-  id: string;
-  name: string;
-  /** 工作区栏里的单字标识 */
-  glyph: string;
-  folders: WsFolder[];
-  /** 本地文件夹工作区 */
-  local?: boolean;
-}
+export type { FileKind, Workspace, WsFile, WsFolder };
 
 const BASE = '/demo/linear-algebra';
 
@@ -65,6 +26,7 @@ export const DEMO_WORKSPACE: Workspace = {
   id: 'linear-algebra',
   name: '线性代数',
   glyph: '线',
+  origin: 'demo',
   folders: [
     {
       id: 'notes',

@@ -1,6 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { demoGraph } from '../../app/demo';
+import { useWorkspace } from '../../app/WorkspaceProvider';
+import { DEMO_WORKSPACE } from '../workspace/workspaceData';
 import { Icon } from '../../ui/Icon';
 import { LinkGraph, type GEdge, type GNode } from './LinkGraph';
 import '../../styles/connection.css';
@@ -51,6 +53,8 @@ function answerMarkdown(): string {
 
 export function ConnectionPage() {
   const [params, setParams] = useSearchParams();
+  const { ready, error, workspace } = useWorkspace();
+  const current = workspace ?? DEMO_WORKSPACE;
   const mode: ModeId = (MODES.find((m) => m.id === params.get('mode'))?.id ?? 'fragments') as ModeId;
   const [draft, setDraft] = useState('');
   const [files, setFiles] = useState<Attachment[]>([]);
@@ -63,7 +67,10 @@ export function ConnectionPage() {
   const rels = demoGraph.relations.filter((r) => RELS.includes(r.id));
 
   const setMode = (id: ModeId) => {
-    setParams(id === 'fragments' ? {} : { mode: id }, { replace: true });
+    const next = new URLSearchParams(params);
+    if (id === 'fragments') next.delete('mode');
+    else next.set('mode', id);
+    setParams(next, { replace: true });
     setAsked(null);
   };
   const ask = (q: string) => {
@@ -91,6 +98,31 @@ export function ConnectionPage() {
     a.click();
     URL.revokeObjectURL(a.href);
   };
+
+  if (!ready) return <div className="cx"><p className="cx-empty" role="status">正在读取工作区…</p></div>;
+
+  if (current.origin !== 'demo') {
+    const fileCount = current.folders.reduce((n, f) => n + f.files.length, 0);
+    return (
+      <div className="cx">
+        <div className="cx-body">
+          <section className="cx-thread" aria-label="工作区关联探索">
+            <div className="cx-empty">
+              <p className="cx-quiet">当前工作区 · {current.name} · {fileCount} 个文件</p>
+              <h1 className="display">关联探索尚未接入这个工作区的知识关系</h1>
+              <p className="cx-quiet">不会把线性代数示例当作你的内容。可以先回工作台整理资料，或查看这个工作区的图谱状态。</p>
+              {error && <p role="alert">工作区存储异常：{error}</p>}
+              <p>
+                <Link className="btn primary" to={`/workspace?ws=${encodeURIComponent(current.id)}`} viewTransition>
+                  回工作台整理资料
+                </Link>
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="cx">

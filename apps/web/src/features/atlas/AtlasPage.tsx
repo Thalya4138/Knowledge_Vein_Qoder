@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { demoGraph, demoKb } from '../../app/demo';
+import { useWorkspace } from '../../app/WorkspaceProvider';
 import { AskBar } from '../../ui/AskBar';
 import { MiniTerrain } from '../../ui/cover/Terrain';
 import { Icon } from '../../ui/Icon';
@@ -41,36 +42,65 @@ function MapSketch({ blank }: { blank: boolean }) {
 
 export function AtlasPage() {
   const [params] = useSearchParams();
-  const ws = params.get('ws');
+  const { spaces, ready, error, workspace } = useWorkspace();
   const map = MAPS.find((m) => m.id === params.get('map'));
 
-  if (ws !== 'linear-algebra') {
+  if (!ready) return <div className="atlas-pick" role="status">正在读取工作区…</div>;
+
+  if (!workspace) {
     return (
       <div className="atlas-pick">
         <h1 className="display">选一个工作区</h1>
+        {error && <p role="alert">工作区存储异常：{error}</p>}
         <ul className="pick-grid">
+          {spaces.map((w) => (
+            <li key={w.id}>
+              <Link className={w.origin === 'demo' ? 'pick-card art' : 'pick-card'} to={`?ws=${encodeURIComponent(w.id)}`} viewTransition>
+                {w.origin === 'demo' && <MiniTerrain />}
+                <span className="pick-glyph" aria-hidden="true">
+                  {w.glyph}
+                </span>
+                <span className="pick-name">{w.origin === 'demo' ? demoKb.title : w.name}</span>
+                <span className="pick-meta">
+                  {w.origin === 'demo'
+                    ? `${demoGraph.nodes.length} 个知识点，${demoGraph.relations.length} 条带理由的关系`
+                    : `${w.folders.reduce((n, f) => n + f.files.length, 0)} 个文件 · ${w.origin === 'folder' ? '本地文件夹' : '浏览器工作区'}`}
+                </span>
+              </Link>
+            </li>
+          ))}
           <li>
-            <Link className="pick-card art" to="?ws=linear-algebra" viewTransition>
-              <MiniTerrain />
-              <span className="pick-glyph" aria-hidden="true">
-                线
-              </span>
-              <span className="pick-name">{demoKb.title}</span>
-              <span className="pick-meta">
-                {demoGraph.nodes.length} 个知识点，{demoGraph.relations.length} 条带理由的关系
-              </span>
-            </Link>
-          </li>
-          <li>
-            <span className="pick-card disabled" aria-disabled="true">
+            <Link className="pick-card disabled" to="/workspace" viewTransition>
               <span className="pick-glyph" aria-hidden="true">
                 <Icon name="plus" />
               </span>
-              <span className="pick-name">新建工作区</span>
-              <span className="pick-meta">接入本地文件夹或 GitHub 后可用</span>
-            </span>
+              <span className="pick-name">新建或打开工作区</span>
+              <span className="pick-meta">去工作台新建空白工作区，或连接本地文件夹</span>
+            </Link>
           </li>
         </ul>
+      </div>
+    );
+  }
+
+  if (workspace.origin !== 'demo') {
+    return (
+      <div className="atlas-pick">
+        <p className="crumb-back">
+          <Link to="/atlas" viewTransition>工作区</Link>
+          <Icon name="chevron" className="icon crumb-sep" />
+          {workspace.name}
+        </p>
+        <h1 className="display">这个工作区还没有图谱</h1>
+        <p>
+          当前不会按文件夹结构自动生成知识关系，也不会伪造节点。可以先回工作台整理 Markdown；
+          新工作区的种子图谱策略确定后，再从这里开始编辑。
+        </p>
+        <p>
+          <Link className="btn primary" to={`/workspace?ws=${encodeURIComponent(workspace.id)}`} viewTransition>
+            回工作台整理资料
+          </Link>
+        </p>
       </div>
     );
   }
@@ -83,7 +113,7 @@ export function AtlasPage() {
             工作区
           </Link>
           <Icon name="chevron" className="icon crumb-sep" />
-          线性代数
+          {workspace.name}
         </p>
         <h1 className="display">选一张图</h1>
         <ul className="pick-grid">
@@ -111,7 +141,7 @@ export function AtlasPage() {
           </Link>
           <Icon name="chevron" className="icon crumb-sep" />
           <Link to="?ws=linear-algebra" viewTransition>
-            线性代数
+            {workspace.name}
           </Link>
           <Icon name="chevron" className="icon crumb-sep" />
           <strong>{map.name}</strong>

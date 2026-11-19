@@ -40,6 +40,10 @@ function allowClasses(tag: string, ...classes: (string | RegExp)[]): AttrDefs {
 /** 在 GitHub 默认白名单上，只放行本项目需要的几样东西。 */
 const schema: SanitizeSchema = {
   ...defaultSchema,
+  protocols: {
+    ...defaultSchema.protocols,
+    src: [...(defaultSchema.protocols?.src ?? []), 'blob'],
+  },
   attributes: {
     ...defaultSchema.attributes,
     code: allowClasses('code', 'math-inline', 'math-display'),

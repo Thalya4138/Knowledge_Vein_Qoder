@@ -5,6 +5,7 @@ import { parseNote } from '../../content/parseNote';
 import { NoteReader } from '../../reader/NoteReader';
 import { demoManifest } from '../../app/demo';
 import { localFileUrl, saveLocalText } from './localFolder';
+import { browserFileUrl, saveBrowserText } from '../../store/browser';
 import type { WsFile } from './workspaceData';
 
 export interface LocateRequest {
@@ -59,7 +60,7 @@ function NoteView({ file, url, locate }: { file: WsFile; url: string; locate: Lo
     setText(null);
     setError(null);
     setAssets(new Map());
-    const saved = file.local ? null : localStorage.getItem(draftKey(`${file.id}.md`));
+    const saved = file.local || file.browser ? null : localStorage.getItem(draftKey(`${file.id}.md`));
     setDraft(saved !== null);
     const load = saved !== null ? Promise.resolve(saved) : fetch(url).then((r) => {
       if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
@@ -95,8 +96,9 @@ function NoteView({ file, url, locate }: { file: WsFile; url: string; locate: Lo
 
   const assetUrl = useMemo(() => {
     if (file.local) return (src: string) => assets.get(normalize(src)) ?? src;
+    if (file.browser) return (src: string) => src;
     return (src: string) => encodeURI(`${DEMO_BASE}/notes/${src}`);
-  }, [file.local, assets]);
+  }, [file.local, file.browser, assets]);
 
   // AI 对话框的定位：按标题文字找到 slug，滚动并短暂高亮
   useEffect(() => {
@@ -132,7 +134,7 @@ function NoteView({ file, url, locate }: { file: WsFile; url: string; locate: Lo
           </button>
         </p>
       )}
-      <NoteReader source={text} manifest={file.local ? undefined : demoManifest} resourceBase={DEMO_BASE} assetUrl={assetUrl} />
+      <NoteReader source={text} manifest={file.local || file.browser ? undefined : demoManifest} resourceBase={DEMO_BASE} assetUrl={assetUrl} />
     </>
   );
 }
@@ -142,22 +144,26 @@ function SourceView({
   url,
   editing,
   onStatus,
+  onSaved,
 }: {
   file: WsFile;
   url: string;
   editing: boolean;
   onStatus: (s: string | null) => void;
+  onSaved: () => void;
 }) {
   const [text, setText] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const local = Boolean(file.local);
+  const browser = Boolean(file.browser);
+  const persisted = local || browser;
 
   useEffect(() => {
     let alive = true;
     setText(null);
     setError(null);
-    const saved = local ? null : localStorage.getItem(draftKey(file.id));
+    const saved = persisted ? null : localStorage.getItem(draftKey(file.id));
     if (saved !== null) {
       setText(saved);
       setDraft(saved);
@@ -170,7 +176,7 @@ function SourceView({
       })
       .then((t) => {
         if (!alive) return;
-        const shown = file.lang === 'json' && !local ? JSON.stringify(JSON.parse(t), null, 2) : t;
+        const shown = file.lang === 'json' && !persisted ? JSON.stringify(JSON.parse(t), null, 2) : t;
         setText(shown);
         setDraft(shown);
       })
@@ -178,7 +184,7 @@ function SourceView({
     return () => {
       alive = false;
     };
-  }, [url, file.id, file.lang, local]);
+  }, [url, file.id, file.lang, persisted]);
 
   if (error) return <p className="viewer-state">{error}</p>;
   if (text === null) return <p className="viewer-state">正在读取…</p>;
@@ -189,11 +195,15 @@ function SourceView({
         if (local) {
           await saveLocalText(file.id, draft);
           onStatus(`已存回你的文件夹：${file.path}`);
+        } else if (browser) {
+          await saveBrowserText(file.id, draft);
+          onStatus(`已保存到浏览器工作区：${file.path}`);
         } else {
           localStorage.setItem(draftKey(file.id), draft);
           onStatus('示例文件只读，已保存为这台电脑的本机草稿');
         }
         setText(draft);
+        onSaved();
       } catch (e) {
         onStatus(`没有保存：${(e as Error).message}`);
       }
@@ -201,7 +211,9 @@ function SourceView({
     return (
       <div className="source-edit">
         <div className="format-bar" role="toolbar" aria-label="源文件">
-          <span className="format-hint">{local ? '改动会直接写回你的文件' : '示例文件只读，改动保存为本机草稿'}</span>
+          <span className="format-hint">
+            {local ? '改动会直接写回你的文件' : browser ? '改动会保存到这个浏览器工作区' : '示例文件只读，改动保存为本机草稿'}
+          </span>
           <span className="format-sep" aria-hidden="true" />
           <button type="button" className="strong" onClick={save} disabled={draft === text}>
             <Icon name="save" />
@@ -250,12 +262,12 @@ export function FileViewer({
   editing: boolean;
   onStatus: (s: string | null) => void;
 }) {
-  const [url, setUrl] = useState<string | null>(file.local ? null : file.url);
+  const [url, setUrl] = useState<string | null>(file.local || file.browser ? null : file.url);
   const [error, setError] = useState<string | null>(null);
+  const [nonce, setNonce] = useState(0);
 
-  // 本地文件按需生成临时地址，换文件时回收
   useEffect(() => {
-    if (!file.local) {
+    if (!file.local && !file.browser) {
       setUrl(file.url);
       return;
     }
@@ -263,7 +275,8 @@ export function FileViewer({
     let alive = true;
     setUrl(null);
     setError(null);
-    localFileUrl(file.id)
+    const load = file.local ? localFileUrl : browserFileUrl;
+    load(file.id)
       .then((u) => {
         made = u;
         if (alive) setUrl(u);
@@ -273,7 +286,7 @@ export function FileViewer({
       alive = false;
       if (made) URL.revokeObjectURL(made);
     };
-  }, [file.id, file.local, file.url]);
+  }, [file.id, file.local, file.browser, file.url, nonce]);
 
   if (error) return <p className="viewer-state">{error}</p>;
   if (!url) return <p className="viewer-state">正在打开…</p>;
@@ -283,11 +296,13 @@ export function FileViewer({
     if (editing || view === 'source') {
       const sourceFile = file.kind === 'lecture' ? { ...file, id: `${file.id}.md` } : file;
       const sourceUrl = file.kind === 'lecture' ? file.sourceUrl! : url;
-      return <SourceView file={sourceFile} url={sourceUrl} editing={editing} onStatus={onStatus} />;
+      return <SourceView file={sourceFile} url={sourceUrl} editing={editing} onStatus={onStatus} onSaved={() => setNonce((n) => n + 1)} />;
     }
     return <NoteView file={file} url={file.kind === 'lecture' ? file.sourceUrl! : url} locate={locate} />;
   }
-  if (file.kind === 'source') return <SourceView file={file} url={url} editing={editing} onStatus={onStatus} />;
+  if (file.kind === 'source') {
+    return <SourceView file={file} url={url} editing={editing} onStatus={onStatus} onSaved={() => setNonce((n) => n + 1)} />;
+  }
   if (file.kind === 'pdf' || file.kind === 'html') {
     return <iframe key={file.id} className="frame" src={url} title={file.name} />;
   }

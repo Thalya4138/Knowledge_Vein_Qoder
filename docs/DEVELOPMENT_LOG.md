@@ -21,6 +21,18 @@
 
 （以下为开工声明，实现与验证结果见本条目末尾回填。）
 
+**完成回填（2026-11-19）**：
+
+- **R1b 已交付并提交 `c8c2abd`**：`NoteReader` 将同一份解析结果接成主栏 + 旁栏；资源抽屉支持引文、PDF 预览与详情深链，视频只给外链接；图表编号、折叠、标题锚点跳转 / 复制均已接入，窄屏旁栏改内联。实测阅读、源文件、抽屉开合、PDF 与锚点交互，截图 `r1b-reader-1440.png`、`r1b-reader-1024.png`、`r1b-reader-390.png`、`r1b-drawer-1440.png`、`r1b-drawer-390.png`。
+- **#35 三个缺陷已修**：本地 `.md` 与浏览器笔记统一走 `parseNote → NoteReader`，公式、callout、相对图片和源文件切换可用；`src` 白名单补 `blob`，否则本地 Blob 图片会被 sanitize 剥掉。注册表、浏览器文件 Blob 与本地目录句柄均进 IndexedDB；本地恢复完成前不挂载 FileViewer，避免句柄尚未填充就误报授权。非示例工作区可移除，只清站内记录、句柄和浏览器副本，不删磁盘文件。
+- **R2 本轮切片**：`store/types.ts` 定义统一 `Workspace / WsFile / WorkspaceStore`，`browser.ts`、`registry.ts`、`idb.ts` 实现浏览器工作区与注册表；`WorkspaceProvider` 提升为跨路由唯一注册表状态，全站以 `?ws=` 和页眉切换器共用当前工作区。工作台、实验室、关联探索、图谱都识别同一工作区；非示例工作区没有 graph / maps / 实验数据时显示真实名称、文件数与回工作台动作，**不冒充线性代数示例，也不自动生成知识关系**。
+- **实现中修正**：注册表更新按 id 去重并保留最新记录；新建笔记 / 工作区后重新读注册表再跳转；本地恢复与工作区切换避免重复授权；长讲义 Grid 主区补 `min-height: 0`，使页面保持视口高度、底部「打开本地文件夹」不被长文推出屏幕。
+- **四道门实跑**：`npm run verify:content` 通过；`npm run typecheck` 无输出；`npm run test` 为 **9 个文件、95 项全过**；`npm run build` 通过。未安装新依赖。
+- **浏览器工作区端到端实测**（5175）：新建工作区 → 新建 Markdown → 阅读 / 编辑 / 保存 → 刷新仍在 → 图谱等另外三个板块识别同一工作区 → 移除后注册记录与文件清空。页眉下拉切换也已实测，URL、选中项与工作台内容同步更新。
+- **本地目录核心链路实测**：Windows 原生目录选择框在自动化可见 Edge 中持续返回用户取消，**没有把它写成已通过**。改用真实 OPFS `FileSystemDirectoryHandle` 走同一套 IndexedDB 句柄恢复代码：打开带 KaTeX 与相对 SVG 的 Markdown → 默认排版阅读 → 源文件编辑并写回 → 再刷新仍保留且无需重新授权 → 移除注册记录和句柄，原文件仍在且含保存内容。权限查询与恢复均为 `granted`；尚未自动操作 Windows 系统目录选择框。
+- **视觉验收**：`r2-workspace-1440.png`、`r2-workspace-1024.png`、`r2-workspace-390.png`。三视口无页面级横向溢出；1024 两侧栏正常收起，390 隐藏工作区切换器、原顶部导航可横向滚动，长讲义在主区滚动。
+- **边界 / 下一步**：本轮不是完整 R2。完整 `demoStore / folderStore` 适配、`useWorkspace() → { kb, graph, notes, maps, store }`、`maps/mind.json` / `maps/memory.json`、L4 关联写图谱、L5 公式与实验互挂、L6 深链、L7 GitHub 均未做。R2-L §4 的种子图谱与 maps 落盘策略仍待用户拍板。测试工作区与 OPFS fixture 已清理。
+
 ---
 
 ## 2026-11-19 · QoderWang1 · 思维导图回炉（R5b）

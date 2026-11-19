@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { CoverPage } from './app/CoverPage';
+import { useWorkspace, WorkspaceProvider } from './app/WorkspaceProvider';
+import { DEMO_WORKSPACE } from './features/workspace/workspaceData';
 import { Wordmark } from './ui/brand/Wordmark';
 import { Icon } from './ui/Icon';
 import { usePrefs } from './ui/prefs';
@@ -20,6 +22,33 @@ const AtlasPage = lazy(() =>
   import('./features/atlas/AtlasPage').then((m) => ({ default: m.AtlasPage })),
 );
 const GuidePage = lazy(() => import('./app/GuidePage').then((m) => ({ default: m.GuidePage })));
+
+function WorkspaceSwitcher() {
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
+  const { spaces, ready, workspace } = useWorkspace();
+  const current = workspace ?? DEMO_WORKSPACE;
+
+  return (
+    <label className="workspace-switch">
+      <Icon name="folder" />
+      <span className="sr-only">当前工作区</span>
+      <select
+        aria-label="当前工作区"
+        value={current.id}
+        disabled={!ready}
+        onChange={(e) => {
+          const next = new URLSearchParams(search);
+          next.set('ws', e.target.value);
+          for (const key of ['file', 'view', 'open', 'map']) next.delete(key);
+          navigate({ pathname, search: `?${next.toString()}` });
+        }}
+      >
+        {spaces.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+      </select>
+    </label>
+  );
+}
 
 /** 页眉右侧：入门文档、白天 / 夜间、设置（模型、存储、语言、账号都在设置里）。 */
 function TopbarActions() {
@@ -63,23 +92,32 @@ function NotFound() {
 }
 
 export default function App() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const space = spaceForPath(pathname);
+  const currentWorkspace = new URLSearchParams(search).get('ws');
 
   return (
-    <div className="shell" data-page={space?.key ?? (pathname === '/' ? 'cover' : 'other')}>
+    <WorkspaceProvider>
+      <div className="shell" data-page={space?.key ?? (pathname === '/' ? 'cover' : 'other')}>
       <a className="skip" href="#main">
         跳到正文
       </a>
       <header className="topbar">
-        <Link to="/" className="topbar-brand" aria-label="知脉 Vein 封面" viewTransition>
-          <Wordmark size="small" />
-        </Link>
+        <div className="topbar-context">
+          <Link to="/" className="topbar-brand" aria-label="知脉 Vein 封面" viewTransition>
+            <Wordmark size="small" />
+          </Link>
+          <WorkspaceSwitcher />
+        </div>
         <nav className="topbar-nav" aria-label="工作空间">
           <ul>
             {SPACES.map((s) => (
               <li key={s.key}>
-                <NavLink to={s.path} viewTransition className={({ isActive }) => (isActive ? 'key small on' : 'key small')}>
+                <NavLink
+                  to={`${s.path}${currentWorkspace ? `?ws=${encodeURIComponent(currentWorkspace)}` : ''}`}
+                  viewTransition
+                  className={({ isActive }) => (isActive ? 'key small on' : 'key small')}
+                >
                   {s.short}
                 </NavLink>
               </li>
@@ -106,6 +144,7 @@ export default function App() {
         </ErrorBoundary>
       </main>
       <SettingsDialog />
-    </div>
+      </div>
+    </WorkspaceProvider>
   );
 }

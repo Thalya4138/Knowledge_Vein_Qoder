@@ -144,6 +144,8 @@ describe('demo 讲义：渲染', () => {
     const html = toHtml(renderNodes(fig.body, { assetUrl: (s) => `/kb/la/notes/${s}` }).hast);
     expect(html).toContain('src="/kb/la/notes/figures/2-1.svg"');
     expect(toHtml(renderNodes(fig.body).hast)).toContain('src="figures/2-1.svg"');
+    const local = toHtml(renderNodes(fig.body, { assetUrl: () => 'blob:http://localhost/local-image' }).hast);
+    expect(local).toContain('src="blob:http://localhost/local-image"');
   });
 });
 
