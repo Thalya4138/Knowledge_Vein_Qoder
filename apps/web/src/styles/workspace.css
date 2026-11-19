@@ -17,6 +17,12 @@
   --tree-w: 40px;
 }
 
+.ws-rail,
+.ws > .ws-strip:first-child { grid-column: 1; }
+.ws-tree,
+.ws > .ws-strip:not(:first-child) { grid-column: 2; }
+.ws-main { grid-column: 3; }
+
 /* 收起后留一条细边，点一下展开 */
 .ws-strip {
   display: flex;

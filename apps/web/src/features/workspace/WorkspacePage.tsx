@@ -178,7 +178,7 @@ export function WorkspacePage() {
                 <Icon name="chevron" className="icon crumb-sep" />
                 <strong>{file.name}</strong>
               </p>
-              {file.kind === 'lecture' && (
+              {(file.kind === 'lecture' || (file.kind === 'source' && file.lang === 'markdown')) && (
                 <div className="segmented" role="group" aria-label="讲义视图">
                   <button type="button" aria-pressed={view === 'read'} onClick={() => open(file.id, 'read')}>
                     阅读

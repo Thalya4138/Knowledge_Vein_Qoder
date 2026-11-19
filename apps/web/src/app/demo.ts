@@ -7,6 +7,8 @@ export const demoKb = kbData;
 export const demoGraph = graphData;
 /** 资源清单：讲义引用的教材、课件、视频及其出处与许可。 */
 export const demoResources = manifestData.resources;
+/** 阅读器资源抽屉的数据源（span 引文、定位、why 全在这里，组件不写死）。 */
+export const demoManifest = { resources: manifestData.resources, spans: manifestData.spans };
 /** 结构图谱的布局：节点 id → 坐标（只含已排布的节点）。 */
 export const demoStructurePositions: Record<string, { x: number; y: number }> = structureLayout.positions;
 
