@@ -111,11 +111,11 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #29（QoderWang1，2026-11-19，#27–#28 分三笔提交并 push） |
+| 最新接龙条目 | §4.5 #30（QoderWang1，2026-11-19，部署草稿就绪，待用户公开点击） |
 | 分支 | `task/R5b-mindmap-QoderWang1`（**已 push**，三笔：代码 / 文档 / 证据，另合并 `origin/main` 的 README 版权行；HEAD 现取 `git log --oneline origin/task/R5b-mindmap-QoderWang1 -1`。起点 `c5e449d` 是 R0-R1 分支头，**尚未进 `main`**；PR 与合并由用户定）。上一条：`task/R0-R1-QoderWang1`（**已 push**，四笔：产物 / 文档 / 代码 / 示例更名。起点 `4817f13` 已经 PR #7 进 `main`） |
 | 合并状态 | PR #1–#6 已进 `main`（T0-0 / T0-2 / T1-1 / T0-1 全部在内）。`task/T0-2-QoderWang1` 上未合并的 5 个文档提交已由 #18 并入，**该分支不必再开 PR**；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
 | 下一位的入口 | 用户看过 #22 的界面后给方向反馈（⑩）。之后按 `IMPLEMENTATION_PLAN.md` §5：R1b 阅读器（= T1-2）、R2 存储、R3 AI 接入；三个板块已有骨架，接真实能力时只替换示例数据与占位窗口，样式只引用 `DESIGN.md` 的变量 |
-| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线、⑩ 方向反馈；⑪ 已授权，提交已完成（#26、#29），待合并后发布（④⑦ 已结案，见 #7 / #10） |
+| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线、⑩ 方向反馈；⑪ 已授权，提交已完成（#26、#29），部署草稿就绪（#30），**待用户在 Qoder 工作台点 Publish 设为公开**，随后匿名实测并登记 ADR-0002（④⑦ 已结案，见 #7 / #10） |
 
 （旧版表格存档如下，保留原样以便追溯。）
 
@@ -261,8 +261,9 @@ CI 改写未经远端验证。
 | 27 | 2026-11-19 | QoderWang1 | **思维导图回炉（R5b，用户指派：「放进 QODER 里面去……以 QoderWang1 的身份写交接文件」）**：新可编辑导图 `MindEditor`（WPS 式快捷键、拖拽换父、复制粘贴分支与缩进文本、内置 LaTeX、两侧 / 向右布局、展开到第 n 层、导出 JSON / Markdown）；知识关系只读、按认知状态分线型，我的连线朱色双线；记忆图谱改读导图本身（`MemoryMap.tsx`，`MindMap.tsx` 删除）；`katex` 由间接依赖改为显式声明（离线写入，未下载）；新增 `prompts/MINDMAP.md` 与 `atlas.mindmap` 位置，`DESIGN.md` §12、`QUALITY_BAR.md` §4 补规则。私人力学样张在 `workspace/mechanics-mindmap/`（已 gitignore）。**另**：删去本表 #25 与 #26 之间的空行（它把表格截断），未改任何条目内容。四道门：verify:content ✓ / typecheck ✓ / 84 passed / build ✓ | 进行中（分支 `task/R5b-mindmap-QoderWang1`，起点 `c5e449d`，**未提交**，提交由后续按惯例拆分） | 无新增；建议用户手测拖拽、粘贴、中文输入法 | `DEVELOPMENT_LOG.md`「2026-11-19 · 思维导图回炉（R5b）」 |
 | 28 | 2026-11-19 | QoderWang1 | **#27 的补充**：记忆图谱渲染公式、挖空比对改用 `answerKey`；导图首屏最小 70% 可读字号；本地预览改监听 `127.0.0.1`（原只监听 `[::1]`，用户用 `127.0.0.1` 打不开）。四道门：verify:content ✓ / typecheck ✓ / 85 passed / build ✓ | 进行中（同分支，未提交） | 用户要用 Qoder 部署公网：须先提交本分支并合并（或从本分支发布），见 §3 红线 | `DEVELOPMENT_LOG.md`「2026-11-19 · 思维导图回炉（R5b）」的「补充」 |
 | 29 | 2026-11-19 | QoderWang1 | **提交并推送 #27–#28（用户指派：「确认远端是否有更新……本地推送更新」）**：先 fetch 核实 `origin/main` 新增三提交，与基线的内容差异只有 README 版权行（`82cf0f6`）；提交前四道门复跑全过（85 passed），密钥扫描无命中。分三笔——① 代码 `c5f0c97` ② docs/prompts `c288c84` ③ 证据截图七张 `87f4535`；再合并 `origin/main`（`d6f7c52`），push 到 `origin/task/R5b-mindmap-QoderWang1`。`workspace/` 未入库（`.gitignore:32` 排除，逐个路径 add，未用 `git add .`）。**更正 #27/#28 的「未提交」状态**：均已提交并 push | 已提交并 push；PR 与合并由用户定 | ⑪ 的提交前提已完成（本分支）；发布由参赛者本人在 Qoder 里操作，路线见 `IMPLEMENTATION_PLAN.md` §5.5 | 本条即记录（纯提交操作，无新增日志） |
+| 30 | 2026-11-19 | QoderWang1 | **部署准备（用户问「是不是可以部署到公网，按赛事网址」）**：查证 Qoder Sites 从**本地 `apps/web/dist`** 打包（描述符 host-local、已 gitignore），**不从 `main` 构建** → 提交后即可部署，技术上无需先合并 main（合并只是治理步骤，PR 由用户定）。核对产物：无 source map；demo 为公开 linear-algebra，其中 MIT OCW PDF 系 CC BY-NC-SA 公开资源（`resources/manifest.json` 有来源声明），**非私人力学材料**；`probe/large.txt`+`build-info.json` 为 T0-0 残留（无害、待清理）。`prepare_site` 复用个人版公开站点（projectId `01a1ce04-6ca0-7221-9e4a-22dfca5a7d65`，slug `vein-probe-personal`），新 action `cb3b9515-1fc3-40c9-af3c-b6687974de54`，`spa=true`、`databaseAccess=none`；草稿就绪 `canPublish=true`、`published=false`、无阻塞。已开 `show_publish_confirmation` 工作台，**公开点击留给参赛者本人**（§3 红线 / ⑪）。公网地址 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`（赛事格式 `.qoder.zone`，当前仍服务旧 T0-0 探针，发布后替换为完整应用） | 草稿就绪，**待用户在 Qoder 工作台点 Publish 设为公开**（agent 不执行 `publish_site`） | 用户公开点击后按 §5.5 第 5 步匿名实测深链 `/workspace`、`/atlas?ws=linear-algebra&map=memory`、`/guide`，把地址+commit+实测登记 ADR-0002 与本表；清理 `probe/` 残留 | 本条即记录 |
 
-**下一位从这里接第 30 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+**下一位从这里接第 31 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
