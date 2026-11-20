@@ -111,8 +111,8 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #41（QoderWang2，2026-11-20，**#40 与博物图鉴拓印美工已分两笔提交并 push，R3/R4 版本已发布公网并匿名实测通过**） |
-| 分支 | `task/R2-L3-QoderWang2`（已 push，HEAD 取 `git log --oneline -1`；#40+美工代码 `709b9b5`、文档 `27feae1`）。PR 合并 main 由用户定 |
+| 最新接龙条目 | §4.5 #42（QoderWang2，2026-11-20，**讲义块级编辑 + 叠加层批注 + Obsidian 兼容 + 文件树已分两笔提交并 push**；未部署，线上仍是 #41 的 R3/R4 版本） |
+| 分支 | `task/R2-L3-QoderWang2`（已 push，HEAD 取 `git log --oneline -1`）。PR 合并 main 由用户定 |
 | 合并状态 | PR #1–#6 已进 `main`（T0-0 / T0-2 / T1-1 / T0-1 全部在内）。`task/T0-2-QoderWang1` 上未合并的 5 个文档提交已由 #18 并入，**该分支不必再开 PR**；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
 | 下一位的入口 | ① 用户对 `docs/samples/r4-direction.html` 与已上线的拓印美工表态；认可后把规则补进 `DESIGN.md` §14；② 可视化与关联探索功能 → 工作台 / 关联探索接真实 AI → 引导；③ 真实 key 的生成 / 改图质量仍待用户实测（未达标先改 `prompts/MINDMAP.md`）。读 `TASK_R2_LINKAGE.md` 顶部状态 |
 | 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线、⑩ 方向反馈；⑪ **R3/R4 版本已发布并匿名实测通过**（#41，公网 `vein-probe-personal-dx7phlm8g8e.qoder.zone`），余真实 key 生成质量与 BYOK 公网跨域实测、`probe/` 残留清理、PR 合并 main 由用户定（④⑦ 已结案，见 #7 / #10） |
@@ -273,7 +273,8 @@ CI 改写未经远端验证。
 | 39 | 2026-11-20 | QoderWang2 | **代提交 #38 并发布公网（用户指派：真源单独一笔 + 部署）**：分三笔——① 真源 `58a54b0`（`schemas/map.schema.json` + `GLOSSARY.md`）② 代码 `41dd420`（`apps/web/src` + `prompts/registry.json`，密钥扫描无命中）③ 文档与证据八张 `9846d48`；提交前四道门复跑全过（119 tests），push 到 `origin/task/R2-L3-QoderWang2`。`prepare_site` 复用 projectId、新 action `5f2551f9-a833-4365-9f30-c2f9f510dc0b`（`spa: true`）→ `publish_site` → `published: true`；线上入口 `index-kHQR9TfK.js` 与本地构建一致，匿名 curl（文档请求头）`/`、`/workspace`、`/atlas?ws=linear-algebra&map=memory`、`/guide`、不存在路径均 200。**更正 #38 的「未提交、未 push、未部署」状态**：均已完成。真实 key 生成实测：用户本轮选择跳过，留待下一轮 | 已提交并 push；**已发布并匿名实测通过** | 真实 key 生成质量与公网跨域实测（未达标先改 `prompts/MINDMAP.md`）；`probe/` 残留清理；PR 合并 main 由用户定 | `DECISIONS.md` ADR-0002「2026-11-20 R2-L3 版本发布」+ 本条 |
 | 40 | 2026-11-20 | QoderWang2 | **对齐文件夹 + 导图 AI 对话 / 按资料更新 / 全屏 + 封面跳动修复 + 美工方向样张**：浏览器工作区「对齐文件夹」（三份指纹定方向、冲突逐个选、不删文件）；导图页 AI 对话框改图先给差异预览、应用为一步、Ctrl+Z /「撤回」整体撤回，「按资料更新」同一条路；全屏；封面卡片高度恒定，地形不再随指针重画；方向样张 `docs/samples/r4-direction.html`（颜料盒四色、碎片相逢、向量场、贴纸）。四道门全绿（125 tests），浏览器 18/18（假模型） | 进行中（代码与验收完成，等提交；样张等用户表态） | 样张方向待用户认可；真实模型改图质量与跨域未实测 | `DEVELOPMENT_LOG.md` 2026-11-20 QoderWang2 第二条；`evidence/r3-*.png`、`r4-sample-*.png` |
 | 41 | 2026-11-20 | QoderWang2 | **代提交 #40 与博物图鉴拓印美工并发布公网（用户指派：「现在的网页更改部署到网址上，更改提交」）**：美工轮（四色矿物颜料、标本拓片、三张背景图版、封面标本签，日志见同日第一条）此前未登记接龙，随本条一并入库。分两笔——① 代码 `709b9b5`（两轮功能 + 美工，密钥扫描只命中测试假值）② 文档 / 样张 / 证据九张 `27feae1`；提交前四道门复跑全过（125 tests），push 到 `origin/task/R2-L3-QoderWang2`。`prepare_site` 复用 projectId、新 action `c60fa45c-309f-40fc-99d9-9079a238ae4b`（`spa: true`）→ `publish_site` → `published: true`；线上入口 `index-CBBbtEP0.js` 与本地构建一致，匿名 curl（文档请求头）五个路径含深链均 200。**更正 #40 的「等提交」状态**：已提交并 push 且已上线。美工轮日志里「认可后补 DESIGN.md §14」仍欠 | 已提交并 push；**已发布并匿名实测通过** | 用户对样张与已上线拓印美工表态（认可后补 `DESIGN.md` §14）；真实模型改图质量与跨域实测；`probe/` 残留清理；PR 合并 main 由用户定 | `DECISIONS.md` ADR-0002「2026-11-20 晚 R3/R4 版本发布」+ 本条 |
-**下一位从这里接第 42 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 42 | 2026-11-20 | QoderWang2 | **讲义块级编辑 + 叠加层批注 + Obsidian 兼容 + 文件树（用户反馈修复轮）**：阅读视图「编辑」改块级（点一段改一段 Markdown，工具栏含字色七色；整篇撤销/重做），源文件视图仍是整篇文本框；叠加层六种笔（荧光黄 / 划线 / 淡化 / 朱批 / 核对 / 便签），TextQuote 锚定，存 `.vein/annotations/` 不写讲义；Obsidian 语法兼容（`%%` 注释、`\[ \]` 公式、`==荧光==`、`![[嵌入]]`、`#标签`、提示框家族、脚注定义丢失修复、轻量代码着色，未装新依赖）；文件树按真实路径重建层级（深度上限 20 / 文件 3000，跳过逐条报告）；讲义纸夜间钉住白天色。四道门全绿（142 tests），无头 Chrome 20 项全过。**已知缺陷**：文件树未用真实 Obsidian 库实测；对齐会把 `.vein/` 一起同步未测；笔记嵌入只显示链接 | 已提交并 push（代码 `de146d3`、文档本笔）；**未部署**——本地 dist 已含本轮构建（入口 `index-rhN6fc-o.js`），线上仍是 #41 版本，部署等用户指令 | 用户用自己的 Obsidian 库实测；字体/字号是否做成阅读设置待定；坏公式需用户给样例 | `DEVELOPMENT_LOG.md` 2026-11-20 QoderWang2「讲义块级编辑 + 叠加层批注 + Obsidian 兼容 + 文件树」 |
+**下一位从这里接第 43 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
