@@ -174,6 +174,14 @@
 `Accept: */*` 的 curl 对深链得 404（资源请求不回退），加文档头即 200——非缺陷。**未测**：
 设置里 BYOK「测试连接」在公网地址下的跨域结果（需浏览器与模型服务，留待用户）；IndexedDB 隔天清理仍未测。
 
+**2026-11-20 R2-L3 版本发布（工作区存储补全 + BYOK 导图生成）**：同一站点、同一 projectId，
+新 action `5f2551f9-a833-4365-9f30-c2f9f510dc0b`（`spa: true`）。发布时分支
+`task/R2-L3-QoderWang2` HEAD `9846d48`（真源单独一笔 `58a54b0`、代码 `41dd420`、文档 `9846d48`，
+均已 push）。`published: true`、`readiness: publication_completed`；线上入口
+`index-kHQR9TfK.js` 与本地构建一致。匿名 curl（文档请求头）五个路径含深链均 200。
+**未测**：真实 key 的导图生成质量与公网跨域——用户本轮选择跳过，留待下一轮（未达标先改
+`prompts/MINDMAP.md`，不改核对代码）。
+
 **访问模式由订阅套餐决定（已解决，但留作决策依据）**：团队版账号下 `available_modes` 里没有
 `public`，站点只能 `organization`/`selected`（评委打不开）。用户账号套餐是「团队版 · 成员」，
 官方文档原文："Individual plans offer 'Anyone can access' (public) or 'Only invited users'.
