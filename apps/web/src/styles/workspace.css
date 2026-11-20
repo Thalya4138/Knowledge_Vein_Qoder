@@ -219,61 +219,72 @@
   font-weight: 600;
 }
 
-.tree-head + .tree-folder {
-  margin-top: var(--s-12);
+.tree-head + .ft {
+  margin-top: var(--s-8);
 }
 
-.tree-folder + .tree-folder {
-  margin-top: var(--s-16);
+/* 文件树：每深一层缩进 14px；文件夹行带折叠箭头 */
+.ft-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.tree-folder h2 {
-  padding: 0 var(--s-8) var(--s-4);
-  font-size: var(--t-13);
-  font-weight: 600;
-  color: var(--ink-3);
-}
-
-.tree-file {
+.ft-row {
   display: flex;
   align-items: center;
-  gap: var(--s-8);
+  gap: 6px;
   width: 100%;
-  min-height: 32px;
-  padding: var(--s-4) var(--s-8);
+  min-height: 30px;
+  padding: 3px var(--s-8) 3px calc(var(--s-8) + var(--depth, 0) * 14px);
   border: 0;
   border-radius: var(--r-small);
   background: transparent;
   color: var(--ink-2);
+  font: inherit;
   font-size: var(--t-13);
   text-align: left;
   cursor: pointer;
 }
 
-.tree-file span {
+.ft-row span {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.tree-file .icon {
+.ft-row .icon {
+  flex: none;
   width: 16px;
   height: 16px;
   color: var(--ink-3);
 }
 
-.tree-file:hover {
+.ft-dir {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ft-chev {
+  transition: transform var(--d-micro) var(--ease);
+}
+
+.ft-chev.open {
+  transform: rotate(90deg);
+}
+
+.ft-row:hover {
   background: var(--fill);
   color: var(--ink);
 }
 
-.tree-file.active {
+.ft-file.active {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
 }
 
-.tree-file.active .icon {
+.ft-file.active .icon {
   color: var(--accent);
 }
 

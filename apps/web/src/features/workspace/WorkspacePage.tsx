@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { createBrowserNote, createBrowserWorkspace, importBrowserFolder } from '../../store/browser';
 import { useWorkspace } from '../../app/WorkspaceProvider';
@@ -11,6 +11,7 @@ import { FolderAlign } from './FolderAlign';
 import { forgetLocalFolder, localFolderSupported, openLocalFolder, restoreLocalFolder } from './localFolder';
 import { DEMO_WORKSPACE, findFile, folderOf, type FileKind } from './workspaceData';
 import '../../styles/workspace.css';
+import { FileTree } from './FileTree';
 
 const KIND_ICON: Record<FileKind, IconName> = {
   lecture: 'doc',
@@ -33,7 +34,7 @@ export function WorkspacePage() {
   const { spaces, ready, error, reload, replace, workspace } = useWorkspace();
   const ws = workspace ?? DEMO_WORKSPACE;
   // 默认打开第一份 Markdown 笔记；maps/ 下的导图数据是给图谱读的，不当作开门第一页
-  const allFiles = ws.folders.flatMap((f) => f.files);
+  const allFiles = useMemo(() => ws.folders.flatMap((f) => f.files), [ws]);
   const fallback = ws.id === DEMO_WORKSPACE.id
     ? findFile(ws, DEFAULT_FILE)
     : allFiles.find((x) => x.lang === 'markdown') ?? allFiles.find((x) => !x.path?.startsWith('maps/')) ?? allFiles[0];
@@ -150,7 +151,7 @@ export function WorkspacePage() {
       setFolderReady(true);
       setTreeOpen(true);
       const n = res.ws.folders.reduce((s, f) => s + f.files.length, 0);
-      setStatus(`已打开「${res.ws.name}」：${n} 个文件${res.skipped ? `，另有 ${res.skipped} 个暂不支持的文件未列出` : ''}`);
+      setStatus(`已打开「${res.ws.name}」：${n} 个文件${res.skippedNote ? `。${res.skippedNote}` : ''}`);
     } catch (e) {
       setStatus(`没有打开文件夹：${(e as Error).message}`);
     }
@@ -362,27 +363,7 @@ export function WorkspacePage() {
               {ws.origin === 'browser' ? '这是空白工作区，可以从一份 Markdown 笔记开始。' : '这个文件夹里没有可以打开的文件（Markdown、PDF、图片、HTML、JSON）。'}
             </p>
           )}
-          {ws.folders.map((f) => (
-            <section key={f.id} className="tree-folder">
-              <h2>{f.name}</h2>
-              <ul>
-                {f.files.map((x) => (
-                  <li key={x.id}>
-                    <button
-                      type="button"
-                      className={x.id === file?.id ? 'tree-file active' : 'tree-file'}
-                      aria-current={x.id === file?.id ? 'page' : undefined}
-                      onClick={() => open(x.id)}
-                      title={x.path ?? x.name}
-                    >
-                      <Icon name={KIND_ICON[x.kind]} />
-                      <span>{x.name}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
+          <FileTree ws={ws} activeId={file?.id} onOpen={open} icons={KIND_ICON} />
         </nav>
       ) : (
         <button type="button" className="ws-strip" onClick={() => setTreeOpen(true)} title="展开文件栏">
@@ -434,7 +415,7 @@ export function WorkspacePage() {
               )}
             </header>
             <div className="ws-content">
-              <FileViewer file={file} view={view} locate={locate} editing={editing} onStatus={setStatus} />
+              <FileViewer file={file} view={view} locate={locate} editing={editing} files={allFiles} onStatus={setStatus} />
             </div>
           </>
         ) : (

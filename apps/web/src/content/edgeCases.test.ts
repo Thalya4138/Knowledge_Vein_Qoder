@@ -56,10 +56,11 @@ describe('callout', () => {
     expect(doc.blocks[0]!.type).toBe('prose');
   });
 
+  // [!warning] 等 Obsidian 自带类型已正式支持（content/obsidian.ts），这里用一个两边都不认识的类型
   it('白名单外的类型：内容保留，同时报 warning', () => {
-    const doc = parseNote('> [!warning] 注意\n> 正文');
+    const doc = parseNote('> [!zzz] 注意\n> 正文');
     const c = doc.blocks[0] as CalloutBlock;
-    expect(c).toMatchObject({ type: 'callout', kind: 'warning', known: false, placement: 'main' });
+    expect(c).toMatchObject({ type: 'callout', kind: 'zzz', known: false, placement: 'main' });
     expect(doc.diagnostics).toMatchObject([{ severity: 'warning', code: 'unknown-callout', line: 1 }]);
   });
 

@@ -12,13 +12,16 @@ import type { Workspace, WsFile } from './workspaceData';
 export interface LocalFolderResult {
   ws: Workspace;
   skipped: number;
+  /** 跳过了什么、为什么——页面上要原样告诉用户，不许静默丢弃 */
+  skippedNote: string;
   permission: PermissionState;
 }
 
 const handles = new Map<string, FileHandle>();
 
-const MAX_FILES = 400;
-const MAX_DEPTH = 3;
+// 上限只防误选整个磁盘；正常的 Obsidian 库远到不了
+const MAX_FILES = 3000;
+const MAX_DEPTH = 20;
 
 export function localFolderSupported(): boolean {
   return 'showDirectoryPicker' in window;
@@ -29,22 +32,32 @@ function clearHandles(wsId: string) {
 }
 
 /** `name` 传入时沿用用户改过的名字，不被文件夹原名覆盖。 */
-async function scan(root: DirHandle, name = root.name): Promise<{ ws: Workspace; skipped: number }> {
+async function scan(root: DirHandle, name = root.name): Promise<{ ws: Workspace; skipped: number; skippedNote: string }> {
   const wsId = `local:${root.name}`;
   clearHandles(wsId);
   const groups = new Map<string, WsFile[]>();
   let count = 0;
   let skipped = 0;
+  let unsupported = 0;
+  let overLimit = 0;
+  const tooDeep: string[] = [];
 
   const walk = async (dir: DirHandle, path: string[], depth: number) => {
     for await (const entry of dir.values()) {
       if (SKIP_DIR.test(entry.name)) continue;
       if (entry.kind === 'directory') {
         if (depth < MAX_DEPTH) await walk(entry, [...path, entry.name], depth + 1);
+        else tooDeep.push([...path, entry.name].join('/'));
         continue;
       }
       const hit = classify(entry.name);
-      if (!hit || count >= MAX_FILES) {
+      if (!hit) {
+        unsupported += 1;
+        skipped += 1;
+        continue;
+      }
+      if (count >= MAX_FILES) {
+        overLimit += 1;
         skipped += 1;
         continue;
       }
@@ -67,9 +80,14 @@ async function scan(root: DirHandle, name = root.name): Promise<{ ws: Workspace;
     })),
   );
 
+  const notes: string[] = [];
+  if (unsupported) notes.push(`${unsupported} 个文件不是 Markdown / PDF / 图片 / HTML / JSON，没有列出`);
+  if (overLimit) notes.push(`文件超过 ${MAX_FILES} 个，后面的 ${overLimit} 个没有列出`);
+  if (tooDeep.length) notes.push(`${tooDeep.length} 个文件夹超过 ${MAX_DEPTH} 层没有展开（如 ${tooDeep[0]}）`);
   return {
     ws: { id: wsId, name, glyph: [...name][0] ?? '文', origin: 'folder', folders },
     skipped,
+    skippedNote: notes.join('；'),
   };
 }
 
@@ -90,7 +108,7 @@ export async function openLocalFolder(): Promise<LocalFolderResult | null> {
 export async function restoreLocalFolder(workspace: Workspace, request: boolean): Promise<LocalFolderResult | null> {
   const h = await folderHandle(workspace.id, request);
   if (!h) return null;
-  if (h.permission !== 'granted') return { ws: workspace, skipped: 0, permission: h.permission };
+  if (h.permission !== 'granted') return { ws: workspace, skipped: 0, skippedNote: '', permission: h.permission };
   const scanned = await scan(h.handle, workspace.name);
   await registerWorkspace(scanned.ws);
   return { ...scanned, permission: h.permission };
