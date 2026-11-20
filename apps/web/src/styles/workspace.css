@@ -790,3 +790,98 @@
   box-shadow: var(--lift);
   animation: rise var(--d-short) var(--ease) both;
 }
+
+/* ---------- 对齐文件夹 ---------- */
+.align {
+  width: min(620px, calc(100vw - 32px));
+  max-height: min(680px, calc(100vh - 64px));
+  padding: var(--s-24);
+  border: 0;
+  border-radius: var(--r-outer);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--lift);
+  overflow: auto;
+}
+
+.align::backdrop {
+  background: rgb(8 12 20 / 0.36);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.align p {
+  line-height: 1.7;
+  margin: 0 0 var(--s-12);
+}
+
+.align-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s-16);
+}
+
+.align-head h2 {
+  font-size: var(--t-22);
+}
+
+.align-quiet {
+  color: var(--ink-2);
+  font-size: var(--t-15);
+}
+
+.align-group {
+  margin: var(--s-16) 0;
+}
+
+.align-group h3 {
+  display: flex;
+  gap: var(--s-8);
+  align-items: baseline;
+  font-size: var(--t-15);
+  margin-bottom: var(--s-8);
+}
+
+.align-group h3 span {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+.align-group.conflict h3 {
+  color: var(--cinnabar);
+}
+
+.align-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-4);
+}
+
+.align-group li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-12);
+  min-height: 32px;
+}
+
+.align-group code {
+  font-family: var(--font-mono);
+  font-size: var(--t-13);
+  overflow-wrap: anywhere;
+}
+
+.align-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-12);
+  margin-top: var(--s-16);
+}
+
+.tree-auth .icon {
+  width: 15px;
+  height: 15px;
+}

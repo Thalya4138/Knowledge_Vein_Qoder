@@ -38,10 +38,12 @@ export interface MindEditorProps extends CanvasIO {
   doc: MDoc;
   /** 工作区 graph.json 的只读知识关系 */
   knowledge: KnowledgeContext;
+  /** 把画布交给外面（AI 对话框要读当前导图、整图应用修改） */
+  onCanvas?: (c: MindCanvas | null) => void;
 }
 
 /** 父组件用 `key={工作区 id}` 挂载：换工作区就换一块画布。 */
-export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed }: MindEditorProps) {
+export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed, onCanvas }: MindEditorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvas = useRef<MindCanvas | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -84,6 +86,7 @@ export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed }:
       { persist, fresh, savedLabel, seed },
     );
     canvas.current = c;
+    onCanvas?.(c);
     setTitle(c.title());
     const onState = () => setTick((t) => t + 1);
     root.addEventListener('me-state', onState);
@@ -95,6 +98,7 @@ export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed }:
       window.clearTimeout(timer);
       c.destroy();
       canvas.current = null;
+      onCanvas?.(null);
     };
   }, []);
 

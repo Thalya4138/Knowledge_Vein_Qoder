@@ -73,19 +73,6 @@ export function LabPage() {
 
   return (
     <div className="lab">
-      <div className="lab-sky" aria-hidden="true">
-        <div className="lab-floor" />
-        <svg className="lab-orbits" viewBox="-400 -200 800 400">
-          <ellipse rx="330" ry="60" transform="rotate(-6)" />
-          <ellipse rx="250" ry="88" transform="rotate(10)" />
-          <ellipse id="lab-orbit" rx="380" ry="44" transform="rotate(3)" />
-          <circle r="4" className="lab-sat">
-            <animateMotion dur="18s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#lab-orbit" />
-            </animateMotion>
-          </circle>
-        </svg>
-      </div>
       <section className={asked ? 'lab-stage asked' : 'lab-stage'}>
         <div className="lab-bubble">
           <span className="lab-mark" aria-hidden="true" />

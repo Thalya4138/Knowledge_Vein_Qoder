@@ -140,13 +140,6 @@ export function ConnectionPage() {
         <section className="cx-thread" aria-label="对话">
           {!asked && (
             <div className="cx-empty">
-              <svg className="cx-converge" viewBox="0 0 800 260" aria-hidden="true">
-                {Array.from({ length: 13 }, (_, i) => {
-                  const y = 10 + i * 20;
-                  return <path key={i} pathLength={1} d={`M0 ${y} C300 ${y} 420 130 640 130`} style={{ ['--i' as string]: i }} />;
-                })}
-                <circle cx="640" cy="130" r="6" />
-              </svg>
               <h1 className="display">{MODES.find((m) => m.id === mode)!.label}</h1>
               {mode === 'fragments' ? (
                 <button type="button" className="cx-try" onClick={() => ask(PRESET_Q)}>

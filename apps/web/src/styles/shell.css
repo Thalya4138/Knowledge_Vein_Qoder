@@ -37,6 +37,18 @@
   border-bottom: 1px solid var(--hairline);
 }
 
+/* 每个板块的颜色：页眉当前项、页内的板块标识都读 --space */
+.shell[data-page='workspace'] { --space: var(--c-workspace); --space-ink: var(--c-workspace-ink); }
+.shell[data-page='lab'] { --space: var(--c-lab); --space-ink: var(--c-lab-ink); }
+.shell[data-page='connection'] { --space: var(--c-connection); --space-ink: var(--c-connection-ink); }
+.shell[data-page='atlas'] { --space: var(--c-atlas); --space-ink: var(--c-atlas-ink); }
+
+.topbar-nav .key[aria-current='page'],
+.topbar-nav .key.on {
+  background: var(--space, var(--accent));
+  color: var(--space-ink, var(--accent-ink));
+}
+
 
 .topbar-brand {
   justify-self: start;
@@ -108,6 +120,8 @@
 
 
 .main {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
   display: flex;

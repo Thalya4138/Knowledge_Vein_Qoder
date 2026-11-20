@@ -1,4 +1,4 @@
-import { DEMO_BASE } from '../features/workspace/workspaceData';
+import { DEMO_BASE, DEMO_NOTE_PATHS } from '../features/workspace/workspaceData';
 import { browserStore } from './browser';
 import { demoStore } from './demo';
 import { folderHandle, folderStore } from './folder';
@@ -18,7 +18,7 @@ export type OpenResult =
 export async function openStore(workspace: Workspace, request = false): Promise<OpenResult> {
   switch (workspace.origin) {
     case 'demo':
-      return { status: 'ready', store: demoStore(workspace.id, DEMO_BASE) };
+      return { status: 'ready', store: demoStore(workspace.id, DEMO_BASE, DEMO_NOTE_PATHS) };
     case 'browser':
       return { status: 'ready', store: browserStore(workspace.id) };
     case 'folder': {

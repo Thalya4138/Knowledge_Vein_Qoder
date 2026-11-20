@@ -27,7 +27,8 @@ export interface MindInput {
   nodes: { id: string; title: string; kind: string; aliases: string[] }[];
   relations: { id: string; from: string; to: string; type: string; explanation: string; assumptions: string[]; epistemic: string }[];
   notes: NoteSpan[];
-  existingMap: null;
+  /** 更新时传入用户当前的导图；生成时为 null */
+  existingMap: MDoc | null;
   userRequest: string;
 }
 
@@ -157,11 +158,30 @@ const squash = (s: string) => s.replace(/\$/g, '').replace(/\s+/g, '');
 
 const str = (v: unknown, max = 4000) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : undefined);
 
+/** 一份导图里已有的公式 / 出处 / ref / 第一层分区：更新时这些是用户已经认可的，不算模型编造 */
+function existing(doc: MDoc | null) {
+  const f = new Set<string>();
+  const src = new Set<string>();
+  const ref = new Set<string>();
+  const band = new Map<string, number>();
+  const walk = (n: MNode) => {
+    (n.f ?? []).forEach((k) => f.add(squash(k)));
+    if (n.src) src.add(n.src);
+    if (n.ref) ref.add(n.ref);
+    if (n.band !== undefined) band.set(n.id, n.band);
+    n.kids.forEach(walk);
+  };
+  if (doc) walk(doc.root);
+  return { f, src, ref, band };
+}
+
 export function checkOutput(raw: unknown, input: MindInput): Checked {
   const o = raw as { title?: unknown; root?: unknown } | null;
   if (!o || typeof o !== 'object' || !o.root || typeof o.root !== 'object') throw new ModelError('模型的回答里没有导图（缺少 root）。');
 
-  const nodeIds = new Set(input.nodes.map((n) => n.id));
+  const prev = input.existingMap;
+  const kept = existing(prev);
+  const nodeIds = new Set([...input.nodes.map((n) => n.id), ...kept.ref]);
   const anchors = new Set(input.notes.map((n) => n.anchor));
   const corpus = squash(input.notes.map((n) => n.text).join('\n'));
   const seen = new Set<string>();
@@ -193,13 +213,14 @@ export function checkOutput(raw: unknown, input: MindInput): Checked {
     }
     if (Array.isArray(x.f)) {
       const f = x.f.map((k) => str(k, 400)).filter((k): k is string => Boolean(k));
-      const kept = f.filter((k) => corpus.includes(squash(k)));
-      badF += f.length - kept.length;
-      if (kept.length) n.f = kept;
+      const ok = f.filter((k) => corpus.includes(squash(k)) || kept.f.has(squash(k)));
+      badF += f.length - ok.length;
+      if (ok.length) n.f = ok;
     }
     const src = str(x.src, 300);
     if (src) {
       if (anchors.has(src)) n.src = srcLabel(src);
+      else if (kept.src.has(src)) n.src = src;
       else badSrc += 1;
     }
     for (const k of ['tag', 'tagNote', 'phen', 'contrast', 'notes'] as const) {
@@ -207,7 +228,7 @@ export function checkOutput(raw: unknown, input: MindInput): Checked {
       if (v) n[k] = v;
     }
     if (depth === 1) {
-      n.band = x.band === 0 || x.band === 1 || x.band === 2 ? x.band : index % 3;
+      n.band = x.band === 0 || x.band === 1 || x.band === 2 ? x.band : kept.band.get(id) ?? index % 3;
       n.side = 1;
     }
     const kids = Array.isArray(x.kids) ? x.kids : [];
@@ -230,8 +251,12 @@ export function checkOutput(raw: unknown, input: MindInput): Checked {
   if (count < 6) warnings.push(`只有 ${count} 个主题，叶子可能还不到「能逐个核对」的粒度`);
 
   const title = str(o.title, 80) ?? root.text;
+  // 「我的连线」只属于用户：更新时原样保留，端点被删掉的那几条才去掉
+  const links = (prev?.links ?? []).filter((l) => seen.has(l.from) && seen.has(l.to));
+  const lost = (prev?.links.length ?? 0) - links.length;
+  if (lost) fixes.push(`${lost} 条「我的连线」的端点被删掉了，这几条连线会随之去掉`);
   return {
-    doc: { version: 2, title, root, links: [], view: { ...DEFAULT_VIEW, layout: 'right' }, seq: seq + count },
+    doc: { version: 2, title, root, links, view: prev ? { ...prev.view } : { ...DEFAULT_VIEW, layout: 'right' }, seq: Math.max(prev?.seq ?? 0, seq + count) },
     fixes,
     warnings,
     count,
@@ -242,4 +267,102 @@ export async function generateMind(model: ModelConfig, store: WorkspaceStore, in
   const { messages } = await buildMessages(store, input);
   const answer = await chat(model, messages, signal);
   return checkOutput(extractJson(answer), input);
+}
+
+/* ---------- 更新已有导图：AI 对话与「按资料更新」 ---------- */
+
+const UPDATE_CONTRACT = `## 本次任务：修改用户已有的导图（覆盖上文「输出」一节中与此冲突的部分）
+
+输入里的 existingMap 是用户当前的导图，userRequest 是这次的要求。只输出一个 JSON 对象，不要任何前后缀：
+
+{ "reply": "用一两句人话说明你做了什么、为什么；只是回答问题时就写回答", "doc"?: { "title": "...", "root": MNode } }
+
+- 用户只是提问、不需要改图时，不要给 doc。
+- 给 doc 时给出**修改后的整张导图**：保留的主题必须沿用原来的 id（挖空练习记录靠 id 对应），新主题用新的短英文 id。
+- 只改这次要求涉及的地方；用户写的文字、角标、笔记，没有被要求就原样保留。
+- 不要输出 links：「我的连线」由界面原样保留。
+- MNode 的字段与规则同上文：f 只抄 notes 原文或保留原有的；src 只填 notes 的 anchor 或保留原有的；ref 只填 nodes 里的 id 或保留原有的。`;
+
+/** 「按资料更新」就是一句固定的要求 */
+export const SYNC_REQUEST =
+  '工作区里的笔记更新了。对照 notes 的最新内容更新这张导图：补上笔记里新出现、导图里还没有的内容；笔记里已经删掉的内容，删掉对应主题；其余保持不变。在 reply 里列出改了哪几处。';
+
+export interface Updated {
+  reply: string;
+  /** 模型给了修改后的导图（已核对）；只回答问题时为 undefined */
+  checked?: Checked;
+}
+
+export async function updateMind(model: ModelConfig, store: WorkspaceStore, input: MindInput, signal?: AbortSignal): Promise<Updated> {
+  const prompt = await promptFor('atlas.mindmap', store);
+  const body = ['```json', JSON.stringify(input, null, 1), '```'].join('\n');
+  const messages = [
+    { role: 'system' as const, content: prompt.text },
+    { role: 'user' as const, content: `${UPDATE_CONTRACT}\n\n## 输入\n\n${body}` },
+  ];
+  const raw = extractJson(await chat(model, messages, signal)) as { reply?: unknown; doc?: unknown };
+  const reply = typeof raw.reply === 'string' && raw.reply.trim() ? raw.reply.trim() : '';
+  if (!raw.doc) {
+    if (!reply) throw new ModelError('模型既没有回答，也没有给出修改。');
+    return { reply };
+  }
+  return { reply: reply || '已按要求修改。', checked: checkOutput(raw.doc, input) };
+}
+
+/* ---------- 两张导图的差异（应用前给用户看） ---------- */
+
+export interface MindDiff {
+  added: { node: MNode; parent: string }[];
+  removed: { node: MNode; parent: string }[];
+  changed: { before: MNode; after: MNode; fields: string[] }[];
+  moved: { node: MNode; from: string; to: string }[];
+}
+
+const FIELD_LABEL: Record<string, string> = {
+  text: '文字',
+  f: '公式',
+  src: '出处',
+  ref: '知识点',
+  tag: '角标',
+  tagNote: '角标说明',
+  phen: '入口现象',
+  contrast: '容易混淆',
+  notes: '笔记',
+};
+
+export function diffDocs(prev: MDoc, next: MDoc): MindDiff {
+  const index = (doc: MDoc) => {
+    const byId = new Map<string, { node: MNode; parent: MNode | null }>();
+    const walk = (n: MNode, p: MNode | null) => {
+      byId.set(n.id, { node: n, parent: p });
+      n.kids.forEach((k) => walk(k, n));
+    };
+    walk(doc.root, null);
+    return byId;
+  };
+  const a = index(prev);
+  const b = index(next);
+  const name = (p: MNode | null) => (p ? p.text : '');
+  const diff: MindDiff = { added: [], removed: [], changed: [], moved: [] };
+  for (const [id, x] of b) {
+    const old = a.get(id);
+    if (!old) {
+      // 只报新分支的根，不把它下面的每个主题都列一遍
+      if (!x.parent || a.has(x.parent.id)) diff.added.push({ node: x.node, parent: name(x.parent) });
+      continue;
+    }
+    const fields = Object.keys(FIELD_LABEL).filter(
+      (k) => JSON.stringify(old.node[k as keyof MNode] ?? null) !== JSON.stringify(x.node[k as keyof MNode] ?? null),
+    );
+    if (fields.length) diff.changed.push({ before: old.node, after: x.node, fields: fields.map((k) => FIELD_LABEL[k]!) });
+    if ((old.parent?.id ?? null) !== (x.parent?.id ?? null)) diff.moved.push({ node: x.node, from: name(old.parent), to: name(x.parent) });
+  }
+  for (const [id, x] of a) {
+    if (!b.has(id) && (!x.parent || b.has(x.parent.id))) diff.removed.push({ node: x.node, parent: name(x.parent) });
+  }
+  return diff;
+}
+
+export function diffSize(d: MindDiff): number {
+  return d.added.length + d.removed.length + d.changed.length + d.moved.length;
 }

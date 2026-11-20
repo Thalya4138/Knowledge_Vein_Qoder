@@ -9,6 +9,8 @@ import { MiniTerrain } from '../../ui/cover/Terrain';
 import { Icon } from '../../ui/Icon';
 import { loadMaps, mapWriter, MEMORY_PATH, MIND_PATH, savedLabel, type MemoryState, type WorkspaceMaps } from './maps';
 import { MapGenerate } from './MapGenerate';
+import { MindAssist } from './MindAssist';
+import type { MindCanvas } from './mindCanvas';
 import { MemoryMap } from './MemoryMap';
 import { MindEditor } from './MindEditor';
 import { indexDoc, normalizeDoc, seedDoc, type MDoc } from './mindDoc';
@@ -131,6 +133,34 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
   // 浏览器工作区写 maps/ 后文件栏会变，始终用最新的工作区对象
   const wsRef = useRef(workspace);
   wsRef.current = workspace;
+  const canvasRef = useRef<MindCanvas | null>(null);
+  const [syncTick, setSyncTick] = useState(0);
+  // 全屏阅读 / 编辑：优先用浏览器全屏；浏览器不给时退回铺满窗口
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const on = () => setFull(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', on);
+    return () => document.removeEventListener('fullscreenchange', on);
+  }, []);
+  useEffect(() => {
+    // 画板尺寸变了，重新放进窗口
+    const t = window.setTimeout(() => canvasRef.current?.fit(), 120);
+    return () => window.clearTimeout(t);
+  }, [full]);
+  useEffect(() => {
+    if (!full || document.fullscreenElement) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setFull(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [full]);
+  const toggleFull = () => {
+    if (document.fullscreenElement) return void document.exitFullscreen();
+    if (full) return setFull(false);
+    const el = frameRef.current;
+    if (el?.requestFullscreen) el.requestFullscreen().catch(() => setFull(true));
+    else setFull(true);
+  };
 
   const start = useCallback(async (request: boolean) => {
     try {
@@ -257,15 +287,32 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
   }
 
   return (
-    <div className="atlas-canvas">
+    <div className={full ? 'atlas-canvas full' : 'atlas-canvas'} ref={frameRef}>
       <header className="atlas-head">
         <Crumbs workspace={workspace} map={map.name} />
-        <div className="segmented" role="group" aria-label="切换图谱">
-          {MAPS.map((m) => (
-            <Link key={m.id} to={`${wsQuery}&map=${m.id}`} aria-current={m.id === map.id ? 'page' : undefined} replace>
-              {m.name}
-            </Link>
-          ))}
+        <div className="atlas-tools">
+          {map.id === 'mind' && (
+            <button
+              type="button"
+              className="btn quiet"
+              onClick={() => setSyncTick((n) => n + 1)}
+              title="工作区里的笔记改过之后，让 AI 对照最新的笔记更新这张图；先给你看改了什么，确认后才应用"
+            >
+              <Icon name="refresh" />
+              按资料更新
+            </button>
+          )}
+          <button type="button" className="btn quiet" onClick={toggleFull} aria-pressed={full} title={full ? '退出全屏（Esc）' : '全屏阅读与编辑'}>
+            <Icon name={full ? 'shrink' : 'expand'} />
+            {full ? '退出全屏' : '全屏'}
+          </button>
+          <div className="segmented" role="group" aria-label="切换图谱">
+            {MAPS.map((m) => (
+              <Link key={m.id} to={`${wsQuery}&map=${m.id}`} aria-current={m.id === map.id ? 'page' : undefined} replace>
+                {m.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </header>
       {map.id === 'mind' ? (
@@ -277,6 +324,7 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
           fresh={maps.fresh}
           savedLabel={savedLabel(workspace, MIND_PATH)}
           seed={workspace.origin === 'demo' ? seedDoc : undefined}
+          onCanvas={(c) => (canvasRef.current = c)}
         />
       ) : (
         <MemoryMap
@@ -293,7 +341,11 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
           {notice}
         </p>
       )}
-      <AskBar placeholder={map.id === 'mind' ? '问这张图，或让它帮你改：比如「把同一类问题合并成一支」' : '让它帮你出题，或照你的想法新建一张图'} />
+      {map.id === 'mind' ? (
+        <MindAssist canvas={() => canvasRef.current} store={load.store} graph={maps.graph} name={workspace.name} syncTick={syncTick} />
+      ) : (
+        <AskBar placeholder="让它帮你出题，或照你的想法新建一张图" />
+      )}
     </div>
   );
 }

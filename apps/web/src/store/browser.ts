@@ -10,7 +10,7 @@ interface BrowserFileRecord {
   data: Blob;
 }
 
-async function digest(data: Blob): Promise<string> {
+export async function digest(data: Blob): Promise<string> {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', await data.arrayBuffer()));
   return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 }

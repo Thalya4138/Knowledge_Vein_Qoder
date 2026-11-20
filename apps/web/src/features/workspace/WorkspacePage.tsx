@@ -7,6 +7,7 @@ import type { Workspace } from '../../store/types';
 import { Icon, type IconName } from '../../ui/Icon';
 import { AiDock, type Hit } from './AiDock';
 import { canEdit, FileViewer, type LocateRequest } from './FileViewer';
+import { FolderAlign } from './FolderAlign';
 import { forgetLocalFolder, localFolderSupported, openLocalFolder, restoreLocalFolder } from './localFolder';
 import { DEMO_WORKSPACE, findFile, folderOf, type FileKind } from './workspaceData';
 import '../../styles/workspace.css';
@@ -48,6 +49,7 @@ export function WorkspacePage() {
   const [needsAuth, setNeedsAuth] = useState(false);
   const [folderReady, setFolderReady] = useState(false);
   const importInput = useRef<HTMLInputElement>(null);
+  const [alignOpen, setAlignOpen] = useState(false);
 
   useEffect(() => setEditing(false), [file?.id, view]);
   useEffect(() => {
@@ -339,6 +341,17 @@ export function WorkspacePage() {
               <span className="sr-only">收起文件栏</span>
             </button>
           </div>
+          {ws.origin === 'browser' && (
+            <button
+              type="button"
+              className="btn quiet tree-auth"
+              onClick={() => setAlignOpen(true)}
+              title={ws.link ? `与「${ws.link.folder}」对齐：写进改动、读入新改动` : '选一个电脑上的文件夹，让这里的改动和它保持一致'}
+            >
+              <Icon name="folder" />
+              {ws.link ? `对齐「${ws.link.folder}」` : '对齐文件夹'}
+            </button>
+          )}
           {needsAuth && ws.origin === 'folder' && (
             <button type="button" className="btn quiet tree-auth" onClick={() => void authorize(ws)}>
               重新授权本地文件夹
@@ -440,6 +453,15 @@ export function WorkspacePage() {
           </p>
         )}
         {error && <p className="ws-status" role="alert">工作区存储异常：{error}</p>}
+        {ws.origin === 'browser' && (
+          <FolderAlign
+            workspace={ws}
+            open={alignOpen}
+            onClose={() => setAlignOpen(false)}
+            onWorkspace={replace}
+            onStatus={setStatus}
+          />
+        )}
         <AiDock onLocate={onLocate} noteName={findFile(DEMO_WORKSPACE, DEFAULT_FILE)?.name ?? '讲义'} />
       </section>
     </div>

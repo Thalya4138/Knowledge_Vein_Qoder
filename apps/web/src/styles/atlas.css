@@ -975,3 +975,107 @@ a.pick-card:active {
 .atlas-pick h1.gen-title {
   font-size: var(--t-32);
 }
+
+/* ---------- 导图页：工具、全屏、AI 对话 ---------- */
+.atlas-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-8);
+}
+
+.atlas-tools .btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 浏览器全屏，或退回铺满窗口：只留页头一行，其余全给画板 */
+.atlas-canvas:fullscreen,
+.atlas-canvas.full {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  background: var(--bg);
+}
+
+.assist .askbar-note {
+  align-items: center;
+}
+
+.assist .askbar-note p {
+  flex: 1;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.assist-panel {
+  display: grid;
+  gap: var(--s-8);
+  max-height: min(52vh, 460px);
+  overflow: auto;
+  padding: var(--s-16) var(--s-24);
+  border-radius: var(--r-mid);
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--lift);
+}
+
+.assist-panel p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.assist-ask {
+  color: var(--ink-3);
+  font-size: var(--t-13);
+}
+
+.assist-reply {
+  font-family: var(--font-text);
+  font-size: var(--t-15);
+}
+
+.assist-diff h4 {
+  display: flex;
+  gap: var(--s-8);
+  font-size: var(--t-13);
+  margin: var(--s-4) 0;
+}
+
+.assist-diff h4 span {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+.assist-diff ul {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: var(--t-13);
+  line-height: 1.7;
+}
+
+.assist-diff em {
+  margin-left: var(--s-8);
+  color: var(--ink-3);
+  font-style: normal;
+}
+
+.assist-diff .more {
+  color: var(--ink-3);
+  list-style: none;
+}
+
+.assist-fix {
+  color: var(--cinnabar);
+  font-size: var(--t-13);
+}
+
+.assist-actions {
+  display: flex;
+  gap: var(--s-8);
+  padding-top: var(--s-4);
+}

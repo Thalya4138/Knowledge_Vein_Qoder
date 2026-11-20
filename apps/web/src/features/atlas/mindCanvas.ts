@@ -835,6 +835,22 @@ export class MindCanvas {
       this.toast('已导入 ' + file.name + '，Ctrl+Z 可以撤回');
     });
   }
+  /** 当前导图的一份深拷贝（交给 AI 读，不让它碰到画布正在用的对象） */
+  docCopy(): MDoc {
+    return JSON.parse(serialize(this.doc)) as MDoc;
+  }
+  /**
+   * 应用一份整图修改（AI 修改、按资料更新）：作为**一步**记进历史，Ctrl+Z 一下整体撤回。
+   * 只换树、连线与标题；视图设置是用户的，不跟着变。
+   */
+  applyDoc(next: MDoc, msg: string) {
+    this.snapshot();
+    this.doc.root = next.root;
+    this.doc.links = next.links;
+    this.doc.title = next.title;
+    this.doc.seq = Math.max(this.doc.seq, next.seq);
+    this.afterHistory(msg);
+  }
   reset() {
     if (!this.io.seed) return;
     this.snapshot();

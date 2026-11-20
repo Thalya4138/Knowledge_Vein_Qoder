@@ -5,6 +5,8 @@ export type { FileKind, Workspace, WsFile, WsFolder };
 
 export const DEMO_BASE = '/demo/linear-algebra';
 const BASE = DEMO_BASE;
+/** 示例工作区里随网站发布的讲义原件（相对 DEMO_BASE） */
+export const DEMO_NOTE_PATHS = ['notes/2.1-列空间中的最近点.md'];
 
 const RESOURCE_KIND: Record<string, string> = {
   video: '视频',

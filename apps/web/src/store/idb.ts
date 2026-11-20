@@ -71,6 +71,7 @@ export async function idbDeleteWorkspace(id: string): Promise<void> {
     const tx = db.transaction(['workspaces', 'handles', 'files'], 'readwrite');
     tx.objectStore('workspaces').delete(id);
     tx.objectStore('handles').delete(id);
+    tx.objectStore('handles').delete(`link:${id}`);
     for (const file of files) if (file.wsId === id) tx.objectStore('files').delete(file.id);
     await completed(tx);
   });

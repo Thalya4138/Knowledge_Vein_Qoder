@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { chat, extractJson } from '../../ai/chat';
 import { memoryStore } from '../../store/memoryStore';
 import type { ModelConfig } from '../../ui/prefs';
-import { checkOutput, collectInput, generateMind, NOTE_BUDGET, splitNote, type MindInput } from './mindGen';
+import { checkOutput, collectInput, diffDocs, diffSize, generateMind, NOTE_BUDGET, splitNote, updateMind, type MindInput } from './mindGen';
 
 const NOTE = `# 应力
 
@@ -139,5 +139,58 @@ describe('模型调用（浏览器直连）', () => {
     expect(sent).toContain('质量底线'); // 共用底线不能被工作区覆盖掉
     expect(r.doc.root.kids[0]).not.toHaveProperty('f');
     expect(r.fixes[0]).toContain('公式');
+  });
+});
+
+describe('更新已有导图（AI 对话 / 按资料更新）', () => {
+  const prev = {
+    version: 2 as const,
+    title: '力学',
+    root: {
+      id: 'root',
+      text: '力学',
+      kids: [
+        { id: 'a', text: '应力', f: ['E=mc^2'], src: '我的课本 p.3', band: 2, kids: [{ id: 'a1', text: '旧叶子', kids: [] }] },
+        { id: 'b', text: '应变', kids: [] },
+      ],
+    },
+    links: [
+      { id: 'l1', from: 'a', to: 'b', label: '对照', reason: '', src: '' },
+      { id: 'l2', from: 'a1', to: 'b', label: '我记的', reason: '', src: '' },
+    ],
+    view: { links: 'all' as const, fx: false, chips: true, layout: 'both' as const, level: 2 },
+    seq: 50,
+  };
+
+  it('用户原有的公式与出处不算编造；我的连线与视图设置原样保留', () => {
+    const raw = { title: '力学', root: { id: 'root', text: '力学', kids: [{ id: 'a', text: '应力', f: ['E = mc^2'], src: '我的课本 p.3', kids: [] }, { id: 'b', text: '应变', kids: [] }] } };
+    const r = checkOutput(raw, input({ existingMap: prev }));
+    expect(r.doc.root.kids[0]).toMatchObject({ f: ['E = mc^2'], src: '我的课本 p.3', band: 2 });
+    expect(r.doc.links.map((l) => l.id)).toEqual(['l1']); // a1 被删，l2 跟着去掉
+    expect(r.fixes.join()).toContain('1 条「我的连线」');
+    expect(r.doc.view).toEqual(prev.view);
+    expect(r.doc.seq).toBeGreaterThanOrEqual(50);
+  });
+
+  it('差异：只报新分支的根、删去的分支根、改了哪些字段、移动到哪', () => {
+    const next = JSON.parse(JSON.stringify(prev));
+    next.root.kids[0].text = '柯西应力';
+    next.root.kids[0].kids = [];
+    next.root.kids[1].kids.push({ id: 'c', text: '新分支', kids: [{ id: 'c1', text: '新叶子', kids: [] }] });
+    next.root.kids.push({ id: 'a1', text: '旧叶子', kids: [] });
+    const d = diffDocs(prev, next);
+    expect(d.added.map((x) => x.node.id)).toEqual(['c']);
+    expect(d.removed).toEqual([]);
+    expect(d.changed).toEqual([expect.objectContaining({ fields: ['文字'] })]);
+    expect(d.moved).toEqual([{ node: expect.objectContaining({ id: 'a1' }), from: '应力', to: '力学' }]);
+    expect(diffSize(d)).toBe(3);
+  });
+
+  it('只是提问时只回答、不给修改', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"reply":"应力是单位面积上的内力。"}' }, finish_reason: 'stop' }] }))));
+    const { store } = memoryStore();
+    const r = await updateMind({ provider: 'openai-compatible', baseUrl: 'https://x/v1', model: 'm', apiKey: 'k' }, store, input({ existingMap: prev, userRequest: '应力是什么' }));
+    expect(r).toEqual({ reply: '应力是单位面积上的内力。' });
+    vi.unstubAllGlobals();
   });
 });

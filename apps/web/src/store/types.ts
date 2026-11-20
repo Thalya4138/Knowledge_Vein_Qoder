@@ -27,6 +27,11 @@ export interface Workspace {
   glyph: string;
   origin: WorkspaceOrigin;
   folders: WsFolder[];
+  /**
+   * 浏览器工作区与一个本地文件夹对齐的记录（只有浏览器工作区有）。
+   * base = 上次对齐时每个文件的内容指纹：两边不一样时，靠它判断是哪一边改的。
+   */
+  link?: { folder: string; base: Record<string, string>; at: number };
 }
 
 export interface FileEntry {
