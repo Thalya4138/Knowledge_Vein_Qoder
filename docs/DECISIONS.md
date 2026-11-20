@@ -182,6 +182,12 @@
 **未测**：真实 key 的导图生成质量与公网跨域——用户本轮选择跳过，留待下一轮（未达标先改
 `prompts/MINDMAP.md`，不改核对代码）。
 
+**2026-11-20 晚 R3/R4 版本发布（对齐文件夹 + 导图 AI 对话 + 博物图鉴拓印美工）**：同一站点、
+同一 projectId，新 action `c60fa45c-309f-40fc-99d9-9079a238ae4b`（`spa: true`）。发布时分支
+`task/R2-L3-QoderWang2` HEAD `27feae1`（代码 `709b9b5`、文档 `27feae1`，均已 push）。
+`published: true`；线上入口 `index-CBBbtEP0.js` 与本地构建一致；匿名 curl（文档请求头）
+五个路径含深链均 200。**未测**：真实模型的改图质量与跨域；拓印滤镜只在 Chrome 验证。
+
 **访问模式由订阅套餐决定（已解决，但留作决策依据）**：团队版账号下 `available_modes` 里没有
 `public`，站点只能 `organization`/`selected`（评委打不开）。用户账号套餐是「团队版 · 成员」，
 官方文档原文："Individual plans offer 'Anyone can access' (public) or 'Only invited users'.
