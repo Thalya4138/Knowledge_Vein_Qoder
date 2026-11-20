@@ -5,6 +5,71 @@
 
 ---
 
+## 2026-11-20 · QoderWang2 · R2-L L0 补全 + L3 导图落进工作区 + R3 最小切片（导图生成）
+
+**范围**（HANDOFF 接龙 #38）：
+1. 把导图与记忆练习从写死的 localStorage 键挪进**每个工作区自己的** `maps/mind.json`、`maps/memory.json`；
+2. 补完 L0：示例 / 浏览器 / 本地文件夹三种工作区走同一个 `WorkspaceStore`，全站一个入口 `openStore()`；
+3. 按用户裁决接上「从工作区资料生成第一张导图」：BYOK 模型调用 + 内置 `prompts/MINDMAP.md` + 输出核对 + 预览确认后写入；
+4. 零碎：工作区改名入口、「导入文件夹」入口（任何浏览器）、浏览器工作区相对图片。
+
+**明确不做**：L4 关联探索写导图、L5 实验室挂主题、L6 讲义 ↔ 导图深链、L7 GitHub；已有导图的「AI 更新」（要走 `ProposedChange` 差异预览，另排）；
+关联探索 / 实验室对非示例工作区仍是空态；不装新依赖；不提交、不 push、不部署（部署由用户交给 Qoder）。
+
+**用户裁决（2026-11-20，原话）**：
+- R2-L §4 ①②：「导图是基于工作区的各种数据库，经由类似demo制作的时候的精确的呈现结果和令人满意的内容质量的（这是不是涉及后面API的实现，以及内置prompt）存进文件夹。」
+  → ① 选 C（按工作区资料、走模型 + 内置提示词生成，质量对齐示例）；② 存进工作区文件夹。
+  → 没有模型时**不退回目录导图**（目录导图达不到「令人满意的内容质量」），只给「接入我的模型」与「从空白导图开始」两个明确动作。
+- ③ 截止前做到哪一步：用户本轮未答，仍开放。
+
+**做了什么**
+
+- **存储层（L0 补全）**：新增 `store/folder.ts`（File System Access 读写，路径拒绝 `..`）、`store/demo.ts`（示例原件只读 fetch + 本机覆盖层）、
+  `store/open.ts`（`openStore(workspace)` 与 `readText / readJson / writeText / writeJson`）、`store/tree.ts`（文件分类、分组、显示名，本地扫描 / 导入 / 新建笔记 / 写导图共用一份）。
+  `localFolder.ts` 改用这些共用规则。
+- **导图进工作区（L3）**：`features/atlas/maps.ts` 读写 `maps/`。示例工作区第一次打开时把旧 localStorage 键（`vein.mind.linear-algebra.v2`、`vein.memory.linear-algebra`）
+  **一次性搬进** `maps/`，搬成功后删旧键。`MindCanvas` 不再碰 localStorage，存到哪里由外面传入（`CanvasIO`）；写入串行，旧版本不会后落盘。
+  `MemoryMap` 的答案判定改用当前工作区 `graph.json` 的别名。浏览器工作区写 `maps/` 时登记进文件栏，工作台能看到 `mind.json` / `memory.json`。
+- **生成第一张导图（R3 最小切片，位置 `atlas.mindmap`）**：`ai/chat.ts`（OpenAI 兼容 + Anthropic，浏览器直连，key 只在请求头）、
+  `ai/prompts.ts`（内置提示词随站发布；工作区 `.vein/prompts/atlas.mindmap.md` 可覆盖，但 `QUALITY_BAR.md` 永远附在前面）、
+  `features/atlas/mindGen.ts`：笔记按标题切片并记锚点（单次上限 48,000 字，超出的段落计数告诉用户）→ 拼输入（kb / 图谱节点与已接受关系 / 笔记片段）→ 调模型 → **逐项核对**：
+  公式必须能在笔记原文里找到、出处必须是真实片段锚点、`ref` 必须是图谱里的节点、id 去重、不收模型画的连线；核对改掉的地方原样展示给用户。
+  `MapGenerate.tsx`：材料统计 → 生成 → 预览（大纲 + 核对结果）→「确认，写入 maps/mind.json」/ 重新生成 / 放弃；没有模型时「接入我的模型」/「从空白导图开始」。
+- **零碎**：工作区栏「改名」（只改站内显示名；本地文件夹重扫时保留改过的名字）、「导入文件夹」（`webkitdirectory`，复制成浏览器工作区，跳过隐藏目录 / node_modules / 不支持的文件）；
+  浏览器工作区 Markdown 的相对图片能显示了；打开工作区默认进第一份笔记而不是 `maps/` 里的数据文件；工作区栏底部两个入口各占一行（之前挤在一行被截成半个字）。
+- **顺手修的既有缺陷**：思维导图的**撤销 / 重做、导入 JSON、恢复示例之后不存盘**（刷新后被撤掉的内容回来）——现在都会存。
+- **改了真源**：新增 `schemas/map.schema.json`（`maps/mind.json` 与 `maps/memory.json`，有测试用 ajv 校验示例导图 / 空白导图 / 练习状态）；`GLOSSARY.md` 给 `PersonalEdge` 补别名「我的连线」。
+
+**实现中发现并修掉的问题**
+
+- **单页应用的托管站对不存在的路径回 200 + 首页 HTML**（本地 `vite preview` 与 Qoder Sites 都是）。示例工作区读 `maps/mind.json` 时覆盖层没有 → 回退去站上 fetch → 拿到首页 HTML 当 JSON → 报错。
+  单元测试抓不到，浏览器验收抓到。修法：非 `.html` 路径收到 `text/html` 视为文件不存在（`store/demo.ts`，有测试）。
+- **标题字体是子集**（只含界面源码出现过的字），新标题「给「工作区名」生成第一张导图」一半标题体一半回落。工作区名是用户内容，任何子集都覆盖不了 →
+  标题改为子集里全有的「这个工作区没有导图」，名字留在面包屑；授权 / 报错页用正文字体标题。字体文件未重建（源字体不在本机）。
+
+**怎么验证的**
+
+- 四道门：`npm run verify:content` 通过；`npm run typecheck` 无输出；`npm run test` **13 个文件、119 项全过**（基线 9 / 95）；`npm run build` 通过。未装新依赖。
+  新增测试：`store/tree.test.ts`、`store/demo.test.ts`、`features/atlas/maps.test.ts`（含 schema 校验）、`features/atlas/mindGen.test.ts`（切片、核对、OpenAI / Anthropic 请求形状、401 / 截断 / 跨域的报错、工作区覆盖提示词）。
+- **浏览器端到端**（无头 Chrome，`vite preview` 4174，全新 profile）**25 / 25 通过**：新建工作区与笔记 → 图谱进生成页（材料统计来自真实笔记）→ 设置面板填模型 → 生成 →
+  预览显示「1 条公式 / 1 处出处 / 1 处指向」被核对删掉 → 确认写入 → 画布状态栏「已保存到工作区 maps/mind.json」→ 加主题落盘 → 撤销也落盘 → 记忆图谱读同一张导图、练习写 `maps/memory.json` →
+  刷新仍在 → 工作台文件栏出现 `mind.json` / `memory.json` 且默认打开笔记 → 改名刷新后仍在 → 示例旧 localStorage 导图迁移、旧键删除 →
+  本地文件夹（OPFS 目录句柄，与原生选择框同一套 File System Access 接口）进生成页 →「从空白导图开始」→ 文件夹里真的出现 `maps/mind.json` → 工作台重扫看得到。全程无未捕获异常。
+- **模型是拦截请求返回的假回答**（同源 `/mockai/`，回答里故意夹了编造的公式、出处、ref）。所以验证的是链路与核对，**没有验证真实模型的生成质量，也没有验证真实服务的跨域**。
+- 截图：`docs/evidence/r2l3-generate-nokey-1440.png`、`r2l3-preview-{1440,1024,390}.png`、`r2l3-mind-1440.png`、`r2l3-memory-1440.png`、`r2l3-workspace-{1440,390}.png`。
+
+**已知缺陷 / 限制**
+
+- 真实模型的导图质量**未实测**：要用户接自己的 key 生成一次，与示例导图并排比（`QUALITY_BAR.md` §1「比样本差就不上线」）。DeepSeek / 通义千问等的浏览器跨域也未实测。
+- 已有导图后没有「重新生成 / AI 更新」入口；按 `MINDMAP.md` §2，更新必须是差异预览，不能覆盖用户改过的主题。
+- Windows 原生目录选择框仍未自动化验收（同 #37）。本地文件夹两个同名文件夹会撞同一个工作区 id（`local:<文件夹名>`，既有设计）。
+- 导图标题与中心主题若是用户内容，标题字体子集同样会回落（既有设计，归视觉层）。
+- `apps/web/dist` 已是本轮构建：**Qoder Sites 从本地 dist 打包**，部署即发布本轮全部改动。
+
+**下一步**：用户用真实 key 跑一次生成并评质量 → L4「加入思维导图」（差异预览 + 可撤销）→ L6 讲义锚点 ↔ 导图主题（`src` 已带「文件 § 标题」）→ L5。
+
+---
+
 ## 2026-11-19 · QoderPeng1 · R1b 阅读器 + R2-L 工作区打通（开工声明）
 
 **范围**（HANDOFF 接龙 #36 认领）：
