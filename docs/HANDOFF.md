@@ -111,10 +111,10 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #39（QoderWang2，2026-11-20，**#38 已分三笔提交并 push（真源单独一笔），R2-L3 版本已发布公网并匿名实测通过**；真实 key 生成实测用户选择跳过，留待下一轮） |
-| 分支 | `task/R2-L3-QoderWang2`（已 push，HEAD 取 `git log --oneline -1`；真源 `58a54b0`、代码 `41dd420`、文档 `9846d48`）。PR 合并 main 由用户定 |
+| 最新接龙条目 | §4.5 #40（QoderWang2，2026-11-20，**对齐文件夹、导图 AI 对话 / 按资料更新 / 全屏、封面跳动修复、美工方向样张**；本地未提交。#39：#38 已 push 并发布公网） |
+| 分支 | `task/R2-L3-QoderWang2`（#38 已 push 并发布：真源 `58a54b0`、代码 `41dd420`、文档 `9846d48`、ADR `1afff21`、接龙 `95aa251`；**#40 的改动在工作区，未提交**；PR 合并 main 由用户定） |
 | 合并状态 | PR #1–#6 已进 `main`（T0-0 / T0-2 / T1-1 / T0-1 全部在内）。`task/T0-2-QoderWang1` 上未合并的 5 个文档提交已由 #18 并入，**该分支不必再开 PR**；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
-| 下一位的入口 | ① 用户用真实 key 在一个自己的工作区生成一次导图，与示例并排比质量（未达标先改 `prompts/MINDMAP.md`，不改核对代码）；② 再做 L4「加入思维导图」（差异预览 + 可撤销）→ L6 讲义 ↔ 导图（`src` 已是「文件 § 标题」）→ L5。读 `TASK_R2_LINKAGE.md` 顶部状态 |
+| 下一位的入口 | ① 把 #40 提交（无真源改动）并部署；② **等用户对 `docs/samples/r4-direction.html` 表态**再铺美工，样张未认可前不要改 `tokens.css` 配色；③ 之后：可视化与关联探索功能 → 工作台 / 关联探索接真实 AI → 引导。真实 key 的生成质量仍待用户实测 |
 | 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线、⑩ 方向反馈；⑪ **R2-L3 版本已发布并匿名实测通过**（#39，公网 `vein-probe-personal-dx7phlm8g8e.qoder.zone`），余真实 key 生成质量与 BYOK 公网跨域实测、`probe/` 残留清理、PR 合并 main 由用户定（④⑦ 已结案，见 #7 / #10） |
 
 （旧版表格存档如下，保留原样以便追溯。）
@@ -271,7 +271,8 @@ CI 改写未经远端验证。
 | 37 | 2026-11-19 | QoderPeng1 | **R1b + R2-L 当前工作区切片交付**：R1b 阅读器提交 `c8c2abd`；#35 三项缺陷均修，浏览器工作区新建 / 笔记读写 / 刷新 / 移除和页眉切换已实测。新增 `WorkspaceProvider`、IndexedDB 注册表与浏览器 Blob、本地目录句柄恢复；四板块共用 `?ws=`，非示例工作区不再冒充示例数据，而是显示真实空态与回工作台动作。真实 OPFS 目录句柄走完本地 md / 公式 / 相对图片 / 保存 / 刷新 / 移除链路，原文件保留；**Windows 原生目录选择框未自动化验收**。四道门全绿（95 tests），1440 / 1024 / 390 截图齐。**不是完整 R2**：完整 store 适配、maps、L4–L7 未做 | R2 代码 / 文档 / 截图已提交（`c42382c`），未 push；本轮按用户要求并入本地 `main` | R2-L §4 ①②③ 仍待用户拍板；下一位先补 maps 与完整数据入口，再 L4–L6 | `DEVELOPMENT_LOG.md` 同日 QoderPeng1 完成回填；`TASK_R2_LINKAGE.md` §3 回填；`evidence/r2-workspace-{1440,1024,390}.png` |
 | 38 | 2026-11-20 | QoderWang2 | **R2-L L0 补全 + L3 导图落进工作区 + R3 最小切片（导图生成）+ 零碎**：示例 / 浏览器 / 本地文件夹走同一个 `WorkspaceStore`（`store/open.ts`、`folder.ts`、`demo.ts`、`tree.ts`）；导图与记忆练习改存各工作区 `maps/mind.json`、`maps/memory.json`，示例旧 localStorage 一次性迁移；非示例工作区进「这个工作区没有导图」→ 用户自己的模型 + 内置 `MINDMAP.md` 生成 → 逐项核对（公式须在原文、出处须是真实片段、ref 须在图谱）→ 预览确认后写入，无模型时「接入我的模型 / 从空白导图开始」；工作区改名、导入文件夹、浏览器工作区相对图片。顺修既有缺陷：导图撤销 / 重做 / 导入 / 恢复示例后不存盘。实现中抓到：SPA 托管站对不存在路径回 200 + 首页 HTML，示例读 `maps/` 会误当 JSON（已修，有测试）。**改了真源**：新增 `schemas/map.schema.json`；`GLOSSARY.md` 给 PersonalEdge 补别名「我的连线」。四道门全绿（119 tests）；浏览器端到端 25/25（模型为拦截请求的假回答） | 进行中（代码与验收完成，等提交）：代码 / 文档 / 截图都在工作区，**未提交、未 push、未部署**；`apps/web/dist` 已是本轮构建（Sites 从本地 dist 打包） | R2-L §4 ①② **已裁决**（用户 11-20：按工作区资料、以示例质量用模型 + 内置提示词生成，存进文件夹；原话见 DEVELOPMENT_LOG）；③ 截止前做到哪一步仍开放；**真实模型的生成质量与跨域未实测**，需用户用自己的 key 验一次 | `DEVELOPMENT_LOG.md` 2026-11-20 QoderWang2；`TASK_R2_LINKAGE.md` §3 / §4 回填；`evidence/r2l3-*.png` |
 | 39 | 2026-11-20 | QoderWang2 | **代提交 #38 并发布公网（用户指派：真源单独一笔 + 部署）**：分三笔——① 真源 `58a54b0`（`schemas/map.schema.json` + `GLOSSARY.md`）② 代码 `41dd420`（`apps/web/src` + `prompts/registry.json`，密钥扫描无命中）③ 文档与证据八张 `9846d48`；提交前四道门复跑全过（119 tests），push 到 `origin/task/R2-L3-QoderWang2`。`prepare_site` 复用 projectId、新 action `5f2551f9-a833-4365-9f30-c2f9f510dc0b`（`spa: true`）→ `publish_site` → `published: true`；线上入口 `index-kHQR9TfK.js` 与本地构建一致，匿名 curl（文档请求头）`/`、`/workspace`、`/atlas?ws=linear-algebra&map=memory`、`/guide`、不存在路径均 200。**更正 #38 的「未提交、未 push、未部署」状态**：均已完成。真实 key 生成实测：用户本轮选择跳过，留待下一轮 | 已提交并 push；**已发布并匿名实测通过** | 真实 key 生成质量与公网跨域实测（未达标先改 `prompts/MINDMAP.md`）；`probe/` 残留清理；PR 合并 main 由用户定 | `DECISIONS.md` ADR-0002「2026-11-20 R2-L3 版本发布」+ 本条 |
-**下一位从这里接第 40 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 40 | 2026-11-20 | QoderWang2 | **对齐文件夹 + 导图 AI 对话 / 按资料更新 / 全屏 + 封面跳动修复 + 美工方向样张**：浏览器工作区「对齐文件夹」（三份指纹定方向、冲突逐个选、不删文件）；导图页 AI 对话框改图先给差异预览、应用为一步、Ctrl+Z /「撤回」整体撤回，「按资料更新」同一条路；全屏；封面卡片高度恒定，地形不再随指针重画；方向样张 `docs/samples/r4-direction.html`（颜料盒四色、碎片相逢、向量场、贴纸）。四道门全绿（125 tests），浏览器 18/18（假模型） | 进行中（代码与验收完成，等提交；样张等用户表态） | 样张方向待用户认可；真实模型改图质量与跨域未实测 | `DEVELOPMENT_LOG.md` 2026-11-20 QoderWang2 第二条；`evidence/r3-*.png`、`r4-sample-*.png` |
+**下一位从这里接第 41 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
