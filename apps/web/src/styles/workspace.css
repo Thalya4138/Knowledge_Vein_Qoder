@@ -64,15 +64,22 @@
   color: var(--ink);
 }
 
+/* 底部两个入口（打开本地文件夹 / 导入文件夹）各占一行，收起按钮挂在第一行右侧 */
 .rail-foot {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--s-4);
+  gap: 2px var(--s-4);
 }
 
 .rail-foot .rail-item {
-  flex: 1;
+  grid-column: 1;
   min-width: 0;
+}
+
+.rail-foot .collapse-btn {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .tree-head {
@@ -150,7 +157,7 @@
 
 .rail-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 28px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 2px;
 }
@@ -180,6 +187,13 @@
 .rail-remove .icon {
   width: 15px;
   height: 15px;
+}
+
+/* 有鼠标时，改名与移除只在指向这一行或键盘聚焦时出现，平时不抢工作区名字的视线 */
+@media (hover: hover) {
+  .rail-workspace:not(:hover):not(:focus-within) .rail-remove {
+    opacity: 0;
+  }
 }
 
 .tree-auth {

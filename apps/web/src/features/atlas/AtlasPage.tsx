@@ -1,16 +1,22 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { demoGraph, demoKb } from '../../app/demo';
 import { useWorkspace } from '../../app/WorkspaceProvider';
+import { openStore } from '../../store/open';
+import type { Workspace, WorkspaceStore } from '../../store/types';
 import { AskBar } from '../../ui/AskBar';
 import { MiniTerrain } from '../../ui/cover/Terrain';
 import { Icon } from '../../ui/Icon';
+import { loadMaps, mapWriter, MEMORY_PATH, MIND_PATH, savedLabel, type MemoryState, type WorkspaceMaps } from './maps';
+import { MapGenerate } from './MapGenerate';
 import { MemoryMap } from './MemoryMap';
 import { MindEditor } from './MindEditor';
-import { buildDemoMap, mapNodeCount } from './mindmapData';
+import { indexDoc, normalizeDoc, seedDoc, type MDoc } from './mindDoc';
 import '../../styles/atlas.css';
 
 /**
  * 认知记忆图谱：选工作区 → 选图谱 → 画布。选择写进地址（?ws= &map=），可以直接分享到画布。
+ * 每个工作区的导图与练习存在它自己的 maps/ 里（R2-L L3）；还没有导图的工作区先生成或从空白开始。
  */
 
 const MAPS = [
@@ -42,8 +48,7 @@ function MapSketch({ blank }: { blank: boolean }) {
 
 export function AtlasPage() {
   const [params] = useSearchParams();
-  const { spaces, ready, error, workspace } = useWorkspace();
-  const map = MAPS.find((m) => m.id === params.get('map'));
+  const { spaces, ready, error, workspace, replace } = useWorkspace();
 
   if (!ready) return <div className="atlas-pick" role="status">正在读取工作区…</div>;
 
@@ -83,51 +88,170 @@ export function AtlasPage() {
     );
   }
 
-  if (workspace.origin !== 'demo') {
+  return <WorkspaceAtlas key={workspace.id} workspace={workspace} mapId={params.get('map')} onWorkspace={replace} />;
+}
+
+function Crumbs({ workspace, map }: { workspace: Workspace; map?: string }) {
+  return (
+    <p className="crumb-back">
+      <Link to="/atlas" viewTransition>
+        工作区
+      </Link>
+      <Icon name="chevron" className="icon crumb-sep" />
+      {map ? (
+        <>
+          <Link to={`?ws=${encodeURIComponent(workspace.id)}`} viewTransition>
+            {workspace.name}
+          </Link>
+          <Icon name="chevron" className="icon crumb-sep" />
+          <strong>{map}</strong>
+        </>
+      ) : (
+        workspace.name
+      )}
+    </p>
+  );
+}
+
+type Load =
+  | { kind: 'loading' }
+  | { kind: 'auth' }
+  | { kind: 'error'; message: string }
+  | { kind: 'ready'; store: WorkspaceStore; maps: WorkspaceMaps };
+
+/** 一个工作区的图谱：读它的 maps/，思维导图与记忆图谱共用同一份导图。 */
+function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspace; mapId: string | null; onWorkspace: (w: Workspace) => void }) {
+  const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  const [notice, setNotice] = useState<string | null>(null);
+  const map = MAPS.find((m) => m.id === mapId);
+  const wsQuery = `?ws=${encodeURIComponent(workspace.id)}`;
+  // 画布就地修改导图；切到记忆图谱时要拿最新的那一份，所以记下「最近写出的」
+  const mindRef = useRef<MDoc | null>(null);
+  const memRef = useRef<MemoryState | null>(null);
+  // 浏览器工作区写 maps/ 后文件栏会变，始终用最新的工作区对象
+  const wsRef = useRef(workspace);
+  wsRef.current = workspace;
+
+  const start = useCallback(async (request: boolean) => {
+    try {
+      const opened = await openStore(wsRef.current, request);
+      if (opened.status === 'auth') return setLoad({ kind: 'auth' });
+      if (opened.status === 'missing') return setLoad({ kind: 'error', message: opened.message });
+      const maps = await loadMaps(opened.store, wsRef.current);
+      mindRef.current = maps.mind;
+      memRef.current = maps.memory;
+      setLoad({ kind: 'ready', store: opened.store, maps });
+    } catch (e) {
+      setLoad({ kind: 'error', message: (e as Error).message });
+    }
+  }, []);
+
+  useEffect(() => {
+    void start(false);
+  }, [start]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = window.setTimeout(() => setNotice(null), 3600);
+    return () => window.clearTimeout(t);
+  }, [notice]);
+
+  const store = load.kind === 'ready' ? load.store : null;
+  const writers = useMemo(() => {
+    if (!store) return null;
+    const track = (w: Workspace) => {
+      wsRef.current = w;
+      onWorkspace(w);
+    };
+    const mind = mapWriter(store, wsRef.current, MIND_PATH, track);
+    const memory = mapWriter(store, wsRef.current, MEMORY_PATH, track);
+    return {
+      mind: async (json: string) => {
+        mindRef.current = normalizeDoc(JSON.parse(json)) ?? mindRef.current;
+        await mind(json);
+      },
+      memory: async (json: string) => {
+        memRef.current = JSON.parse(json) as MemoryState;
+        await memory(json);
+      },
+    };
+  }, [store, onWorkspace]);
+  const onError = useCallback((msg: string) => setNotice(msg), []);
+
+  if (load.kind === 'loading') return <div className="atlas-pick" role="status">正在读取「{workspace.name}」的图谱…</div>;
+
+  if (load.kind === 'auth' || load.kind === 'error') {
     return (
       <div className="atlas-pick">
-        <p className="crumb-back">
-          <Link to="/atlas" viewTransition>工作区</Link>
-          <Icon name="chevron" className="icon crumb-sep" />
-          {workspace.name}
-        </p>
-        <h1 className="display">这个工作区还没有图谱</h1>
+        <Crumbs workspace={workspace} />
+        {/* 这两句里有标题字体子集之外的字，用正文字体，免得一半标题体一半回落 */}
+        <h1 className="gen-title">{load.kind === 'auth' ? '需要重新授权这个文件夹' : '没有读到这个工作区'}</h1>
         <p>
-          当前不会按文件夹结构自动生成知识关系，也不会伪造节点。可以先回工作台整理 Markdown；
-          新工作区的种子图谱策略确定后，再从这里开始编辑。
+          {load.kind === 'auth'
+            ? `导图存在你的文件夹里（${MIND_PATH}）。浏览器每次新开都要你点一次允许，才能读写这个文件夹。`
+            : load.message}
         </p>
         <p>
-          <Link className="btn primary" to={`/workspace?ws=${encodeURIComponent(workspace.id)}`} viewTransition>
-            回工作台整理资料
-          </Link>
+          {load.kind === 'auth' ? (
+            <button type="button" className="btn primary" onClick={() => void start(true)}>
+              允许读写「{workspace.name}」
+            </button>
+          ) : (
+            <Link className="btn primary" to={`/workspace${wsQuery}`} viewTransition>
+              回工作台
+            </Link>
+          )}
         </p>
       </div>
     );
   }
 
+  const { maps } = load;
+  const mind = mindRef.current;
+
+  if (!mind || !writers) {
+    return (
+      <div className="atlas-pick">
+        <Crumbs workspace={workspace} />
+        {/* 标题只用标题字体子集里有的字；工作区名是用户内容，放在面包屑里 */}
+        <h1 className="display">这个工作区没有导图</h1>
+        <MapGenerate
+          name={workspace.name}
+          store={load.store}
+          graph={maps.graph}
+          writeLabel={workspace.origin === 'folder' ? `文件夹的 ${MIND_PATH}` : MIND_PATH}
+          onAccept={async (doc) => {
+            await writers!.mind(JSON.stringify(doc));
+            setLoad({ kind: 'ready', store: load.store, maps: { ...maps, mind: doc, fresh: false } });
+            setNotice(`已写入 ${MIND_PATH}`);
+          }}
+        />
+      </div>
+    );
+  }
+
+  const count = indexDoc(mind).byId.size;
+
   if (!map) {
     return (
       <div className="atlas-pick">
-        <p className="crumb-back">
-          <Link to="/atlas" viewTransition>
-            工作区
-          </Link>
-          <Icon name="chevron" className="icon crumb-sep" />
-          {workspace.name}
-        </p>
+        <Crumbs workspace={workspace} />
         <h1 className="display">选一张图</h1>
         <ul className="pick-grid">
           {MAPS.map((m) => (
             <li key={m.id}>
-              <Link className="pick-card art" to={`?ws=linear-algebra&map=${m.id}`} viewTransition>
+              <Link className="pick-card art" to={`${wsQuery}&map=${m.id}`} viewTransition>
                 <MapSketch blank={m.id === 'memory'} />
                 <span className="pick-name">{m.name}</span>
                 <span className="pick-meta">{m.line}</span>
-                <span className="pick-meta">{mapNodeCount(buildDemoMap())} 个节点</span>
+                <span className="pick-meta">
+                  {count} 个主题 · 存在 {m.id === 'mind' ? MIND_PATH : MEMORY_PATH}
+                </span>
               </Link>
             </li>
           ))}
         </ul>
+        {notice && <p role="status">{notice}</p>}
       </div>
     );
   }
@@ -135,26 +259,40 @@ export function AtlasPage() {
   return (
     <div className="atlas-canvas">
       <header className="atlas-head">
-        <p className="crumb-back">
-          <Link to="/atlas" viewTransition>
-            工作区
-          </Link>
-          <Icon name="chevron" className="icon crumb-sep" />
-          <Link to="?ws=linear-algebra" viewTransition>
-            {workspace.name}
-          </Link>
-          <Icon name="chevron" className="icon crumb-sep" />
-          <strong>{map.name}</strong>
-        </p>
+        <Crumbs workspace={workspace} map={map.name} />
         <div className="segmented" role="group" aria-label="切换图谱">
           {MAPS.map((m) => (
-            <Link key={m.id} to={`?ws=linear-algebra&map=${m.id}`} aria-current={m.id === map.id ? 'page' : undefined} replace>
+            <Link key={m.id} to={`${wsQuery}&map=${m.id}`} aria-current={m.id === map.id ? 'page' : undefined} replace>
               {m.name}
             </Link>
           ))}
         </div>
       </header>
-      {map.id === 'mind' ? <MindEditor /> : <MemoryMap />}
+      {map.id === 'mind' ? (
+        <MindEditor
+          key={workspace.id}
+          doc={mind}
+          knowledge={maps.knowledge}
+          persist={writers.mind}
+          fresh={maps.fresh}
+          savedLabel={savedLabel(workspace, MIND_PATH)}
+          seed={workspace.origin === 'demo' ? seedDoc : undefined}
+        />
+      ) : (
+        <MemoryMap
+          key={workspace.id}
+          doc={mind}
+          knowledge={maps.knowledge}
+          memory={memRef.current ?? maps.memory}
+          persist={writers.memory}
+          onError={onError}
+        />
+      )}
+      {notice && (
+        <p className="atlas-notice" role="status">
+          {notice}
+        </p>
+      )}
       <AskBar placeholder={map.id === 'mind' ? '问这张图，或让它帮你改：比如「把同一类问题合并成一支」' : '让它帮你出题，或照你的想法新建一张图'} />
     </div>
   );

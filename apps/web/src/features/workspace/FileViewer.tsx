@@ -46,7 +46,7 @@ const normalize = (path: string) => {
 
 /**
  * Markdown 阅读视图（R1b / T1-2）：示例讲义与本地 md 都走 T1-1 解析器 + NoteReader。
- * 示例讲义带资源抽屉（manifest）；本地 md 的相对图片先解析成 blob 地址再渲染。
+ * 示例讲义带资源抽屉（manifest）；本地 / 浏览器工作区 md 的相对图片先解析成 blob 地址再渲染。
  */
 function NoteView({ file, url, locate }: { file: WsFile; url: string; locate: LocateRequest | null }) {
   const [text, setText] = useState<string | null>(null);
@@ -69,7 +69,9 @@ function NoteView({ file, url, locate }: { file: WsFile; url: string; locate: Lo
     load
       .then(async (t) => {
         if (!alive) return t;
-        if (file.local && file.path) {
+        if ((file.local || file.browser) && file.path) {
+          // 本地文件夹走文件句柄，浏览器工作区（含导入的文件夹）走 IndexedDB；两者的 id 都是「工作区 id/路径」
+          const resolve = file.local ? localFileUrl : browserFileUrl;
           const prefix = file.id.slice(0, file.id.length - file.path.length);
           const dir = file.path.split('/').slice(0, -1).join('/');
           const map = new Map<string, string>();
@@ -77,7 +79,7 @@ function NoteView({ file, url, locate }: { file: WsFile; url: string; locate: Lo
             imageSrcs(t).map(async (src) => {
               const handleId = `${prefix}${normalize(`${dir}/${src}`)}`;
               try {
-                map.set(normalize(src), await localFileUrl(handleId));
+                map.set(normalize(src), await resolve(handleId));
               } catch {
                 // 图片句柄不存在时保留原路径，阅读器照常渲染其余内容
               }
@@ -95,8 +97,7 @@ function NoteView({ file, url, locate }: { file: WsFile; url: string; locate: Lo
   }, [file, url, nonce]);
 
   const assetUrl = useMemo(() => {
-    if (file.local) return (src: string) => assets.get(normalize(src)) ?? src;
-    if (file.browser) return (src: string) => src;
+    if (file.local || file.browser) return (src: string) => assets.get(normalize(src)) ?? src;
     return (src: string) => encodeURI(`${DEMO_BASE}/notes/${src}`);
   }, [file.local, file.browser, assets]);
 

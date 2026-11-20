@@ -11,14 +11,12 @@ import {
   indexDoc,
   insertParent,
   isDescendant,
-  MIND_DOC_KEY,
   moveNode,
   moveSibling,
   parseImported,
   parseOutline,
   pasteBranches,
   removeNode,
-  seedDoc,
   serialize,
   toMarkdown,
   toOutline,
@@ -35,6 +33,17 @@ import {
  * 用命令式 DOM 写，是因为一次编辑要先量出每个节点的真实尺寸（公式、换行）再排版，
  * 放进 React 的渲染周期会多出一轮重排。React 只负责外框（MindEditor.tsx）。
  */
+
+/** 导图存到哪里由外面决定（工作区的 maps/mind.json）；画布只管什么时候存。 */
+export interface CanvasIO {
+  persist(json: string): Promise<void>;
+  /** 这张图是第一次打开（工作区里还没有存过） */
+  fresh: boolean;
+  /** 已保存时状态栏显示的话，如「已保存到 maps/mind.json」 */
+  savedLabel: string;
+  /** 「恢复示例」用；没有示例的工作区不提供 */
+  seed?: () => MDoc;
+}
 
 export interface CanvasEls {
   root: HTMLElement;
@@ -167,6 +176,9 @@ export class MindCanvas {
   private drag: Drag | null = null;
   private pendingSnap = false;
   private saveTimer = 0;
+  private saveRev = 0;
+  private saving: Promise<void> = Promise.resolve();
+  private dead = false;
   private toastTimer = 0;
   private off: (() => void)[] = [];
 
@@ -176,11 +188,12 @@ export class MindCanvas {
     doc: MDoc,
     private onToast: (msg: string) => void,
     private onSheet: () => void,
+    private io: CanvasIO,
   ) {
     this.doc = doc;
     this.sel = doc.root.id;
     this.bind();
-    if (doc.view.level === null && !globalThis.localStorage?.getItem(MIND_DOC_KEY)) foldToLevel(this.doc, 99);
+    if (doc.view.level === null && io.fresh) foldToLevel(this.doc, 99);
     this.render();
     this.firstView();
     void document.fonts?.ready.then(() => {
@@ -213,7 +226,8 @@ export class MindCanvas {
     this.off.forEach((f) => f());
     window.clearTimeout(this.saveTimer);
     window.clearTimeout(this.toastTimer);
-    this.flushSave();
+    if (!this.saved) this.flushSave();
+    this.dead = true;
   }
 
   /* ---------- 历史与存储 ---------- */
@@ -250,6 +264,7 @@ export class MindCanvas {
     if (!this.sel || !this.ix.byId.has(this.sel)) this.sel = this.doc.root.id;
     if (this.selLink?.kind === 'p' && !this.doc.links.some((l) => l.id === this.selLink?.id)) this.selLink = null;
     this.render();
+    this.save();
     this.toast(msg);
   }
   private save() {
@@ -258,13 +273,24 @@ export class MindCanvas {
     this.saveTimer = window.setTimeout(() => this.flushSave(), 300);
   }
   private flushSave() {
-    try {
-      localStorage.setItem(MIND_DOC_KEY, serialize(this.doc));
-      this.saved = true;
-    } catch {
-      this.toast('浏览器存储已满，请导出 JSON 备份');
-    }
-    this.renderStatus();
+    const rev = ++this.saveRev;
+    const json = serialize(this.doc);
+    // 串行写：本地文件夹的写入是异步的，后一次必须等前一次写完，免得旧版本后落盘
+    this.saving = this.saving
+      .then(() => this.io.persist(json))
+      .then(
+        () => {
+          if (rev === this.saveRev) this.saved = true;
+        },
+        (e: Error) => this.toast('没有保存成功：' + e.message + '。请先导出 JSON 备份'),
+      )
+      .then(() => {
+        if (!this.dead) this.renderStatus();
+      });
+  }
+  /** 是否有一个可以「恢复示例」的种子 */
+  hasSeed() {
+    return Boolean(this.io.seed);
   }
   private toast(msg: string) {
     this.onToast(msg);
@@ -805,16 +831,19 @@ export class MindCanvas {
       this.selLink = null;
       this.render();
       this.fit();
+      this.save();
       this.toast('已导入 ' + file.name + '，Ctrl+Z 可以撤回');
     });
   }
   reset() {
+    if (!this.io.seed) return;
     this.snapshot();
-    this.doc = seedDoc();
+    this.doc = this.io.seed();
     this.sel = this.doc.root.id;
     this.selLink = null;
     this.render();
     this.fit();
+    this.save();
     this.toast('已恢复示例，Ctrl+Z 可以撤回');
   }
 
@@ -981,7 +1010,7 @@ export class MindCanvas {
     else if (this.sel) list = [['Tab', '子主题'], ['Enter', '同级主题'], ['Shift+Tab', '父主题'], ['F2', '编辑'], ['Delete', '删除'], ['Ctrl+/', '收起'], ['Alt+↑', '上移'], ['Ctrl+K', '画连线'], ['F1', '全部快捷键']];
     else list = [['拖动', '空白处平移'], ['滚轮', '缩放'], ['Ctrl+0', '适应窗口'], ['F1', '全部快捷键']];
     this.e.hints.innerHTML = list.map(([k, t]) => '<span>' + (/^[一-龥]/.test(k) ? '<b>' + k + '</b>' : K(k)) + t + '</span>').join('');
-    this.e.meta.innerHTML = '<span>' + (this.ix?.byId.size ?? 0) + ' 个主题</span><span>' + (this.saved ? '已保存在本机' : '正在保存') + '</span>';
+    this.e.meta.innerHTML = '<span>' + (this.ix?.byId.size ?? 0) + ' 个主题</span><span>' + (this.saved ? this.io.savedLabel : '正在保存') + '</span>';
     this.e.root.dispatchEvent(new CustomEvent('me-state'));
   }
   private renderTools() {

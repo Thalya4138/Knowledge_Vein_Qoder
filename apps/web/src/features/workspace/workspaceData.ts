@@ -3,7 +3,8 @@ import type { FileKind, Workspace, WsFile, WsFolder } from '../../store/types';
 
 export type { FileKind, Workspace, WsFile, WsFolder };
 
-const BASE = '/demo/linear-algebra';
+export const DEMO_BASE = '/demo/linear-algebra';
+const BASE = DEMO_BASE;
 
 const RESOURCE_KIND: Record<string, string> = {
   video: '视频',

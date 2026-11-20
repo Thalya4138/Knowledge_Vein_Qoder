@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { createBrowserNote, createBrowserWorkspace } from '../../store/browser';
+import { createBrowserNote, createBrowserWorkspace, importBrowserFolder } from '../../store/browser';
 import { useWorkspace } from '../../app/WorkspaceProvider';
-import { unregisterWorkspace } from '../../store/registry';
+import { renameWorkspace, unregisterWorkspace } from '../../store/registry';
 import type { Workspace } from '../../store/types';
 import { Icon, type IconName } from '../../ui/Icon';
 import { AiDock, type Hit } from './AiDock';
@@ -31,7 +31,11 @@ export function WorkspacePage() {
   const [params, setParams] = useSearchParams();
   const { spaces, ready, error, reload, replace, workspace } = useWorkspace();
   const ws = workspace ?? DEMO_WORKSPACE;
-  const fallback = ws.id === DEMO_WORKSPACE.id ? findFile(ws, DEFAULT_FILE) : ws.folders[0]?.files[0];
+  // 默认打开第一份 Markdown 笔记；maps/ 下的导图数据是给图谱读的，不当作开门第一页
+  const allFiles = ws.folders.flatMap((f) => f.files);
+  const fallback = ws.id === DEMO_WORKSPACE.id
+    ? findFile(ws, DEFAULT_FILE)
+    : allFiles.find((x) => x.lang === 'markdown') ?? allFiles.find((x) => !x.path?.startsWith('maps/')) ?? allFiles[0];
   const file = findFile(ws, params.get('file')) ?? fallback;
   const view = params.get('view') === 'source' ? 'source' : 'read';
   const folder = file ? folderOf(ws, file.id) : undefined;
@@ -43,6 +47,7 @@ export function WorkspacePage() {
   const [status, setStatus] = useState<string | null>(null);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [folderReady, setFolderReady] = useState(false);
+  const importInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => setEditing(false), [file?.id, view]);
   useEffect(() => {
@@ -176,6 +181,39 @@ export function WorkspacePage() {
     }
   };
 
+  const rename = async (workspace: Workspace) => {
+    const name = window.prompt(
+      workspace.origin === 'folder' ? '新名字（只改知脉里显示的名字，硬盘上的文件夹名不变）' : '新名字',
+      workspace.name,
+    );
+    if (name === null || name.trim() === workspace.name) return;
+    try {
+      const renamed = await renameWorkspace(workspace, name);
+      replace(renamed);
+      setStatus(`已改名为「${renamed.name}」`);
+    } catch (e) {
+      setStatus(`没有改名：${(e as Error).message}`);
+    }
+  };
+
+  /** 导入文件夹：任何浏览器都能用，把文件复制成一个浏览器工作区（改动不写回硬盘）。 */
+  const importFolder = async (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = [...(e.target.files ?? [])];
+    e.target.value = '';
+    if (!picked.length) return;
+    const top = picked[0]!.webkitRelativePath.split('/')[0] || '导入的文件夹';
+    const files = picked.map((f) => ({ path: f.webkitRelativePath.split('/').slice(1).join('/') || f.name, data: f as Blob }));
+    try {
+      const res = await importBrowserFolder(top, files);
+      await reload();
+      setParams({ ws: res.workspace.id }, { replace: true });
+      setTreeOpen(true);
+      setStatus(`已导入「${top}」：${res.count} 个文件复制到浏览器里${res.skipped ? `，${res.skipped} 个暂不支持的文件没有导入` : ''}；改动不会写回原文件夹`);
+    } catch (err) {
+      setStatus(`没有导入：${(err as Error).message}`);
+    }
+  };
+
   const removeWorkspace = async (workspace: Workspace) => {
     const message = workspace.origin === 'folder'
       ? `从知脉移除「${workspace.name}」？\n\n只会断开本站引用，不会删除你磁盘上的任何文件。`
@@ -216,6 +254,17 @@ export function WorkspacePage() {
                   <button
                     type="button"
                     className="rail-remove"
+                    onClick={() => void rename(w)}
+                    aria-label={`给工作区「${w.name}」改名`}
+                    title="改名"
+                  >
+                    <Icon name="edit" />
+                  </button>
+                )}
+                {w.origin !== 'demo' && (
+                  <button
+                    type="button"
+                    className="rail-remove"
                     onClick={() => void removeWorkspace(w)}
                     aria-label={`移除工作区「${w.name}」`}
                     title={w.origin === 'folder' ? '只断开本站引用，不删磁盘文件' : '移除这个浏览器工作区'}
@@ -247,6 +296,25 @@ export function WorkspacePage() {
               </span>
               <span className="rail-name">打开本地文件夹</span>
             </button>
+            <button
+              type="button"
+              className="rail-item new"
+              onClick={() => importInput.current?.click()}
+              title="把一个文件夹复制进浏览器（任何浏览器可用；改动不写回原文件夹）"
+            >
+              <span className="rail-glyph" aria-hidden="true">
+                <Icon name="folder" />
+              </span>
+              <span className="rail-name">导入文件夹</span>
+            </button>
+            <input
+              ref={importInput}
+              type="file"
+              hidden
+              multiple
+              onChange={(e) => void importFolder(e)}
+              {...{ webkitdirectory: '' }}
+            />
             <button type="button" className="collapse-btn" onClick={() => setRailOpen(false)} title="收起工作区栏">
               <Icon name="sidebar" />
               <span className="sr-only">收起工作区栏</span>

@@ -342,6 +342,7 @@ export function answerKey(s: string): string {
 
 /* ---------- 存储与示例 ---------- */
 
+/** 旧版的 localStorage 键，只用于迁移；现在导图存在工作区的 maps/mind.json */
 export const MIND_DOC_KEY = 'vein.mind.linear-algebra.v2';
 
 /** 讲义 §2.1 原文里的公式，挂到对应的叶子上（不新增知识）。 */
@@ -377,21 +378,31 @@ export function seedDoc(): MDoc {
   return doc;
 }
 
+/** 校验一份存下来的导图（maps/mind.json 或旧的 localStorage），不合格返回 null。 */
+export function normalizeDoc(o: unknown): MDoc | null {
+  const d = o as Partial<MDoc> | null;
+  if (!d || typeof d !== 'object' || d.version !== 2 || !d.root || typeof d.root.id !== 'string' || !Array.isArray(d.root.kids)) return null;
+  return { ...(d as MDoc), view: { ...DEFAULT_VIEW, ...d.view }, links: d.links ?? [], seq: d.seq ?? 1000 };
+}
+
+/**
+ * 读旧版存在 localStorage 里的示例导图（2026-11-19 之前），只用于一次性迁移到示例工作区的 maps/mind.json。
+ * 没有或损坏时回到示例。
+ */
 export function loadDoc(storage: Pick<Storage, 'getItem'> | undefined = globalThis.localStorage): MDoc {
   try {
     const raw = storage?.getItem(MIND_DOC_KEY);
-    if (raw) {
-      const o = JSON.parse(raw) as MDoc;
-      if (o && o.version === 2 && o.root?.id) {
-        o.view = { ...DEFAULT_VIEW, ...o.view };
-        o.links = o.links ?? [];
-        return o;
-      }
-    }
+    const doc = raw ? normalizeDoc(JSON.parse(raw)) : null;
+    if (doc) return doc;
   } catch {
     /* 存储损坏时回到示例 */
   }
   return seedDoc();
+}
+
+/** 空白导图：只有中心主题，由用户自己从这里长出来。 */
+export function blankDoc(title: string): MDoc {
+  return { version: 2, title, root: { id: 'root', text: title, kids: [] }, links: [], view: { ...DEFAULT_VIEW }, seq: 0 };
 }
 
 export function serialize(doc: MDoc): string {
@@ -446,14 +457,27 @@ export interface KnowledgeContext {
   relations: KRelation[];
 }
 
+/** 工作区 graph.json 里导图要用到的那部分（字段真源见 schemas/graph.schema.json） */
+export interface GraphLike {
+  nodes: { id: string; kind: string; title: string; aliases?: string[] }[];
+  relations: { id: string; from: string; to: string; type: string; status?: string; explanation: string; assumptions: string[]; epistemic: string }[];
+}
+
+export const EMPTY_KNOWLEDGE: KnowledgeContext = { info: () => null, relations: [] };
+
 export function demoKnowledge(): KnowledgeContext {
-  const nodes = new Map(demoGraph.nodes.map((n) => [n.id, n]));
+  return graphKnowledge(demoGraph);
+}
+
+/** 从任一工作区的 graph.json 得到导图的只读知识上下文；只取已接受的关系。 */
+export function graphKnowledge(graph: GraphLike): KnowledgeContext {
+  const nodes = new Map((graph.nodes ?? []).map((n) => [n.id, n]));
   return {
     info(ref) {
       const n = nodes.get(ref);
       return n ? { kind: KIND[n.kind] ?? n.kind, aliases: n.aliases ?? [], title: n.title } : null;
     },
-    relations: demoGraph.relations
+    relations: (graph.relations ?? [])
       .filter((r) => r.status === 'accepted')
       .map((r) => ({
         id: r.id,
