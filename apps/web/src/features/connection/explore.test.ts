@@ -46,7 +46,7 @@ describe('示例（金样例）', () => {
     expect(result.title.length).toBeGreaterThan(4);
   });
 
-  it('示例是规范不是模板：三篇不共用任何小节名，第一段直接给出判断', () => {
+  it('示例是规范不是模板：各篇不共用任何小节名，第一段直接给出判断', () => {
     const notes = PRESETS.map((p) => presetResult(p).result.note);
     const heads = notes.map((n) => [...n.matchAll(/^## (.+)$/gm)].map((m) => m[1]!.trim()));
     const all = heads.flat();
@@ -136,13 +136,42 @@ describe('示例（金样例）', () => {
     expect(result.note).toContain('最近 $\\Leftrightarrow$ 残差垂直于列空间');
   });
 
-  it('跨学科示例：每条边都标了轨道，类比只在 C2，差异产生新问题', () => {
-    const { result } = presetResult(PRESETS.find((p) => p.mode === 'cross')!);
+  it.each(PRESETS.filter((p) => p.mode === 'cross'))('$id 跨学科：每条边都标了轨道，类比只在 C2', (p) => {
+    const { result } = presetResult(p);
     for (const e of result.graph.edges) {
       expect(e.track).toBeDefined();
       if (e.epistemic === 'analogy') expect(e.track).toBe('C2');
     }
-    for (const s of ['精确的瞬时关系', '有限自运动', 'J^+', '总力矩', '反向传播', '最小实验', '数学推导、实验测量、模型推断、类比与猜想']) expect(result.note).toContain(s);
+  });
+
+  it('机器人示例：精确瞬时关系、有限自运动与力矩边界都不能省', () => {
+    const { result } = presetResult(PRESETS.find((p) => p.id === 'cross')!);
+    for (const s of ['精确的瞬时关系', '有限自运动', 'J^+', '总力矩', '反向传播']) expect(result.note).toContain(s);
+  });
+
+  it('生物神经 × AI：动力系统、信用分配、局部学习与预测误差分开', () => {
+    const { result } = presetResult(PRESETS.find((p) => p.id === 'cross-bio')!);
+    for (const s of [
+      'Hodgkin–Huxley', '膜电位', '外向电流取正号', '前向 Euler', '漏电发放神经元', '尚未包含绝对不应期', '阈值不是一个固定电压',
+      '链式法则', '信用怎样分配', 'STDP', '权重边界', '预测误差', '加权最小二乘', '固定且正定', '精度', '端到端能耗', '最小验证',
+      '相同时间平均电流', '同一任务、读出与损失', '“向大脑学习”才会从比喻变成研究',
+    ]) expect(result.note).toContain(s);
+    expect(result.note).toContain('梯度能反向走，信用却未必能');
+    expect(result.note).toContain('“能在模型中构造”与“大脑实际这样工作”');
+    expect(result.graph.edges.length).toBeGreaterThanOrEqual(24);
+    const analogies = result.graph.edges.filter((e) => e.epistemic === 'analogy');
+    expect(analogies.length).toBeGreaterThanOrEqual(3);
+    for (const e of analogies) expect(e.boundary).toBeTruthy();
+    const bioBackprop = result.graph.edges.find((e) => e.id === 'b-backprop-bio')!;
+    expect(bioBackprop.track).toBe('C2');
+    expect(bioBackprop.type).toBe('analogy-to');
+    const residual = result.graph.edges.find((e) => e.id === 'b-error-residual')!;
+    expect(residual.track).toBe('C2');
+    expect(residual.type).toBe('analogy-to');
+    expect(residual.boundary).toContain('切空间');
+    const source = PRESETS.find((p) => p.id === 'cross-bio')!.raw;
+    expect(source).toContain('论文 @p-hh');
+    expect(source).toContain('论文 @p-backprop');
   });
 
   it('KaTeX 不认 psmallmatrix（上面那条检查确实能抓到红字），核对会自动改写', () => {

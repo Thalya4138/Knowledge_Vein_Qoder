@@ -1,6 +1,7 @@
 import fragments from '../../../../../content/demo/linear-algebra/explore/fragments.md?raw';
 import meta from '../../../../../content/demo/linear-algebra/explore/meta.md?raw';
 import cross from '../../../../../content/demo/linear-algebra/explore/cross.md?raw';
+import crossBio from '../../../../../content/demo/linear-algebra/explore/cross-bio.md?raw';
 import { demoGraph } from '../../app/demo';
 import { DEMO_NOTE_PATHS } from '../workspace/workspaceData';
 import { checkResult, parseOutput, type CheckContext, type ExploreResult, type Issue, type ModeId } from './explore';
@@ -39,6 +40,7 @@ export const PRESETS: Preset[] = (
     ['fragments', fragments],
     ['meta', meta],
     ['cross', cross],
+    ['cross-bio', crossBio],
   ] as const
 ).map(([id, src]) => {
   const { data, body } = front(src);
