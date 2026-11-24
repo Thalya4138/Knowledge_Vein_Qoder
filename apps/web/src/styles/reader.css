@@ -36,7 +36,13 @@
   align-items: start;
   margin-bottom: 6px;
 }
-.nr-row:not(.has-side) { grid-template-columns: minmax(0, 1fr); }
+/* 样张：旁栏位置始终保留，正文永远在同一列；只有标题与整页栏目（问题探讨、表、思维训练、练习等）跨满整页 */
+.nr-row:not(.has-side) > .nr-main { grid-column: 2; }
+@media (min-width: 1100px) {
+  .nr-row:not(.has-side) .nr-main :is(.nr-h1, .nr-problem, .nr-table, .nr-training, .nr-discuss, .nr-method, .nr-exercise, .nr-practice) {
+    margin-left: calc(-196px - 30px);
+  }
+}
 .nr-side {
   font-size: 13px;
   line-height: 1.75;
@@ -158,19 +164,20 @@
 .nr-focus { border-top: 1.5px solid var(--nr-violet); border-bottom: 1.5px solid var(--nr-violet); padding: 6px 0 8px; }
 .nr-focus .nr-co-head { color: var(--nr-violet); }
 .nr-focus .nr-co-head::before { content: '◉ '; }
-.nr-problem .nr-co-body {
+/* 问题探讨：以一张图开头时，图在右、文字在左；没有图时按普通段落排（不把第一段当成图挤进右栏） */
+.nr-problem .nr-co-body:has(> :first-child img) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 230px;
   gap: 12px 24px;
   align-items: center;
 }
-.nr-problem .nr-co-body > :first-child {
+.nr-problem .nr-co-body:has(> :first-child img) > :first-child {
   grid-column: 2;
   grid-row: 1 / span 3;
   margin: 0;
   text-indent: 0;
 }
-.nr-problem .nr-co-body > :not(:first-child) { grid-column: 1; }
+.nr-problem .nr-co-body:has(> :first-child img) > :not(:first-child) { grid-column: 1; }
 .nr-problem .nr-co-body p { font-family: var(--nr-kai); color: var(--nr-blue-deep); }
 .nr-training { background: var(--nr-blue-pale); border: 1px solid #cfe5f3; border-radius: 10px; padding: 14px 18px; }
 .nr-summary { border-top: 1.5px dashed var(--nr-blue-line); padding-top: 10px; }
@@ -634,3 +641,158 @@ pre.nr-code code { background: none; padding: 0; font: inherit; }
 }
 .be-swatch:hover { transform: scale(1.12); }
 .be-clear { font-size: 12px; white-space: nowrap; }
+
+/* 关联图块（```vein-graph）：从关联探索复制或接到讲义里的关联图，渲染成一幅图 */
+.vein-graph-fig { margin: 4px 0; }
+.vein-graph-fig svg { width: 100%; height: auto; max-width: 100%; }
+
+/* ==========================================================================
+   对齐验收样张（content/demo/linear-algebra/rendered/style.css）
+   2026-11-24：阅读器相对样张丢了书眉、两行节标题、栏目标志、波浪线、列表符号、楷体问句、
+   ▲图号 / ▼表号、思维训练与练习的两栏。以下规则按样张逐项补回；冲突时以样张为准。
+   ========================================================================== */
+
+/* 书眉 */
+.nr-running {
+  margin: -8px 0 26px;
+  text-align: center;
+  font: 12px var(--nr-sans);
+  color: #9aa7b2;
+  letter-spacing: 0.3em;
+  text-indent: 0;
+}
+
+/* 节标题：「第 1 节」一行，节名一行 */
+.nr-h1 { margin-bottom: 22px; }
+.nr-secno { display: block; font: 600 26px var(--nr-sans); color: #222; letter-spacing: 0; margin-bottom: 2px; }
+
+/* 列表：全站样式清掉了列表符号，讲义纸里按教材恢复 */
+.nr-sheet ol { list-style: decimal; padding-left: 2em; margin: 0 0 0.35em; }
+.nr-sheet ul { list-style: disc; padding-left: 1.3em; margin: 0 0 0.35em; }
+.nr-sheet li { margin-bottom: 0.15em; }
+.nr-sheet li > p { margin: 0; text-indent: 0; }
+
+/* 栏目标志 */
+.nr-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--nr-blue);
+  color: #fff;
+  font: 600 14px/1 var(--nr-sans);
+}
+
+/* 问题探讨：标志 + 蓝色楷体 + 编号的讨论题 + 波浪线收住 */
+.nr-problem .nr-co-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font: 600 16px var(--nr-sans);
+  color: var(--nr-blue);
+}
+.nr-problem .nr-co-body p,
+.nr-problem .nr-co-body li { font-family: var(--nr-kai); color: var(--nr-blue-deep); font-size: 15.5px; }
+.nr-problem .nr-co-body p { text-indent: 2em; margin: 0 0 0.3em; }
+.nr-problem .nr-co-body p:has(> strong:only-child) { font: 600 14.5px var(--nr-sans); color: var(--nr-ink); text-indent: 1em; margin-top: 0.5em; }
+.nr-problem .nr-co-body ol { padding-left: 2.6em; }
+.nr-problem::after {
+  content: '';
+  display: block;
+  height: 8px;
+  margin: 14px 0 6px;
+  background: radial-gradient(circle at 4px -1px, transparent 4px, var(--nr-blue-line) 4.5px, transparent 5.5px) 0 0 / 8px 8px repeat-x;
+}
+
+/* 本节聚焦：紫色圆点列表 */
+.nr-focus ul { padding-left: 1.1em; color: #4b4470; }
+.nr-focus li { margin-bottom: 4px; }
+.nr-focus li::marker { color: var(--nr-violet); }
+
+/* 相关信息：细线下的灰色栏名，楷体正文 */
+.nr-co.nr-side { border-top: 1px solid var(--nr-blue-line); padding-top: 4px; }
+.nr-co.nr-side .nr-co-head { font: 600 13px var(--nr-sans); color: #6f8797; margin-bottom: 2px; }
+.nr-co.nr-side .nr-co-body p { font-family: var(--nr-kai); color: #444; text-indent: 2em; margin: 0; text-align: justify; }
+.nr-co.nr-critical { border-top: 1px solid var(--nr-blue-line); padding-top: 4px; }
+.nr-co.nr-critical .nr-co-head { display: flex; align-items: center; gap: 6px; font: 600 13px var(--nr-sans); color: #6f8797; }
+.nr-co.nr-critical .nr-icon { width: 18px; height: 18px; font-size: 11px; background: #6f8797; }
+.nr-co.nr-critical .nr-co-body p { font-family: var(--nr-kai); color: #444; text-indent: 2em; margin: 0; }
+
+/* 推理中途单独成段的问句：楷体 */
+.nr-main .nr-ask p { font-family: var(--nr-kai); font-size: 16px; color: #333; margin: 0.5em 0; }
+
+/* 图号、表号 */
+.nr-fig-no { color: var(--nr-blue); font-weight: 600; margin-right: 0.5em; white-space: nowrap; }
+.nr-table .nr-co-head { font: 13px var(--nr-sans); color: var(--nr-ink); margin-bottom: 6px; }
+
+/* 思维训练、思考·讨论：浅蓝底板，标志 + 栏目名，居中小标题，题目分两栏 */
+.nr-training,
+.nr-discuss {
+  background: var(--nr-blue-pale);
+  border: 1px solid #cfe5f3;
+  border-radius: 10px;
+  padding: 16px 22px 14px;
+  margin: 10px 0 18px;
+}
+.nr-training .nr-co-head,
+.nr-discuss .nr-co-head,
+.nr-method .nr-co-head,
+.nr-practice .nr-co-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 16px var(--nr-sans);
+  color: var(--nr-blue);
+  margin-bottom: 2px;
+}
+.nr-co-sub { margin: -2px 0 8px; text-align: center; text-indent: 0 !important; font: 600 15px var(--nr-sans); color: var(--nr-ink); }
+.nr-training > .nr-co-body,
+.nr-discuss > .nr-co-body,
+.nr-method > .nr-co-body { column-count: 2; column-gap: 34px; font-size: 14.5px; }
+.nr-training > .nr-co-body p,
+.nr-discuss > .nr-co-body p,
+.nr-method > .nr-co-body p { text-indent: 2em; text-align: justify; margin: 0 0 0.4em; break-inside: avoid; }
+.nr-training > .nr-co-body li,
+.nr-discuss > .nr-co-body li { break-inside: avoid; }
+
+/* 科学方法：波浪线下的栏目，正文分两栏 */
+.nr-method { margin: 14px 0 18px; }
+.nr-method::before {
+  content: '';
+  display: block;
+  height: 8px;
+  margin-bottom: 8px;
+  background: radial-gradient(circle at 4px -1px, transparent 4px, var(--nr-blue-line) 4.5px, transparent 5.5px) 0 0 / 8px 8px repeat-x;
+}
+
+/* 练习与应用：虚线中间的居中标题；概念检测、拓展应用左右两栏，一题一行 */
+.nr-exercise { border: 0; border-radius: 0; padding: 0; margin-top: 22px; }
+.nr-practice-head { display: flex; align-items: center; gap: 14px; margin: 0 0 12px; }
+.nr-practice-head::before,
+.nr-practice-head::after { content: ''; flex: 1; border-top: 1.5px dashed var(--nr-blue-line); }
+.nr-practice-head span { font: 600 18px var(--nr-sans); color: var(--nr-blue); letter-spacing: 0.1em; }
+.nr-exercise > .nr-co-body { column-count: 2; column-gap: 34px; font-size: 14.5px; line-height: 1.85; }
+.nr-exercise > .nr-co-body p { text-indent: 0; margin: 0 0 0.3em; text-align: left; }
+.nr-exercise > .nr-co-body p:has(> strong:first-child) { font-family: var(--nr-sans); }
+.nr-exercise > .nr-co-body li { break-inside: avoid; }
+.nr-exercise .nr-col-break { break-before: column; }
+details.nr-exercise,
+details.nr-training { border: 1px solid #e3e8ee; border-radius: 8px; padding: 10px 16px; background: none; }
+details.nr-exercise > .nr-co-body,
+details.nr-training > .nr-co-body { column-count: 1; }
+
+@media (max-width: 760px) {
+  .nr-training > .nr-co-body,
+  .nr-discuss > .nr-co-body,
+  .nr-method > .nr-co-body,
+  .nr-exercise > .nr-co-body { column-count: 1; }
+}
+
+/* 栏目里万一出现独立公式：居中、不缩进（问题探讨里不提倡写独立公式，见 DESIGN.md §13 第 13 条） */
+.nr-co-body .katex-display { text-align: center; text-indent: 0; margin: 0.4em 0; }
+
+/* 链接型资源卡（清单外的资源）：与清单资源卡同一个样子 */
+a.nr-res { text-decoration: none; color: inherit; }

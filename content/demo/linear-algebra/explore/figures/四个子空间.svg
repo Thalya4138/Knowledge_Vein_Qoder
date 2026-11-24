@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 270" width="580" height="270" font-family="'Times New Roman','Songti SC','Noto Serif SC',SimSun,serif" font-size="15">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#5a7a8e"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#1a8fd0"/></marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#e08a2c"/></marker>
+    <marker id="ak" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#333"/></marker>
+  </defs>
+
+  <!-- 左：输入平面，原点 (130,138)，1 个单位 = 60 -->
+  <rect x="14" y="16" width="232" height="238" rx="10" fill="#e8f4fb" stroke="#9fcbe6" stroke-width="1.2"/>
+  <text x="26" y="38" font-size="14" fill="#5a7a8e">输入空间</text>
+  <!-- 行空间：方向 (1,2) -->
+  <line x1="82" y1="234" x2="181" y2="36" stroke="#1a8fd0" stroke-width="1.8"/>
+  <!-- 零空间：方向 (2,-1) -->
+  <line x1="34" y1="90" x2="232" y2="189" stroke="#e08a2c" stroke-width="1.8"/>
+  <polyline points="138,142 142,134 134,130" fill="none" stroke="#7d6fb4" stroke-width="1"/>
+  <!-- x = (1,0) 及其两个分量 -->
+  <line x1="142" y1="114" x2="190" y2="138" stroke="#7d6fb4" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="178" y1="162" x2="190" y2="138" stroke="#7d6fb4" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="130" y1="138" x2="141" y2="116" stroke="#1a8fd0" stroke-width="2.4" marker-end="url(#ab)"/>
+  <line x1="130" y1="138" x2="176" y2="161" stroke="#e08a2c" stroke-width="2.4" marker-end="url(#ao)"/>
+  <line x1="130" y1="138" x2="188" y2="138" stroke="#333" stroke-width="1.6" marker-end="url(#ak)"/>
+  <text x="194" y="136" font-style="italic">x</text>
+  <text x="186" y="34" fill="#1a8fd0" font-size="14">行空间</text>
+  <text x="186" y="52" fill="#1a8fd0" font-size="13">方向 (1, 2)</text>
+  <text x="170" y="212" fill="#b96a12" font-size="14">零空间</text>
+  <text x="170" y="230" fill="#b96a12" font-size="13">方向 (2, −1)</text>
+  <text x="92" y="112" fill="#1a8fd0" font-size="13">(0.2, 0.4)</text>
+  <text x="116" y="193" fill="#b96a12" font-size="13">(0.8, −0.4)</text>
+
+  <!-- 中间：A -->
+  <line x1="258" y1="124" x2="318" y2="124" stroke="#5a7a8e" stroke-width="1.4" marker-end="url(#ah)"/>
+  <text x="282" y="116" font-style="italic" font-size="17">A</text>
+  <text x="290" y="152" font-size="12" fill="#1a8fd0" text-anchor="middle">行空间分量</text><text x="290" y="167" font-size="12" fill="#1a8fd0" text-anchor="middle">↦ (1, 3)</text>
+  <text x="290" y="192" font-size="12" fill="#b96a12" text-anchor="middle">零空间分量</text><text x="290" y="207" font-size="12" fill="#b96a12" text-anchor="middle">↦ 0</text>
+
+  <!-- 右：输出平面，原点 (440,160)，1 个单位 = 30 -->
+  <rect x="334" y="16" width="232" height="238" rx="10" fill="#e8f4fb" stroke="#9fcbe6" stroke-width="1.2"/>
+  <text x="346" y="38" font-size="14" fill="#5a7a8e">输出空间</text>
+  <!-- 列空间：方向 (1,3) -->
+  <line x1="410" y1="250" x2="484" y2="28" stroke="#1a8fd0" stroke-width="1.8"/>
+  <!-- 左零空间：方向 (3,-1) -->
+  <line x1="350" y1="130" x2="548" y2="196" stroke="#e08a2c" stroke-width="1.8"/>
+  <polyline points="448,163 451,155 443,152" fill="none" stroke="#7d6fb4" stroke-width="1"/>
+  <!-- Ax = (1,3) -->
+  <line x1="440" y1="160" x2="469" y2="73" stroke="#1a8fd0" stroke-width="2.4" marker-end="url(#ab)"/>
+  <text x="476" y="76" font-style="italic">A</text><text x="487" y="76" font-style="italic">x</text>
+  <!-- b = (1,1)，p = (0.4,1.2) -->
+  <line x1="470" y1="130" x2="452" y2="124" stroke="#7d6fb4" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <circle cx="470" cy="130" r="3" fill="#333"/>
+  <circle cx="452" cy="124" r="2.8" fill="#7d6fb4"/>
+  <text x="477" y="128" font-style="italic">b</text>
+  <text x="436" y="120" font-style="italic" fill="#7d6fb4">p</text>
+  <text x="346" y="234" fill="#1a8fd0" font-size="14">列空间</text>
+  <text x="346" y="250" fill="#1a8fd0" font-size="13">方向 (1, 3)</text>
+  <text x="486" y="222" fill="#b96a12" font-size="14">左零空间</text>
+  <text x="486" y="240" fill="#b96a12" font-size="13">方向 (3, −1)</text>
+</svg>

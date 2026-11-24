@@ -6,9 +6,26 @@ import type { ModelConfig } from '../ui/prefs';
  * 一个 OpenAI 兼容实现覆盖 DeepSeek / 通义千问兼容模式 / Kimi / OpenAI；Anthropic 单独一支。
  */
 
+/** 用户消息可以夹带图片（截图），给支持看图的模型；纯文本消息仍然只是字符串 */
+export type ContentPart = { type: 'text'; text: string } | { type: 'image'; mediaType: string; data: string };
+
 export interface ChatMessage {
   role: 'system' | 'user';
-  content: string;
+  content: string | ContentPart[];
+}
+
+const asText = (c: ChatMessage['content']) => (typeof c === 'string' ? c : c.map((p) => (p.type === 'text' ? p.text : '')).join('\n'));
+
+/** 两家接口对图片的写法不同：OpenAI 兼容用 data URL，Anthropic 用 base64 source */
+function wire(c: ChatMessage['content'], anthropic: boolean): unknown {
+  if (typeof c === 'string') return c;
+  return c.map((p) =>
+    p.type === 'text'
+      ? { type: 'text', text: p.text }
+      : anthropic
+        ? { type: 'image', source: { type: 'base64', media_type: p.mediaType, data: p.data } }
+        : { type: 'image_url', image_url: { url: `data:${p.mediaType};base64,${p.data}` } },
+  );
 }
 
 export class ModelError extends Error {}
@@ -17,15 +34,16 @@ function explain(status: number, body: string): string {
   if (status === 401 || status === 403) return `模型服务拒绝了这个 key（HTTP ${status}）。请在设置里检查 key。`;
   if (status === 404) return `地址或模型名不对（HTTP 404）。请在设置里核对 Base URL 与模型名。`;
   if (status === 429) return `模型服务说太忙或额度用完了（HTTP 429），稍后再试。`;
+  if (status === 400 && /image|vision|multimodal|图片|图像/i.test(body)) return '这个模型看不了图片（HTTP 400）。请去掉截图，或在设置里换一个支持看图的模型。';
   if (status === 400) return `模型服务不接受这次请求（HTTP 400）${body ? `：${body.slice(0, 160)}` : ''}`;
   return `模型服务出错（HTTP ${status}）${body ? `：${body.slice(0, 160)}` : ''}`;
 }
 
 export async function chat(m: ModelConfig, messages: ChatMessage[], signal?: AbortSignal, maxTokens = 8192): Promise<string> {
   const base = m.baseUrl.replace(/\/+$/, '');
-  const system = messages.filter((x) => x.role === 'system').map((x) => x.content).join('\n\n');
-  const user = messages.filter((x) => x.role === 'user');
   const anthropic = m.provider === 'anthropic';
+  const system = messages.filter((x) => x.role === 'system').map((x) => asText(x.content)).join('\n\n');
+  const user = messages.filter((x) => x.role === 'user').map((x) => ({ role: 'user' as const, content: wire(x.content, anthropic) }));
   const url = anthropic ? `${base}/messages` : `${base}/chat/completions`;
   const headers: Record<string, string> = anthropic
     ? {

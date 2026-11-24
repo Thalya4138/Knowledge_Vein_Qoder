@@ -33,7 +33,7 @@ describe('demo 讲义：结构', () => {
     expect(doc.headings.filter((h) => h.depth === 2).map((h) => h.slug)).toEqual([
       '从代数问题到几何问题', '最近点满足的条件', '法方程', '点唯一参数未必唯一',
     ]);
-    expect(doc.headings[0]).toMatchObject({ depth: 1, line: 11, slug: '第1节-正交投影与最小二乘法' });
+    expect(doc.headings[0]).toMatchObject({ depth: 1, line: 12, slug: '第1节-正交投影与最小二乘法' });
   });
 
   it('栏目顺序与样张一致', () => {
@@ -49,7 +49,7 @@ describe('demo 讲义：结构', () => {
       'p-normal-eq', 'p-example', 'p-unique', 'p-proj', 'exercises',
     ]);
     const intro = doc.blockById.get('p-intro')!;
-    expect(intro.lines).toEqual({ start: 27, end: 27 });
+    expect(intro.lines).toEqual({ start: 28, end: 28 });
     const html = renderAll(doc).html;
     expect(html).not.toMatch(/\^p-|\^exercises|@p-/);
   });

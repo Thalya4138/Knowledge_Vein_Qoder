@@ -18,6 +18,7 @@ import type { Diagnostic } from './types';
 import type { WikiLink } from './wikiLink';
 import type { EmbedNode, MarkNode, TagNode } from './obsidian';
 import { rehypeLiteHighlight } from './highlight';
+import { rehypeVeinGraph } from './veinGraph';
 
 export interface RenderOptions {
   /** wiki link 目标 → 链接地址；返回 undefined 表示没落地，渲染成带 `unresolved` 的 span。 */
@@ -28,6 +29,8 @@ export interface RenderOptions {
   embedUrl?: (target: string) => string | undefined;
   /** 全文的脚注定义：每块单独渲染，块里引用到的脚注要从这里补进来，否则脚注正文会丢。 */
   footnotes?: readonly FootnoteDefinition[];
+  /** 单个换行显示为换行（栏目里的小题、选项一行一个；与 Obsidian 默认一致） */
+  breaks?: boolean;
 }
 
 const IMAGE_RE = /\.(png|jpe?g|gif|svg|webp|bmp|avif)$/i;
@@ -92,6 +95,27 @@ const handlers = (opts: RenderOptions): RemarkRehypeOptions['handlers'] => ({
   },
 });
 
+/** 单个换行 → <br>：只处理普通文字，代码、公式源码不动 */
+function rehypeSoftBreaks() {
+  const walk = (n: Root | Element) => {
+    const out: ElementContent[] = [];
+    for (const c of n.children as ElementContent[]) {
+      // 元素之间的空白换行（如 </p>\n<ol>）不是文字里的换行，不能变成 <br>
+      if (c.type === 'text' && c.value.includes('\n') && c.value.trim()) {
+        c.value.split('\n').forEach((part, i) => {
+          if (i) out.push({ type: 'element', tagName: 'br', properties: {}, children: [] });
+          if (part) out.push({ type: 'text', value: part });
+        });
+        continue;
+      }
+      if (c.type === 'element' && c.tagName !== 'code' && c.tagName !== 'pre') walk(c);
+      out.push(c);
+    }
+    (n as Element).children = out;
+  };
+  return (tree: HastRoot) => walk(tree as unknown as Root);
+}
+
 /** remark-rehype 已经给脚注 id 加过 `user-content-` 前缀，sanitize 又加一次；去掉重复的那层，脚注跳转才对得上。 */
 function rehypeFootnoteIds() {
   const fix = (n: Root | Element | ElementContent) => {
@@ -107,6 +131,9 @@ function processorFor(opts: RenderOptions) {
     .use(rehypeRaw)
     .use(rehypeSanitize, schema)
     .use(rehypeFootnoteIds)
+    // 关联图块（```vein-graph）换成图：在白名单之后，图由 veinGraph.ts 只用数字与文本生成
+    .use(rehypeVeinGraph)
+    .use(opts.breaks ? rehypeSoftBreaks : () => undefined)
     .use(rehypeKatex, { strict: 'ignore' })
     .use(rehypeLiteHighlight);
 }
@@ -133,7 +160,7 @@ export function renderNodes(
   if (opts.assetUrl) rewriteAssets(root, opts.assetUrl);
 
   let processor = defaultProcessor;
-  if (opts.wikiHref || opts.embedUrl) {
+  if (opts.wikiHref || opts.embedUrl || opts.breaks) {
     processor = cache.get(opts) ?? processorFor(opts);
     cache.set(opts, processor);
   }

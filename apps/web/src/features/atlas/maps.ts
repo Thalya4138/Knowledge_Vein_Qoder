@@ -85,15 +85,15 @@ export async function loadMaps(store: WorkspaceStore, workspace: Workspace, lega
   let memory = await readJson<unknown>(store, MEMORY_PATH);
   if (memory === null && demo) memory = await migrate(store, LEGACY_MEMORY_KEY, MEMORY_PATH, legacy);
 
-  let graph: GraphLike | null = demo ? (demoGraph as GraphLike) : null;
-  if (!demo) {
-    try {
-      graph = await readJson<GraphLike>(store, 'graph.json');
-    } catch {
-      graph = null;
-    }
-    if (graph && (!Array.isArray(graph.nodes) || !Array.isArray(graph.relations))) graph = null;
+  // 示例工作区也先读 graph.json：关联探索里接受的关系写在本机覆盖层，读不到才用随站发布的原件
+  let graph: GraphLike | null = null;
+  try {
+    graph = await readJson<GraphLike>(store, 'graph.json');
+  } catch {
+    graph = null;
   }
+  if (graph && (!Array.isArray(graph.nodes) || !Array.isArray(graph.relations))) graph = null;
+  if (!graph && demo) graph = demoGraph as GraphLike;
 
   return { mind, fresh, memory: normalizeMemory(memory), graph, knowledge: graph ? graphKnowledge(graph) : EMPTY_KNOWLEDGE };
 }
