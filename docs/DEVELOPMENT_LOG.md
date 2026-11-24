@@ -5,6 +5,32 @@
 
 ---
 
+## 2026-11-24 · QoderWang1 · 配图与全屏版本发布、公网图片验收（#58）
+
+**用户指令**：「部署一下」；随后反馈「解释的图例为什么没有更新到 demo」。
+
+**范围**：把已验收的 `apps/web/dist` 发布到既有公开站点，并在公网核对四个探索示例与主讲义的图片。**不做**：改源码、重复构建、新建站点、改变访问范围、推送 `main`、读取或上传私人 `workspace/`。
+
+**发布状态**
+
+- 复用 projectId `01a1ce04-6ca0-7221-9e4a-22dfca5a7d65` 与既有站点，新 action `d076f9fa-9a52-4056-915a-6d97d6e1ba4d`，`webDirectory: dist`、`spa: true`，无 Function / 数据库依赖。
+- `get_publish_status` 复验：`published: true`、`readiness: publication_completed`，publish operation `01a20df3-083f-792a-9057-ff654210da17` 为 succeeded/committed；站点仍为 `active` / `public`。
+- deployment `01a20df2-49f6-787f-b494-d5aa1601a214`，release `01a20df3-083f-78cb-93c3-04cc2ef129d4`，线上入口 `index-BC-iDKjR.js`。发布前已通过内容校验、typecheck、206 项测试与生产构建；本轮未改源码，未重复跑构建。
+
+**公网诊断与验收**
+
+- 用户原页面仍运行旧入口 `index-BONNVgzf.js`，显示旧标题且 `.nr-fig img` 为 0。忽略缓存重新加载后，入口变为 `index-BC-iDKjR.js`；因此原因是已打开标签页没有替换正在运行的旧前端包，不是线上 demo 漏图或图片路径失效。
+- 新版本四个探索示例逐篇真实打开：碎片串联 1 图、学科元思考 3 图、机器人 1 图、生物神经 × AI 1 图；全部 `complete=true` 且 `naturalWidth > 0`，KaTeX 分别为 143 / 253 / 78 / 51 组。
+- 主讲义「正交投影与最小二乘法」在线打开，问题图与图 2-1～2-5 共 6 张图片全部加载成功，193 组 KaTeX；新增的图 2-2、2-4、2-5 实际渲染宽度均为 589px。
+- 既有标签页需硬刷新（Ctrl+Shift+R）或关闭后重新打开，才能加载新部署。未添加自动刷新机制或版本提示。
+
+**已知限制 / 下一步**
+
+- 本轮是发布与运行态诊断，没有源码改动；真实 API key 生成质量与公网跨域仍未实测。
+- 四个探索示例的正式题名调整已向用户提出建议，尚未实施。
+
+---
+
 ## 2026-11-24 · QoderWang1 · 关联导图全屏可编辑与可读（#56）
 
 **用户指令**：关联探索的导图界面全屏之后还得可编辑、可读。

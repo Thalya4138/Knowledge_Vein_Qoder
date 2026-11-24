@@ -198,6 +198,16 @@ publish operation `01a20d01-687f-7aa6-bd0c-9a627b22d919`，deployment
 `/workspace`、`/atlas`、`/guide` 与不存在路径均 200 + 应用外壳，JS / CSS 资源 200 且类型正确。
 **未测**：真实 key 下三种模式的生成质量与公网跨域；桌面 / 移动端视觉与横向溢出。
 
+**2026-11-24 R2-L4 讲义配图与关联导图全屏版本发布**：同一公开站点、同一 projectId，
+新 action `d076f9fa-9a52-4056-915a-6d97d6e1ba4d`（`webDirectory: dist`、`spa: true`）。
+发布时分支 `task/R2-L4-connection-QoderWang2` HEAD `4e076cf`。`published: true`、
+`readiness: publication_completed`，publish operation `01a20df3-083f-792a-9057-ff654210da17`
+succeeded/committed，deployment `01a20df2-49f6-787f-b494-d5aa1601a214`，release
+`01a20df3-083f-78cb-93c3-04cc2ef129d4`；站点仍为 active/public，线上入口
+`index-BC-iDKjR.js`。公网逐篇验收四个探索示例（1 / 3 / 1 / 1 图）与主讲义（问题图 +
+图 2-1～2-5），图片均加载成功。用户报告的“零图”来自仍运行旧入口 `index-BONNVgzf.js`
+的已打开标签页；硬刷新后加载新入口并显示图片，不是部署漏图。**未测**：真实 key 的生成质量与公网跨域。
+
 **访问模式由订阅套餐决定（已解决，但留作决策依据）**：团队版账号下 `available_modes` 里没有
 `public`，站点只能 `organization`/`selected`（评委打不开）。用户账号套餐是「团队版 · 成员」，
 官方文档原文："Individual plans offer 'Anyone can access' (public) or 'Only invited users'.
