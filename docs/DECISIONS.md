@@ -188,6 +188,16 @@
 `published: true`；线上入口 `index-CBBbtEP0.js` 与本地构建一致；匿名 curl（文档请求头）
 五个路径含深链均 200。**未测**：真实模型的改图质量与跨域；拓印滤镜只在 Chrome 验证。
 
+**2026-11-24 R2-L4 关联探索版本发布（碎片串联 / 学科元思考 / 跨学科并联、PDF 读取与 PPT 导出）**：
+同一公开站点、同一 projectId，action `0a30eb98-0032-44e6-9faf-58da502245f1`（`spa: true`，
+`webDirectory: dist`）。发布时分支 `task/R2-L4-connection-QoderWang2` HEAD `5503acb`；三笔
+`5b1b275` / `81e6508` / `5503acb` 均已 push。`published: true`、`readiness: publication_completed`，
+publish operation `01a20d01-687f-7aa6-bd0c-9a627b22d919`，deployment
+`01a20d01-0c5d-70e5-b44b-ecff880f897b`，release `01a20d01-687f-7a41-bde3-e0f381014e87`。
+线上入口 `index-yujg0S_A.js` 与本地构建一致；匿名 curl（文档请求头）`/`、`/connection`、
+`/workspace`、`/atlas`、`/guide` 与不存在路径均 200 + 应用外壳，JS / CSS 资源 200 且类型正确。
+**未测**：真实 key 下三种模式的生成质量与公网跨域；桌面 / 移动端视觉与横向溢出。
+
 **访问模式由订阅套餐决定（已解决，但留作决策依据）**：团队版账号下 `available_modes` 里没有
 `public`，站点只能 `organization`/`selected`（评委打不开）。用户账号套餐是「团队版 · 成员」，
 官方文档原文："Individual plans offer 'Anyone can access' (public) or 'Only invited users'.

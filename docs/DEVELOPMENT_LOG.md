@@ -5,6 +5,32 @@
 
 ---
 
+## 2026-11-24（夜）· QoderWang2 · R2-L4 关联探索第六轮：提交、推送与公网发布
+
+**用户指令**：「推送，提交，部署」。授权范围是当前任务分支与既有个人版公开站点，不含推送 `main`、合并 PR 或新建站点。
+
+**提交与推送**
+
+- 按依赖、功能、文档拆为三笔：`5b1b275`（PDF / PPT 依赖）、`81e6508`（关联探索三种模式、核对、导出与网络接入）、`5503acb`（第六轮演进、验收证据与交接状态）。
+- 推送 `task/R2-L4-connection-QoderWang2` 到 `origin`，上游跟踪已建立；推送前工作树干净，未纳入私人课程材料或凭据。
+- 这三笔包含 #43–#48 的全部工作。**更正 #43–#48 的「未提交 / 未 push」状态：均已完成。**
+
+**部署**
+
+- 发布前复核 `apps/web/dist/index.html`：入口为 `index-yujg0S_A.js`，样式为 `index-Cclu6rWC.css`；无 source map，未发现凭据 / 私钥模式。站点仍为静态、无 Function 或数据库依赖。
+- 首次 `prepare_site` 被当前会话根目录拒绝（`sites_current_session_required`），未生成 draft 或 publication。随后由工作目录正确的既有部署会话重试**同一 action 与同一组输入**，没有新建 action 或站点。
+- `prepare_site` 复用 projectId `01a1ce04-6ca0-7221-9e4a-22dfca5a7d65`，action `0a30eb98-0032-44e6-9faf-58da502245f1`，`webDirectory: dist`、`spa: true`。草稿 `artifactReady=true`、`dependenciesReady=true`、`canPublish=true`，无 blocker。
+- `publish_site` 后 `published: true`，operation `01a20d01-687f-7aa6-bd0c-9a627b22d919` 为 `succeeded/committed`，`readiness: publication_completed`；deployment `01a20d01-0c5d-70e5-b44b-ecff880f897b`，release `01a20d01-687f-7a41-bde3-e0f381014e87`。
+- 站点 `active` / `public` / 静态，backend disabled，公网地址仍为 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`。Desktop 已用同一 action 打开发布确认。
+
+**线上验收**
+
+- 匿名 curl（不带 cookie，`Accept: text/html` + `Sec-Fetch-Dest: document`）：`/`、`/connection`、`/workspace`、`/atlas`、`/guide` 与任意不存在路径均 200 + 应用外壳，入口全部为本次构建的 `index-yujg0S_A.js`。
+- JS / CSS 资源均 200 且 content-type 正确，大小分别为 289,179 B / 25,059 B。
+- **未做**视觉 / 移动端 QA，也未用真实 API key 生成；沿用第六轮已记录的限制。线上路由与资源验收不等于真实模型质量验收。
+
+---
+
 ## 2026-11-24（夜）· QoderWang2 · R2-L4 关联探索第六轮：碎片串联证明共同模型，跨学科并联按差异分叉生长
 
 **范围**：只继续修缮碎片串联与跨学科并联的规范、运行时阶段提示、金样例、测试与用户流程说明。学科元思考本轮未改；`features/lab/` 未动。
