@@ -352,6 +352,11 @@
   overflow-y: hidden;
 }
 
+/* 全屏保底 1:1，大图两个方向都可平移 */
+.xgraph.fit-fullscreen {
+  overflow: auto;
+}
+
 .xsizer {
   position: relative;
 }
@@ -710,7 +715,7 @@ g.xedge.st-rejected .xe-line { stroke-dasharray: 2 6; }
 .cx-full {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 500;
   display: grid;
   padding: var(--s-24);
   background: var(--bg);

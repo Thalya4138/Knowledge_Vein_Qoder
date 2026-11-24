@@ -37,7 +37,7 @@ export function ArgGraph({
   showRejected: boolean;
   connecting: boolean;
   onConnected: () => void;
-  fit?: 'width' | 'both';
+  fit?: 'width' | 'fullscreen';
 }) {
   const laid = useMemo(() => layoutGraph(graph.nodes, graph.edges) /* 含不认同的线：表态后节点不跳 */, [graph.nodes, graph.edges]);
   const W = laid.width;
@@ -56,8 +56,8 @@ export function ArgGraph({
     const el = wrapRef.current;
     if (!el) return;
     const measure = () => {
-      // 侧栏里按宽度缩放，但不小于 0.72（字还要看得清），放不下就横向滚动；全屏时整张放进窗口
-      const s = fit === 'both' ? Math.min(el.clientWidth / W, el.clientHeight / H) : Math.max(0.72, el.clientWidth / W);
+      // 侧栏按宽度缩放且保底可读；全屏不缩到 1 以下，大图通过画布平移查看
+      const s = fit === 'fullscreen' ? Math.max(1, Math.min(el.clientWidth / W, el.clientHeight / H)) : Math.max(0.72, el.clientWidth / W);
       setScale(Math.max(0.3, Math.min(1.3, s)));
     };
     measure();
@@ -185,7 +185,7 @@ export function ArgGraph({
 
   return (
     <div
-      className={`xgraph${connecting ? ' connecting' : ''}${fit === 'width' ? ' fit-width' : ''}${panning ? ' panning' : ''}`}
+      className={`xgraph${connecting ? ' connecting' : ''}${fit === 'width' ? ' fit-width' : ' fit-fullscreen'}${panning ? ' panning' : ''}`}
       ref={wrapRef}
       tabIndex={0}
       onKeyDown={onKey}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useWorkspace } from '../../app/WorkspaceProvider';
 import { openStore } from '../../store/open';
@@ -85,9 +86,33 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
   const [confirmMind, setConfirmMind] = useState<Turn | null>(null);
   const [exporting, setExporting] = useState<Turn | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fullRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const shotRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!full) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const overflow = document.body.style.overflow;
+    const rootOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    fullRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      setFull(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = overflow;
+      document.documentElement.style.overflow = rootOverflow;
+      if (previous?.isConnected && previous !== document.body) previous.focus();
+      else document.querySelector<HTMLButtonElement>('.cx-graph-tools button[aria-label="全屏"]')?.focus();
+    };
+  }, [full]);
 
   /* ---------- 读工作区 ---------- */
 
@@ -457,7 +482,7 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
         showRejected={showRejected}
         connecting={connecting}
         onConnected={() => setConnecting(false)}
-        fit={full ? 'both' : 'width'}
+        fit={full ? 'fullscreen' : 'width'}
       />
       <Legend />
       <Inspector graph={g} sel={sel} busy={busy} v={verdicts} />
@@ -600,10 +625,11 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
         )}
       </div>
 
-      {full && focused && (
-        <div className="cx-full" role="dialog" aria-label="关联图全屏" onKeyDown={(e) => e.key === 'Escape' && setFull(false)}>
+      {full && focused && createPortal(
+        <div className="cx-full" ref={fullRef} role="dialog" aria-modal="true" aria-label="关联图全屏" tabIndex={-1}>
           <div className="cx-full-main">{graphPanel}</div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       <form className="cx-composer" onSubmit={submit}>

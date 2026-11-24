@@ -105,6 +105,66 @@ try {
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: from.x + dx, y: from.y + dy, button: 'left', buttons: 0, clickCount: 1, pointerType: 'mouse' });
     await sleep(120);
   };
+  const click = async (point) => {
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 1, pointerType: 'mouse' });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1, pointerType: 'mouse' });
+    await sleep(100);
+  };
+  const doubleClick = async (point) => {
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 1, pointerType: 'mouse' });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1, pointerType: 'mouse' });
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 2, pointerType: 'mouse' });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 2, pointerType: 'mouse' });
+    await sleep(100);
+  };
+  const escape = async () => {
+    await send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await sleep(150);
+  };
+  const fullscreenState = () => evaluate(`(() => {
+    const graph = document.querySelector('.cx-full .xgraph');
+    const stage = document.querySelector('.cx-full .xstage');
+    const node = document.querySelector('.cx-full .xnode');
+    if (!graph || !stage || !node) return null;
+    const r = graph.getBoundingClientRect();
+    const dialog = document.querySelector('.cx-full');
+    const dr = dialog.getBoundingClientRect();
+    const edge = document.elementFromPoint(innerWidth - 4, innerHeight / 2);
+    const matrix = new DOMMatrix(getComputedStyle(stage).transform);
+    const tools = [...document.querySelectorAll('.cx-full .cx-graph-tools button')].map((el) => {
+      const b = el.getBoundingClientRect();
+      const x = b.left + b.width / 2;
+      const y = b.top + b.height / 2;
+      return { label: el.getAttribute('aria-label') || el.textContent.trim(), left: b.left, right: b.right, top: b.top, bottom: b.bottom,
+        visible: document.elementFromPoint(x, y)?.closest('button') === el };
+    });
+    return { scale: matrix.a, fontSize: parseFloat(getComputedStyle(node).fontSize) * matrix.a,
+      graph: { left: r.left, right: r.right, top: r.top, bottom: r.bottom, clientWidth: graph.clientWidth, clientHeight: graph.clientHeight, scrollWidth: graph.scrollWidth, scrollHeight: graph.scrollHeight, scrollLeft: graph.scrollLeft, scrollTop: graph.scrollTop },
+      tools, viewport: { width: innerWidth, height: innerHeight }, overflow: document.documentElement.scrollWidth > innerWidth + 1,
+      bodyOverflow: document.body.style.overflow, rootOverflow: document.documentElement.style.overflow,
+      dialog: { left: dr.left, right: dr.right, width: dr.width, background: getComputedStyle(dialog).backgroundColor },
+      edgeHit: { tag: edge?.tagName, className: edge?.className, insideDialog: Boolean(edge?.closest('.cx-full')) },
+      layoutWidth: document.documentElement.clientWidth, visualWidth: visualViewport.width,
+      inspector: Boolean(document.querySelector('.cx-full .xinspect')) };
+  })()`);
+  const assertFullscreenReadable = (label, state) => {
+    if (!state?.inspector || !state.edgeHit.insideDialog || state.fontSize < 14 || state.overflow || state.bodyOverflow !== 'hidden' || state.rootOverflow !== 'hidden' || state.tools.some((b) => !b.visible || b.left < 0 || b.right > state.viewport.width + 1 || b.top < 0 || b.bottom > state.viewport.height + 1)) {
+      throw new Error(`${label} is not readable/editable: ${JSON.stringify(state)}`);
+    }
+  };
+  const visibleNode = () => evaluate(`(() => {
+    const graph = document.querySelector('.cx-full .xgraph').getBoundingClientRect();
+    for (const el of document.querySelectorAll('.cx-full .xnode')) {
+      const r = el.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      if (x > graph.left + 5 && x < graph.right - 5 && y > graph.top + 5 && y < graph.bottom - 5) {
+        return { x, y, left: el.style.left, top: el.style.top, label: el.textContent.trim() };
+      }
+    }
+    return null;
+  })()`);
 
   const visualState = () => evaluate(`(() => {
     const sheet = document.querySelector('.nr-sheet').getBoundingClientRect();
@@ -133,6 +193,7 @@ try {
     await viewport(1440, 900, false);
     await navigate(`/connection?ws=linear-algebra&mode=${item.mode}`);
     await waitFor(`document.querySelector('.cx-try')`);
+    const previousHref = await evaluate(`location.href`);
     const opened = await evaluate(`(() => {
       const preset = [...document.querySelectorAll('.cx-try')].find((el) => el.textContent.includes(${JSON.stringify(item.ask)}));
       if (!preset) return false;
@@ -140,6 +201,7 @@ try {
       return true;
     })()`);
     if (!opened) throw new Error(`Preset not found: ${item.id}`);
+    await waitFor(`location.href !== ${JSON.stringify(previousHref)} && new URL(location.href).searchParams.has('t') && document.querySelector('.turn h1')?.textContent.trim().replace(/§$/, '') === ${JSON.stringify(item.title)}`);
     await waitFor(`document.querySelector('.xgraph') && document.querySelectorAll('.nr-fig img').length > 0 && [...document.querySelectorAll('.nr-fig img')].every((img) => img.complete && img.naturalWidth > 0)`);
     await sleep(450);
 
@@ -195,6 +257,80 @@ try {
       const moved = await evaluate(`(() => { const el = document.querySelector('.xnode'); return { left: el.style.left, top: el.style.top }; })()`);
       if (node.left === moved.left && node.top === moved.top) throw new Error(`Node drag did not move the node: ${JSON.stringify({ node, moved })}`);
       console.log(`PASS canvas pan (${before.scrollLeft} -> ${after.scrollLeft}) and node drag`);
+
+      await evaluate(`document.querySelector('.cx-graph-tools button[aria-label="全屏"]').click()`);
+      await waitFor(`document.querySelector('.cx-full .xgraph')`);
+      await sleep(250);
+      const full = await fullscreenState();
+      assertFullscreenReadable('fragments fullscreen', full);
+      const fullPath = await screenshot('r2-explore-fragments-fullscreen.png');
+
+      const fullNode = await visibleNode();
+      if (!fullNode) throw new Error('Fullscreen has no visible node');
+      await drag({ x: fullNode.x, y: fullNode.y }, 42, 18);
+      const fullMoved = await visibleNode();
+      if (fullNode.left === fullMoved.left && fullNode.top === fullMoved.top) throw new Error(`Fullscreen node drag failed: ${JSON.stringify({ fullNode, fullMoved })}`);
+
+      await doubleClick({ x: fullMoved.x, y: fullMoved.y });
+      await waitFor(`document.querySelector('.cx-full .xnode input')`);
+      await evaluate(`(() => { const input = document.querySelector('.cx-full .xnode input'); input.focus(); input.select(); })()`);
+      await send('Input.insertText', { text: '全屏改名节点' });
+      await evaluate(`document.querySelector('.cx-full .xnode input').blur()`);
+      await waitFor(`[...document.querySelectorAll('.cx-full .xnode')].some((el) => el.textContent.includes('全屏改名节点'))`);
+
+      const nodeCount = await evaluate(`document.querySelectorAll('.cx-full .xnode').length`);
+      const addButton = await evaluate(`(() => {
+        const button = [...document.querySelectorAll('.cx-full .cx-graph-tools button')].find((el) => el.textContent.trim() === '加节点');
+        const r = button.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      })()`);
+      await click(addButton);
+      await waitFor(`document.querySelectorAll('.cx-full .xnode').length === ${nodeCount + 1} && document.querySelector('.cx-full #xi-label')?.value === '新概念'`);
+      const removeButton = await evaluate(`(() => {
+        const button = [...document.querySelectorAll('.cx-full .xinspect button')].find((el) => el.textContent.trim() === '删除节点');
+        const r = button.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      })()`);
+      await click(removeButton);
+      await waitFor(`document.querySelectorAll('.cx-full .xnode').length === ${nodeCount}`);
+
+      const edge = await evaluate(`(() => {
+        const graph = document.querySelector('.cx-full .xgraph').getBoundingClientRect();
+        for (const el of document.querySelectorAll('.cx-full .xe-label')) {
+          const r = el.getBoundingClientRect();
+          const x = r.left + r.width / 2;
+          const y = r.top + r.height / 2;
+          if (x > graph.left + 5 && x < graph.right - 5 && y > graph.top + 5 && y < graph.bottom - 5) return { x, y };
+        }
+        return null;
+      })()`);
+      if (!edge) throw new Error('Fullscreen has no visible relation label');
+      await click(edge);
+      await waitFor(`document.querySelector('.cx-full .xi-path') && document.querySelector('.cx-full .xi-why')`);
+      const fullDetailPath = await screenshot('r2-explore-fragments-fullscreen-detail.png');
+
+      const panBefore = await fullscreenState();
+      const panPoint = await evaluate(`(() => {
+        const graph = document.querySelector('.cx-full .xgraph').getBoundingClientRect();
+        for (let y = graph.top + 20; y < graph.bottom - 20; y += 24) {
+          for (let x = graph.left + 20; x < graph.right - 20; x += 24) {
+            const hit = document.elementFromPoint(x, y);
+            if (hit && !hit.closest('.xnode, button, input, textarea, select, a')) return { x, y };
+          }
+        }
+        return null;
+      })()`);
+      if (!panPoint || panBefore.graph.scrollWidth <= panBefore.graph.clientWidth + 1) throw new Error(`Fullscreen graph is not pannable: ${JSON.stringify(panBefore)}`);
+      await drag(panPoint, -120, 0);
+      const panAfter = await fullscreenState();
+      if (panAfter.graph.scrollLeft - panBefore.graph.scrollLeft <= 60) throw new Error(`Fullscreen background pan failed: ${JSON.stringify({ panPoint, panBefore, panAfter })}`);
+
+      await escape();
+      await waitFor(`!document.querySelector('.cx-full') && document.querySelector('.cx-graph .xgraph')`);
+      const persisted = await evaluate(`document.querySelector('.cx-graph .xgraph').textContent.includes('全屏改名节点')`);
+      if (!persisted) throw new Error('Fullscreen edits were lost after Esc');
+      console.log(`PASS fullscreen: ${full.fontSize.toFixed(1)}px nodes, visible tools, drag/rename/add/delete/edge details/pan, edits persist after Esc`);
+      console.log(`  ${fullPath}\n  ${fullDetailPath}`);
     }
 
     await viewport(375, 812, true);
@@ -208,6 +344,19 @@ try {
     const narrowFigurePath = await screenshot(`r2-explore-${item.id}-narrow-figure.png`);
     console.log(`PASS ${item.id}: ${desktop.images.length} figures loaded, ${desktop.katex} formulas, desktop/narrow fit`);
     console.log(`  ${desktopPath}\n  ${figurePath}\n  ${narrowPath}\n  ${narrowFigurePath}`);
+
+    if (item.id === 'fragments') {
+      await evaluate(`document.querySelector('.cx-graph-tools button[aria-label="全屏"]').click()`);
+      await waitFor(`document.querySelector('.cx-full .xgraph')`);
+      await sleep(250);
+      const narrowFull = await fullscreenState();
+      assertFullscreenReadable('fragments narrow fullscreen', narrowFull);
+      const narrowFullPath = await screenshot('r2-explore-fragments-narrow-fullscreen.png');
+      await escape();
+      await waitFor(`!document.querySelector('.cx-full')`);
+      console.log(`PASS narrow fullscreen: ${narrowFull.fontSize.toFixed(1)}px nodes, controls in viewport, no page overflow`);
+      console.log(`  ${narrowFullPath}`);
+    }
   }
 
   await viewport(1440, 900, false);
