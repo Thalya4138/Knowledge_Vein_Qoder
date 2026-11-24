@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>光合作用 · 单画布呈现过程之间的联系</title>
+<style>
+/* 视觉变量取自原站 tokens.css / DESIGN.md（只取用，不改动原站） */
+:root{
+  --bg:#edf0ea; --surface:#fbfcf8; --glass:rgb(237 240 234 / .78);
+  --ink:#1b2430; --ink-2:#3f4a57; --ink-3:#5d6672;
+  --hairline:rgb(27 36 48 / .14); --fill:rgb(27 36 48 / .05); --fill-strong:rgb(27 36 48 / .09);
+  --accent:#1f4e79; --accent-ink:#fbfcf8; --accent-hover:#173d60; --accent-soft:rgb(31 78 121 / .12);
+  --cinnabar:#b53c0b; --cinnabar-soft:rgb(194 65 12 / .12);
+  --gold:#b38a35; --gold-soft:rgb(179 138 53 / .14);
+  --green:#4d7a62; --green-soft:rgb(77 122 98 / .14);
+  --blue:#2b6cb0; --blue-soft:rgb(43 108 176 / .14);
+  --vein:#8f9a94; --contour:#c2cbc3; --contour-strong:#93a097;
+  --font-ui:'PingFang SC','HarmonyOS Sans SC','Microsoft YaHei UI','Microsoft YaHei','Noto Sans SC',sans-serif;
+  --font-display:'Vein Title','PingFang SC','Microsoft YaHei',var(--font-ui);
+  --font-text:'Vein Text','Kaiti SC','KaiTi',var(--font-ui);
+  --font-math:'Cambria Math','Times New Roman',serif;
+  --t-12:12px; --t-13:13px; --t-15:15px; --t-17:17px; --t-22:22px;
+  --s-4:4px; --s-8:8px; --s-12:12px; --s-16:16px; --s-24:24px;
+  --r-outer:20px; --r-mid:14px; --r-inner:10px; --r-small:6px; --r-pill:999px;
+  --lift:0 12px 40px rgb(14 23 38 / .1),0 2px 6px rgb(14 23 38 / .06);
+  --ease:cubic-bezier(.2,.8,.2,1); --d-micro:120ms; --d-short:220ms;
+  color-scheme:light;
+}
+:root[data-theme='dark']{
+  --bg:#11181c; --surface:#182126; --glass:rgb(24 33 38 / .78);
+  --ink:#e5ebe6; --ink-2:#b2bdb7; --ink-3:#8c9892;
+  --hairline:rgb(229 235 230 / .14); --fill:rgb(229 235 230 / .06); --fill-strong:rgb(229 235 230 / .1);
+  --accent:#8fb6dc; --accent-ink:#11181c; --accent-hover:#a9c8e6; --accent-soft:rgb(143 182 220 / .16);
+  --cinnabar:#f08a5d; --cinnabar-soft:rgb(240 138 93 / .16);
+  --gold:#d3ab5c; --gold-soft:rgb(211 171 92 / .16);
+  --green:#8fbf9f; --green-soft:rgb(143 191 159 / .16);
+  --blue:#7fb3e8; --blue-soft:rgb(127 179 232 / .16);
+  --vein:#5e6b66; --contour:#24302f; --contour-strong:#364441;
+  --lift:0 12px 40px rgb(0 0 0 / .45),0 2px 6px rgb(0 0 0 / .3);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-ui);
+  background-image:radial-gradient(var(--contour) 1px, transparent 1px);
+  background-size:26px 26px;
+}
+::selection{background:var(--accent-soft)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+*{scrollbar-width:thin; scrollbar-color:var(--contour-strong) transparent}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--contour-strong);border-radius:999px}
+*::-webkit-scrollbar-thumb:hover{background:var(--vein)}
+.wrap{max-width:1720px;margin:0 auto;padding:var(--s-12) var(--s-16)}
+header.top{display:flex;align-items:baseline;gap:var(--s-12);flex-wrap:wrap;padding:var(--s-4) 0 var(--s-12)}
+.brand{font-family:var(--font-display);font-size:var(--t-22);font-weight:700;letter-spacing:.02em}
+.brand em{font-style:italic;font-family:var(--font-math);color:var(--accent);font-size:var(--t-15);margin-left:2px}
+.title{font-family:var(--font-text);font-size:var(--t-17);color:var(--ink-2)}
+.mode-tag{margin-left:auto;font-size:var(--t-12);color:var(--ink-3);border:1px solid var(--hairline);
+  background:var(--surface);border-radius:var(--r-pill);padding:3px 10px}
+button{font-family:var(--font-ui);cursor:pointer}
+.btn{border:1px solid var(--hairline);background:var(--surface);color:var(--ink);
+  border-radius:var(--r-small);padding:6px 12px;font-size:var(--t-13);
+  transition:background var(--d-micro) var(--ease),border-color var(--d-micro) var(--ease)}
+.btn:hover{background:var(--fill-strong)}
+.btn[aria-pressed='true']{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-hover)}
+.layout{display:block}
+.stage-wrap{position:relative;background:var(--surface);border:1px solid var(--hairline);
+  border-radius:var(--r-outer);box-shadow:var(--lift);overflow:hidden}
+.stage-sub{padding:10px 164px 0 16px;font-family:var(--font-text);font-size:var(--t-13);color:var(--ink-2)}
+.stage-wrap svg{display:block;width:100%;height:auto;aspect-ratio:1280/820}
+.pan-hint{display:none;padding:4px 16px 8px;font-size:var(--t-12);color:var(--ink-3)}
+.panel{margin-top:var(--s-12);display:flex;flex-direction:column;gap:var(--s-12);position:relative}
+.layout.rail-hidden .panel{display:none}
+.card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-mid);padding:var(--s-12) var(--s-16)}
+.card h3{margin:0 0 8px;font-size:var(--t-13);color:var(--ink-3);font-weight:600;letter-spacing:.06em}
+.stepno{font-size:var(--t-12);color:var(--cinnabar);font-weight:700}
+.steptitle{font-family:var(--font-display);font-size:var(--t-17);font-weight:700;margin:2px 0 6px}
+.stepdesc{font-family:var(--font-text);font-size:var(--t-15);line-height:1.7;color:var(--ink-2);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:var(--t-12);border-radius:var(--r-pill);padding:2px 10px;background:var(--cinnabar-soft);color:var(--cinnabar)}
+.chip.par{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);cursor:pointer}
+.chip.par:hover{background:var(--accent);color:var(--accent-ink)}
+.gatemsg{margin-top:8px;font-size:var(--t-13);color:var(--cinnabar);background:var(--cinnabar-soft);
+  border-radius:var(--r-small);padding:6px 10px}
+.emptyhint{font-size:var(--t-13);color:var(--ink-3);line-height:1.6}
+.relprop{font-family:var(--font-display);font-size:var(--t-15);font-weight:700;color:var(--accent);margin:0 0 8px;line-height:1.5}
+.prose p{margin:0 0 8px;font-family:var(--font-text);font-size:var(--t-13);line-height:1.7;color:var(--ink-2)}
+.prose p:last-child{margin-bottom:0}
+.figread{margin:8px 0 0;font-size:var(--t-12);line-height:1.6;color:var(--ink-3);border-left:3px solid var(--vein);padding-left:8px}
+.relsrc{margin:6px 0 0;font-size:var(--t-12);line-height:1.6;color:var(--ink-3)}
+.xrefs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.xrefs .btn{padding:3px 9px;font-size:var(--t-12)}
+.param{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;margin-bottom:10px}
+.param label{font-size:var(--t-13);color:var(--ink-2)}
+.param output{font-family:var(--font-math);font-size:var(--t-13);font-weight:700}
+.param input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);height:22px}
+.param select{grid-column:1/-1;width:100%;font-family:var(--font-ui);font-size:var(--t-13);color:var(--ink);
+  background:var(--surface);border:1px solid var(--contour-strong);border-radius:var(--r-small);padding:5px 8px}
+.param select:focus-visible{outline:2px solid var(--accent)}
+.param .note{grid-column:1/-1;font-size:var(--t-12);color:var(--ink-3);line-height:1.5}
+.mods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.glossdef{font-family:var(--font-text);font-size:var(--t-15);line-height:1.7;color:var(--ink-2)}
+.glossrel{font-size:var(--t-12);color:var(--accent);margin-top:6px}
+.glosssrc{font-size:var(--t-12);color:var(--ink-3);margin-top:4px}
+details.glossall summary{cursor:pointer;font-size:var(--t-13);color:var(--accent)}
+details.glossall ul{margin:8px 0 0;padding-left:18px;font-size:var(--t-12);color:var(--ink-2);line-height:1.7}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.actions .scrub{flex:1;min-width:120px;accent-color:var(--cinnabar)}
+/* 方程式旁注（R26：与过程图示一体，锚定节点） */
+svg .eqann{cursor:pointer}
+svg .eqann text{paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
+svg .eqann .eqn{font-size:10px;fill:var(--ink-3);font-weight:600}
+svg .eqann .eql{font-family:var(--font-math);font-size:12.5px;fill:var(--ink)}
+svg .eqann .eqc{font-size:9.5px;fill:var(--ink-3)}
+svg .eqann[aria-current='true'] .eqn,svg .eqann[aria-current='true'] .eql{fill:var(--cinnabar);font-weight:700}
+svg .eqlead{fill:none;stroke:var(--contour-strong);stroke-width:1;stroke-dasharray:2 3}
+/* 画布缩放控件（R24） */
+.zoombar{position:absolute;top:10px;right:12px;display:flex;gap:4px;align-items:center;z-index:6;
+  background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--hairline);border-radius:var(--r-pill);padding:3px 6px}
+.zoombar .btn{padding:2px 9px;font-size:var(--t-12);border-radius:var(--r-pill)}
+.zoombar .pct{min-width:54px;text-align:center;font-family:var(--font-math)}
+#svg{touch-action:none;cursor:grab}
+#svg.dragging{cursor:grabbing}
+/* 折叠态迷你控制条（R23：折叠不丢操作） */
+.minibar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:none;gap:6px;align-items:center;
+  background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--hairline);border-radius:var(--r-pill);
+  padding:5px 10px;z-index:6;box-shadow:var(--lift)}
+.layout.rail-hidden .minibar{display:flex}
+.minibar .btn{padding:3px 10px;font-size:var(--t-12);border-radius:var(--r-pill);white-space:nowrap}
+.minibar .stepread{font-size:var(--t-12);color:var(--ink-2);font-family:var(--font-math);min-width:78px;text-align:center}
+/* 右栏阐释一览（R22：链接常驻首屏，不翻页） */
+.card.directory{position:sticky;top:0;z-index:4;box-shadow:0 6px 16px rgb(14 23 38 / .07)}
+.dirgroup{margin-bottom:8px}
+.dirgroup:last-child{margin-bottom:0}
+.dirgroup h4{margin:0 0 5px;font-size:var(--t-12);color:var(--ink-3);font-weight:600}
+.dirlinks{display:flex;flex-wrap:wrap;gap:4px}
+.dirlink{border:1px solid var(--hairline);background:var(--fill);color:var(--ink-2);border-radius:var(--r-pill);
+  padding:2px 9px;font-size:var(--t-12);cursor:pointer;
+  transition:border-color var(--d-micro) var(--ease),color var(--d-micro) var(--ease),background var(--d-micro) var(--ease)}
+.dirlink:hover{border-color:var(--accent);color:var(--accent)}
+.dirlink[aria-current='true']{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+/* SVG 语义色 */
+svg text{font-family:var(--font-ui);fill:var(--ink)}
+svg .comp{fill:none;stroke:var(--contour-strong);stroke-dasharray:5 5;stroke-width:1.2}
+svg .complab{font-size:13px;fill:var(--ink-3);letter-spacing:.05em}
+svg .edge{fill:none;stroke:var(--vein)}
+svg .edge.cycle{stroke:var(--ink-2)}
+svg .edge.ret{stroke-dasharray:4 4;stroke:var(--contour-strong)}
+svg .edge.branch{stroke:var(--cinnabar);stroke-dasharray:6 4}
+svg .edge.chipconn{stroke:var(--contour-strong);stroke-dasharray:2 4}
+svg .edge.active{stroke:var(--cinnabar);stroke-dasharray:7 4}
+svg .edge.photon{stroke:var(--gold);stroke-dasharray:none}
+svg .edge.h{stroke:var(--green);stroke-dasharray:none}
+svg .edge[data-rel]{cursor:pointer}
+svg .elab{font-size:11.5px;fill:var(--ink-3);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
+svg .elab.pre{fill:var(--cinnabar);font-weight:700}
+svg .node circle.body{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.6}
+svg .node.changed circle.body{stroke:var(--cinnabar);stroke-width:3}
+svg .node text.nl{font-size:13px;font-weight:700;text-anchor:middle}
+svg .node text.ns{font-size:10.5px;fill:var(--ink-3);text-anchor:middle}
+svg .node{cursor:pointer}
+/* 形状语义：圆/块=真实存在的物体（酶·细胞器·区室·膜蛋白）；物质与过程=纯文字 */
+svg .substance{cursor:pointer}
+svg .substance text{paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
+svg .substance text.nl{font-size:13px;font-weight:700;text-anchor:middle}
+svg .substance text.ns{font-size:10.5px;fill:var(--ink-3);text-anchor:middle}
+svg .substance.changed text.nl{fill:var(--cinnabar)}
+svg .entity{cursor:pointer}
+svg .entity circle.body{fill:var(--fill);stroke:var(--ink-2);stroke-width:1.6}
+svg .entity.enzyme circle.body{fill:var(--accent-soft);stroke:var(--accent)}
+svg .entity.organelle circle.body{fill:var(--green-soft);stroke:var(--green)}
+svg .entity.compartment circle.body{fill:var(--gold-soft);stroke:var(--gold)}
+svg .entity.cell circle.body{fill:var(--blue-soft);stroke:var(--blue)}
+svg .entity.changed circle.body{stroke:var(--cinnabar);stroke-width:3}
+svg .entity text.nl{font-size:12px;font-weight:700;text-anchor:middle}
+svg .entity text.ns{font-size:9.5px;fill:var(--ink-3);text-anchor:middle}
+svg .site{fill:var(--cinnabar);stroke:var(--surface);stroke-width:1}
+svg .vacuole circle.body{fill:var(--gold-soft);stroke:var(--gold);stroke-width:1.6}
+svg .vacuole text{font-size:10.5px;fill:var(--ink-3);text-anchor:middle}
+svg .glossbadge{cursor:pointer}
+svg .glossbadge circle{fill:var(--gold);stroke:var(--surface);stroke-width:1.5}
+svg .glossbadge text{font-size:9px;fill:#fbfcf8;text-anchor:middle;font-weight:700}
+svg .protein rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.6}
+svg .protein ellipse{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.6}
+svg .protein.changed rect,svg .protein.changed ellipse{stroke:var(--cinnabar);stroke-width:2.5}
+svg .protein text{font-size:11.5px;font-weight:700;fill:var(--accent);text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
+svg .protein text.ps{font-size:9.5px;font-weight:400;fill:var(--ink-3)}
+svg .eqarr{fill:none;stroke:var(--contour-strong);stroke-width:1.4}
+svg .eqarr.on{stroke:var(--cinnabar)}
+svg .stoich circle{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.2}
+svg .stoich rect{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.2}
+svg .stoich text{font-size:8.5px;font-weight:700;text-anchor:middle;fill:var(--ink-2)}
+svg .lipid head{fill:var(--gold)}
+svg .chipbox rect{fill:var(--fill);stroke:var(--contour-strong);stroke-width:1.2}
+svg .chipbox.changed rect{stroke:var(--cinnabar);stroke-width:2.5}
+svg .chipbox text{font-size:12px;fill:var(--ink-2);text-anchor:middle;font-weight:600}
+svg .zonebox{fill:var(--fill);stroke:var(--contour);stroke-dasharray:4 4;stroke-width:1}
+svg .zonelab{font-size:11px;fill:var(--ink-3)}
+svg .legendbox{fill:var(--surface);stroke:var(--hairline)}
+svg .legend text{font-size:11px;fill:var(--ink-2)}
+@media (min-width:1200px) and (min-height:620px){
+  .wrap{height:100dvh;display:flex;flex-direction:column;padding:var(--s-8) var(--s-16)}
+  header.top{padding:0 0 var(--s-8)}
+  .layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 384px;gap:var(--s-12)}
+  .layout.rail-hidden{grid-template-columns:minmax(0,1fr) 0}
+  .stage-wrap{display:flex;flex-direction:column;min-height:0}
+  .stage-wrap svg{flex:1;min-height:0;height:100%;aspect-ratio:auto}
+  .panel{margin-top:0;min-height:0;overflow-y:auto;padding-right:2px}
+  .actions{position:sticky;bottom:0;background:var(--glass);backdrop-filter:blur(6px);
+    border:1px solid var(--hairline);border-radius:var(--r-mid);padding:var(--s-8)}
+}
+@media (max-width:700px){
+  .stage-wrap{overflow:hidden;display:flex;flex-direction:column}
+  .stage-wrap svg{min-width:1000px;order:3}
+  .stage-sub{padding-right:16px;order:1}
+  .zoombar{position:static;order:2;align-self:flex-start;margin:6px 12px 0}
+  .minibar{bottom:44px;left:12px;transform:none}
+  .mode-tag{display:none}
+  .pan-hint{display:block;order:5}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <span class="brand">知脉<em>Vein</em></span>
+  <span class="title">光合作用 · 单画布呈现过程之间的联系</span>
+  <span class="mode-tag">同一参数与步号下画面恒定</span>
+  <button class="btn" id="railToggle" aria-expanded="true" title="折叠后画布独占全宽，播放控制保留在画布内">折叠右栏</button>
+  <button class="btn" id="theme" aria-pressed="false">夜间</button>
+</header>
+<div class="layout" id="layout">
+  <div class="stage-wrap">
+    <div class="stage-sub" id="stageSub">单画布：光反应与卡尔文循环构成主线；光呼吸与光抑制在条件成立时与主线<strong>同时发生</strong>；C4 与 CAM 为可切换的替代碳入口。形状语义：圆与方块只画真实存在的物体（酶、细胞器、区室、膜蛋白），物质与过程一律为纯文字；箭头落在酶轮廓的接触点即活性位点（朱砂色小点）。光反应与卡尔文循环两区均按五层叠加绘制：区室底色→结构拟态（团块复合体、头+通道合酶、Rubisco 可溶酶团块）→定向流（折线光、细曲电子、粗直质子、循环碳主干粗线）→动态粒子（光反应流速随光强、循环流速随 CO₂ 浓度变化）→反应耦联（底物⟶产物弯箭头与 4e⁻/2e⁻、3CO₂/6ATP·6NADPH/3ATP/5G3P 计量徽章）。方程式旁注于对应过程图示之侧，点击跳至该步；点击联系边阅读其联系理由，点击节点查看注解；滚轮缩放、拖动平移，右栏顶部一览可直达全部文字阐释。</div>
+    <svg id="svg" viewBox="0 0 1280 820" preserveAspectRatio="xMidYMid meet" role="img"
+         aria-label="光合作用单画布图：类囊体膜双分子层、光反应链、卡尔文循环、载体往返、同时发生的光呼吸与光抑制、替代碳入口模块">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--vein)"></path>
+        </marker>
+        <marker id="arrHot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--cinnabar)"></path>
+        </marker>
+        <marker id="arrGold" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--gold)"></path>
+        </marker>
+        <marker id="arrGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--green)"></path>
+        </marker>
+        <marker id="arrEq" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--contour-strong)"></path>
+        </marker>
+        <marker id="arrEqHot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--cinnabar)"></path>
+        </marker>
+      </defs>
+      <g id="vp">
+        <g id="scene"></g>
+        <g id="flows"></g>
+      </g>
+    </svg>
+    <div class="zoombar" role="group" aria-label="画布缩放">
+      <button class="btn" id="zoomOut" title="缩小（−）">−</button>
+      <button class="btn pct" id="zoomPct" title="点击复位视图（f 或双击画布）">100%</button>
+      <button class="btn" id="zoomIn" title="放大（＋）">＋</button>
+    </div>
+    <div class="minibar" role="group" aria-label="折叠态播放控制">
+      <button class="btn" id="miniPrev" title="上一步">◀</button>
+      <button class="btn primary" id="miniPlay" aria-pressed="false">播放</button>
+      <button class="btn" id="miniNext" title="下一步">▶</button>
+      <span class="stepread" id="miniStep">第 1 / 16 步</span>
+      <button class="btn" id="miniExpand">展开右栏</button>
+    </div>
+    <div class="pan-hint">窄屏：拖动平移、双指捏合或滚轮缩放查看全画布；双击复位（字号优先保真）。</div>
+  </div>
+  <aside class="panel">
+    <section class="card directory" id="dirCard">
+      <h3>文字阐释 · 一览（点击原位阅读，不翻页）</h3>
+      <div id="dirLinks"></div>
+    </section>
+    <section class="card">
+      <h3>当前步骤</h3>
+      <div class="stepno" id="stepNo"></div>
+      <div class="steptitle" id="stepTitle"></div>
+      <p class="stepdesc" id="stepDesc"></p>
+      <div class="chips" id="stepChips"></div>
+      <div class="gatemsg" id="gateMsg" hidden></div>
+    </section>
+    <section class="card">
+      <h3>此刻同时发生（点击阅读联系）</h3>
+      <div class="chips" id="parChips"></div>
+      <div class="emptyhint" id="parEmpty" hidden>上述分支当前未发生：将光强提高至 1.2 以上，可观察光抑制与捕光同时出现；提高 O₂/CO₂ 比，可观察光呼吸与 CO₂ 固定竞争 RuBP；切换为 C4 或 CAM 植物，可观察竞争受到抑制。</div>
+    </section>
+    <section class="card" id="relCard">
+      <h3>过程之间的联系</h3>
+      <p class="relprop" id="relProp"></p>
+      <div class="prose" id="relBody"></div>
+      <p class="figread" id="relFig"></p>
+      <p class="relsrc" id="relSrc"></p>
+      <div class="xrefs" id="relXref"></div>
+    </section>
+    <section class="card" id="whyCard">
+      <h3>来龙去脉 · 过程存在的理由</h3>
+      <div class="param" style="margin-bottom:8px">
+        <label for="sel_focus">选择叙述对象</label>
+        <select id="sel_focus">
+          <option value="core">光反应与卡尔文循环</option>
+          <option value="c4">C4 途径</option>
+          <option value="cam">CAM 途径</option>
+          <option value="photoresp">光呼吸</option>
+          <option value="photoinh">光抑制</option>
+        </select>
+      </div>
+      <div class="prose" id="whyBody"></div>
+    </section>
+    <section class="card">
+      <h3>可变参数（即时生效）</h3>
+      <div class="param"><label for="sel_plant">植物类型（替代入口 · 不共存）</label>
+        <select id="sel_plant">
+          <option value="c3">C3 植物（默认）</option>
+          <option value="c4">C4 植物（空间分离）</option>
+          <option value="cam">CAM 植物（时间分离）</option>
+        </select>
+        <div class="note">C4/CAM 提高 Rubisco 周围 CO₂ 浓度，抑制光呼吸：切换后竞争边宽度减小。</div></div>
+      <div class="param"><label for="sl_light">光照强度（相对）</label><output id="out_light">1.00</output>
+        <input type="range" id="sl_light" min="0" max="3" step="0.05" value="1">
+        <div class="note">0 为无光照，光反应停止；超过 1.2 时光能超出利用限度，光抑制与捕光<strong>同时</strong>发生；超过 2 且防御关闭时损伤不可逆；1 以后速率不再随光强增加。</div></div>
+      <div class="param"><label for="sl_co2">CO₂ 浓度（相对）</label><output id="out_co2">1.00</output>
+        <input type="range" id="sl_co2" min="0" max="2" step="0.05" value="1">
+        <div class="note">0 为无 CO₂：卡尔文循环各步骤停止（固定、还原、再生、回流），光呼吸亦无从竞争。</div></div>
+      <div class="param"><label for="sl_ratio">O₂ ÷ CO₂ 比（环境）</label><output id="out_ratio">1.00</output>
+        <input type="range" id="sl_ratio" min="0.2" max="4" step="0.1" value="1">
+        <div class="note">O₂/CO₂ 比越高，光呼吸消耗的 RuBP 越多；C4/CAM 的浓缩作用使该比降低。</div></div>
+      <div class="param"><label for="sl_phase">CAM 时刻（0 夜 → 1 昼）</label><output id="out_phase">0.00</output>
+        <input type="range" id="sl_phase" min="0" max="1" step="0.01" value="0">
+        <div class="note">夜间气孔开放、白昼气孔关闭；夜间储存苹果酸、白昼脱羧供应 CO₂（仅 CAM 植物运行）。</div></div>
+      <div class="param"><label for="sl_speed">播放速度</label><output id="out_speed">1×</output>
+        <input type="range" id="sl_speed" min="0.5" max="2" step="0.5" value="1"></div>
+      <div class="actions" style="margin-top:4px">
+        <button class="btn" id="tg_defense" aria-pressed="true">防御修复：开</button>
+        <button class="btn" id="resetParams">重置参数</button>
+      </div>
+    </section>
+    <section class="card">
+      <h3>模块 · 展开 / 收起（只改显示，不改过程）</h3>
+      <div class="mods">
+        <button class="btn" id="mod_c4" aria-pressed="false">C4 途径</button>
+        <button class="btn" id="mod_cam" aria-pressed="false">CAM 途径</button>
+        <button class="btn" id="mod_photoresp" aria-pressed="false">光呼吸分支</button>
+        <button class="btn" id="mod_photoinh" aria-pressed="false">光抑制分支</button>
+      </div>
+    </section>
+    <section class="card" id="glossCard">
+      <h3>名词注解（课本外引入词）</h3>
+      <div class="glossdef" id="glossDef">点击画布上带「注」徽标的节点或酶 chip，查看定义与课本词对照。</div>
+      <div class="glossrel" id="glossRel"></div>
+      <div class="glosssrc" id="glossSrc"></div>
+      <details class="glossall"><summary>全部注解清单</summary><ul id="glossList"></ul></details>
+    </section>
+    <section class="card actions">
+      <button class="btn" id="btnFirst" title="回到第一步">⏮</button>
+      <button class="btn" id="btnPrev" title="上一步（←）">◀</button>
+      <button class="btn primary" id="btnPlay" aria-pressed="false">播放</button>
+      <button class="btn" id="btnNext" title="下一步（→）">▶</button>
+      <button class="btn" id="btnLast" title="到末步">⏭</button>
+      <input class="scrub" type="range" id="scrub" min="0" max="15" step="1" value="0" aria-label="步骤滑杆">
+      <button class="btn" id="btnReset">重置</button>
+      <button class="btn" id="btnExport">导出 PNG</button>
+    </section>
+  </aside>
+</div>
+</div>
+<script>
+'use strict';
+/* ---------- 领域数据：单画布过程图 ---------- */
+var GLOSS = {
+  RuBP:{def:'核酮糖-1,5-二磷酸，CO₂ 的受体分子（五碳）。',rel:'课本词：C₅',src:'拓展注解 · 课本以 C₅ 表示'},
+  G3P:{def:'甘油醛-3-磷酸，卡尔文循环输出的三碳糖磷酸。',rel:'课本词：三碳糖 / (CH₂O) 的前体',src:'拓展注解'},
+  Rubisco:{def:'核酮糖-1,5-二磷酸羧化酶/加氧酶：既催化 CO₂ 固定，也催化 O₂ 加成（光呼吸入口）。',rel:'课本词：催化 CO₂ 固定的酶',src:'拓展注解 · 双重活性是竞争前提'},
+  PQ:{def:'质体醌：膜内脂溶性电子与质子载体，于磷脂双分子层中横向移动。',rel:'课本无对应词；电子传递链成员',src:'拓展注解'},
+  Cytb6f:{def:'细胞色素 b₆f 复合体：跨膜蛋白，将电子自 PQ 传递至 PC，同时将 H⁺ 泵入腔内。',rel:'课本无对应词；质子梯度建立者',src:'拓展注解'},
+  PC:{def:'质体蓝素：腔侧水溶性电子载体，将电子自 Cyt b₆f 传递至 PSI。',rel:'课本无对应词',src:'拓展注解'},
+  FdFNR:{def:'铁氧还蛋白 / FNR 还原酶：基质侧将电子传递至 NADP⁺ 生成 NADPH。',rel:'课本词：[H] 的生成位点',src:'拓展注解'},
+  P680:{def:'PSII 反应中心叶绿素 a，吸收峰约 680nm。',rel:'课本词：光系统 II 的反应中心',src:'拓展注解'},
+  P700:{def:'PSI 反应中心叶绿素 a，吸收峰约 700nm。',rel:'课本词：光系统 I 的反应中心',src:'拓展注解'},
+  NADPH:{def:'还原型辅酶Ⅱ，携带高能电子与氢的物质流载体。',rel:'课本词：[H]',src:'课本以 [H] 表示，本页标 NADPH 并对照'},
+  Hplus:{def:'质子；类囊体腔内积累形成跨膜质子梯度（质子动力势），驱动 ATP 合酶。',rel:'课本无对应词；化学渗透机制',src:'拓展注解 · 梯度为示意模型'},
+  ExcessLight:{def:'超过光合利用能力的光能：电子传递链过度还原，电子漏予 O₂。',rel:'课本语境：光抑制（强光胁迫）',src:'拓展注解 · 阈值 1.2 为示意'},
+  PEPcase:{def:'PEP 羧化酶：叶肉细胞中将 HCO₃⁻ 固定于 PEP 生成 C4，对 CO₂ 亲和力高、不加氧。',rel:'课本无对应词；C4 入口',src:'拓展注解'},
+  Malate:{def:'苹果酸：C4 / CAM 中储存与运输 CO₂ 的四碳有机酸。',rel:'课本无对应词；碳的储存形式',src:'拓展注解'},
+  Pyruvate:{def:'丙酮酸：C4 脱羧后的三碳回流产物，再生 PEP 需额外 ATP。',rel:'课本无对应词；C4 额外能耗来源',src:'拓展注解'},
+  BundleSheath:{def:'维管束鞘细胞：C4 植物中脱羧释放 CO₂ 供卡尔文循环的细胞（花环结构）。',rel:'课本无对应词；C4 的空间前提',src:'拓展注解'},
+  Glycolate:{def:'乙醇酸（C2）：Rubisco 加氧反应的产物，光呼吸底物。',rel:'课本无对应词；光呼吸入口分子',src:'拓展注解'},
+  Peroxisome:{def:'过氧化物酶体：光呼吸中乙醇酸转化并释放部分 CO₂ 前体的细胞器。',rel:'课本无对应词；光呼吸路径成员',src:'拓展注解'},
+  MitoPR:{def:'线粒体（光呼吸语境）：甘氨酸在此缩合释放 CO₂，并生成 C3 返回卡尔文循环。',rel:'课本词：线粒体（此处为光呼吸功能）',src:'拓展注解 · 功能语境标注'},
+  ROS:{def:'活性氧：超额光能下电子漏予 O₂ 生成的损伤性分子。',rel:'课本无对应词；光抑制损伤介质',src:'拓展注解 · 示意模型'},
+  D1:{def:'PSII 反应中心 D1 蛋白：光抑制的主要损伤靶点，可被修复循环替换。',rel:'课本无对应词；修复前提',src:'拓展注解 · 示意模型'},
+  Stomata:{def:'气孔：CAM 植物夜开昼闭，决定 CO₂ 进入与水分散失的权衡。',rel:'课本词：气孔（CAM 语境强调夜开）',src:'拓展注解'}
+};
+var NODES = {
+  PSII:{x:120,y:390,r:0,protein:true,label:'PSII',sub:'P680',gloss:'P680'},
+  Cyt:{x:260,y:390,r:0,protein:true,label:'Cyt b₆f',sub:'泵 H⁺',gloss:'Cytb6f'},
+  PSI:{x:400,y:390,r:0,protein:true,label:'PSI',sub:'P700',gloss:'P700'},
+  ATPsyn:{x:540,y:390,r:0,protein:true,label:'ATP',sub:'合酶',gloss:'Hplus'},
+  Fd:{x:465,y:349,r:0,protein:true,label:'Fd/FNR',sub:'',gloss:'FdFNR'},
+  PQ:{x:190,y:390,r:0,label:'PQ',sub:'',gloss:'PQ',small:true},
+  PC:{x:330,y:442,r:0,label:'PC',sub:'',gloss:'PC',small:true},
+  H2O:{x:100,y:480,r:0,label:'H₂O',sub:'光解'},
+  O2:{x:170,y:520,r:0,label:'O₂',sub:'释放'},
+  Hcav:{x:300,y:500,r:24,entity:'compartment',label:'腔',sub:'H⁺ 积累',gloss:'Hplus'},
+  NADPH:{x:500,y:300,r:0,label:'NADPH',sub:'[H]',gloss:'NADPH'},
+  ATP:{x:585,y:285,r:0,label:'ATP',sub:'高能'},
+  RuBP:{x:880,y:120,r:0,label:'RuBP',sub:'C₅',gloss:'RuBP'},
+  C3:{x:1030,y:270,r:0,label:'C3',sub:'三碳化合物'},
+  G3P:{x:880,y:420,r:0,label:'G3P',sub:'三碳糖',gloss:'G3P'},
+  Regen:{x:730,y:270,r:0,label:'再生',sub:'耗 ATP'},
+  Sugar:{x:880,y:505,r:0,label:'糖类',sub:'(CH₂O)'},
+  CO2in:{x:1080,y:80,r:0,label:'CO₂',sub:'入口'},
+  Rubisco:{x:985,y:165,r:0,protein:true,calvin:true,label:'Rubisco',sub:'羧化/加氧',gloss:'Rubisco'},
+  C4co2:{x:1230,y:120,r:0,label:'CO₂',sub:'',zone:'c4'},
+  PEP:{x:1150,y:148,r:27,entity:'enzyme',label:'PEP羧化酶',sub:'叶肉',gloss:'PEPcase',zone:'c4'},
+  C4acid:{x:1150,y:213,r:0,label:'C4',sub:'四碳',zone:'c4'},
+  Sheath:{x:1150,y:273,r:26,entity:'cell',label:'维管束鞘',sub:'脱羧',gloss:'BundleSheath',zone:'c4'},
+  Stomata:{x:1090,y:400,r:0,stomata:true,label:'气孔',sub:'',gloss:'Stomata',zone:'cam'},
+  CamNight:{x:1150,y:430,r:0,label:'夜间固定',sub:'PEP',zone:'cam'},
+  Malate:{x:1150,y:496,r:0,label:'苹果酸',sub:'液泡储存',gloss:'Malate',zone:'cam'},
+  CamDay:{x:1150,y:556,r:0,label:'白昼脱羧',sub:'释放 CO₂',zone:'cam'},
+  C2:{x:940,y:660,r:0,label:'C2',sub:'乙醇酸',gloss:'Glycolate',zone:'photoresp'},
+  Perox:{x:820,y:700,r:28,entity:'organelle',label:'过氧化物酶体',sub:'',gloss:'Peroxisome',zone:'photoresp'},
+  Mito:{x:700,y:740,r:24,entity:'organelle',label:'线粒体',sub:'释放 CO₂',gloss:'MitoPR',zone:'photoresp'},
+  PRloss:{x:648,y:678,r:0,label:'CO₂',sub:'释放',zone:'photoresp'},
+  Excess:{x:120,y:670,r:0,label:'超额光能',sub:'强光',gloss:'ExcessLight',zone:'photoinh'},
+  ROS:{x:230,y:710,r:0,label:'ROS',sub:'活性氧',gloss:'ROS',zone:'photoinh'},
+  Damage:{x:350,y:750,r:24,entity:'enzyme',label:'D1 蛋白',sub:'损伤靶点',gloss:'D1',zone:'photoinh'},
+  Repair:{x:470,y:710,r:0,label:'修复',sub:'防御开',zone:'photoinh'}
+};
+var EDGES = [
+  {id:'ph680',d:'M112,250 L130,282 L116,288 L122,350',kind:'photon',label:'光 680nm',lx:120,ly:240},
+  {id:'ph700',d:'M392,250 L410,282 L396,288 L402,350',kind:'photon',label:'光 700nm',lx:400,ly:240},
+  {id:'h2o',d:'M100,458 L116,428',kind:'c'},
+  {id:'o2',d:'M124,428 L162,502',kind:'c',label:'O₂ 出',lx:150,ly:470},
+  {id:'psii_pq',d:'M136,380 Q166,362 182,382',kind:'e',label:'e⁻',lx:160,ly:360},
+  {id:'pq_cyt',d:'M198,382 Q216,362 234,378',kind:'e',label:'e⁻',lx:216,ly:360},
+  {id:'cyt_pc',d:'M262,424 Q290,448 320,440',kind:'e'},
+  {id:'pc_psi',d:'M340,440 Q370,448 396,424',kind:'e'},
+  {id:'psi_fd',d:'M416,352 Q432,336 448,344',kind:'e',label:'e⁻',lx:432,ly:330},
+  {id:'fd_nadph',d:'M478,338 Q492,326 496,314',kind:'nadph'},
+  {id:'pump',d:'M260,424 L288,478',kind:'h',label:'泵 H⁺',lx:252,ly:470},
+  {id:'hret',d:'M324,500 L534,430',kind:'h',label:'H⁺ 回流',lx:430,ly:478},
+  {id:'atpsyn',d:'M549,320 L573,300',kind:'atp'},
+  {id:'co2_rub',d:'M1080,102 L1000,158',kind:'c',label:'固定',lx:1052,ly:126},
+  {id:'fix',d:'M905,138 Q1000,165 1012,247',kind:'c',cycle:true},
+  {id:'red',d:'M1012,293 Q1000,375 905,402',kind:'c',cycle:true,label:'还原',lx:1016,ly:352},
+  {id:'out',d:'M880,450 L880,483',kind:'c',cycle:true,label:'输出',lx:908,ly:470},
+  {id:'reg1',d:'M855,402 Q760,375 748,293',kind:'c',cycle:true},
+  {id:'reg2',d:'M748,247 Q760,165 855,138',kind:'c',cycle:true,label:'再生·耗ATP',lx:742,ly:160},
+  {id:'atp_go',d:'M609,282 C750,210 880,280 988,366',kind:'atp',label:'ATP 供应卡尔文循环',lx:790,ly:238,rel:'core'},
+  {id:'nadph_go',d:'M524,300 C700,330 860,340 986,378',kind:'nadph',label:'NADPH 供应卡尔文循环',lx:760,ly:330,rel:'core'},
+  {id:'adp_ret',d:'M986,384 C860,420 700,400 552,338',kind:'ret',label:'ADP+Pi 返回光反应',lx:760,ly:408,rel:'core'},
+  {id:'nadp_ret',d:'M986,390 C840,470 660,440 478,362',kind:'ret',label:'NADP⁺ 返回光反应',lx:700,ly:448,rel:'core'},
+  {id:'c4_chip',d:'M1102,80 L1105,84',kind:'chipconn',zone:'c4',closedOnly:true,rel:'c4'},
+  {id:'c4_co2',d:'M1214,126 L1172,138',kind:'c',zone:'c4'},
+  {id:'c4_pep',d:'M1150,174 L1150,191',kind:'c',zone:'c4'},
+  {id:'c4_she',d:'M1150,235 L1150,247',kind:'c',zone:'c4'},
+  {id:'c4_supply',d:'M1128,263 C1060,225 1060,140 1072,100',kind:'c',zone:'c4',label:'脱羧释放 CO₂，抑制光呼吸',lx:985,ly:208,rel:'c4'},
+  {id:'c4_pyr',d:'M1174,263 C1212,225 1212,185 1174,158',kind:'ret',zone:'c4',label:'丙酮酸·耗 ATP',lx:1210,ly:186,rel:'c4'},
+  {id:'cam_chip',d:'M1075,356 C1040,300 1050,140 1072,98',kind:'chipconn',zone:'cam',closedOnly:true,rel:'cam'},
+  {id:'cam_sto',d:'M1104,408 L1130,420',kind:'c',zone:'cam',label:'夜间 CO₂ 进入',lx:1020,ly:440},
+  {id:'cam_night',d:'M1150,444 L1150,452',kind:'c',zone:'cam'},
+  {id:'cam_mal',d:'M1150,528 L1150,542',kind:'c',zone:'cam'},
+  {id:'cam_supply',d:'M1128,551 C1040,520 1040,140 1068,95',kind:'c',zone:'cam',label:'白昼脱羧释放 CO₂',lx:1046,ly:470,rel:'cam'},
+  {id:'pr_branch',d:'M985,189 C990,400 960,540 946,638',kind:'branch',label:'O₂ 与 CO₂ 竞争 RuBP',lx:960,ly:585,pre:true,width:'ratio',rel:'pr'},
+  {id:'pr_c2',d:'M918,668 L844,692',kind:'branch',zone:'photoresp'},
+  {id:'pr_perox',d:'M796,708 L724,732',kind:'branch',zone:'photoresp',label:'耗 ATP',lx:760,ly:706},
+  {id:'pr_loss',d:'M681,726 L660,694',kind:'branch',zone:'photoresp',label:'释放 CO₂',lx:648,ly:648},
+  {id:'pr_return',d:'M700,716 C760,560 940,420 1015,298',kind:'ret',zone:'photoresp',label:'C3 回卡尔文循环',lx:790,ly:592,rel:'pr'},
+  {id:'pi_ros',d:'M140,682 L212,700',kind:'branch',zone:'photoinh',label:'光强超出利用限度',lx:196,ly:668,pre:true},
+  {id:'pi_dmg',d:'M248,720 L330,738',kind:'branch',zone:'photoinh'},
+  {id:'pi_eff',d:'M350,726 C300,600 160,520 124,428',kind:'branch',label:'捕光效率下降',lx:262,ly:560,rel:'pi'},
+  {id:'pi_rep',d:'M448,718 L374,742',kind:'ret',zone:'photoinh',label:'修复',lx:412,ly:716,rel:'pi'}
+];
+var ZONES = {
+  c4:{box:[1064,100,192,200],chip:[1180,84],title:'C4 途径 · 展开'},
+  cam:{box:[1064,340,192,258],chip:[1150,356],title:'CAM 途径 · 展开'},
+  photoresp:{box:[620,600,420,200],chip:[830,622],title:'光呼吸 · 与固定竞争 RuBP'},
+  photoinh:{box:[60,600,520,200],chip:[300,622],title:'光抑制 · 与捕光同时',lab:'end'}
+};
+var STEPS = [
+  {t:'光系统捕光',d:'PSII 与 PSI 的天线色素吸收光子，光能进入类囊体膜上的蛋白复合体。光能的捕获与转化由此开始。',changed:['PSII','PSI'],flows:[['ph680','photon'],['ph700','photon']],gate:[{p:'light',min:0.05,msg:'无光照：捕光停止，光反应各步骤均不能进行。'}]},
+  {t:'水的光解',d:'在类囊体腔一侧，水发生光解：H₂O 分解为 O₂、H⁺ 与电子。电子补充至 PSII，O₂ 释放，H⁺ 留存于腔内——物质变化与能量转化由此同步进行。',changed:['H2O','O2','Hcav'],flows:[['h2o','c'],['o2','c']],gate:[{p:'light',min:0.05,msg:'无光照：水的光解不能进行。'}]},
+  {t:'电子传递与泵质子',d:'电子经 PQ、Cyt b₆f、PC 传递至 PSI；Cyt b₆f 同时将 H⁺ 泵入腔内，形成跨膜质子梯度。光强超过利用限度时，光抑制所致的损伤自本步起与电子传递同时发生，而非其后继步骤。',changed:['PQ','Cyt','PC','Hcav'],flows:[['psii_pq','e'],['pq_cyt','e'],['cyt_pc','e'],['pc_psi','e'],['pump','h']],gate:[{p:'light',min:0.05,msg:'无光照：电子传递不能进行。'}]},
+  {t:'NADPH 生成',d:'PSI 再次激发电子，经 Fd 与 FNR 传递至 NADP⁺，生成 NADPH（课本以 [H] 表示）。还原力以分子形式离开类囊体膜。',changed:['Fd','NADPH'],flows:[['psi_fd','e'],['fd_nadph','nadph']],gate:[{p:'light',min:0.05,msg:'无光照：NADPH 不能生成。'}]},
+  {t:'质子梯度驱动 ATP 合酶',d:'H⁺ 顺浓度梯度回流，经 ATP 合酶催化 ADP 与 Pi 合成 ATP。质子梯度中的能量转化为 ATP 中的化学能，与 NADPH 一同供应卡尔文循环。',changed:['ATPsyn','ATP','Hcav'],flows:[['hret','h'],['atpsyn','atp']],gate:[{p:'light',min:0.05,msg:'无光照：不能形成质子梯度，ATP 不能合成。'}]},
+  {t:'CO₂ 固定（Rubisco）',d:'Rubisco 催化 CO₂ 与 RuBP（C₅）结合，生成 C₃。Rubisco 的活性位点既结合 CO₂ 也结合 O₂，因此自本步起，光呼吸与 CO₂ 固定竞争同一批 RuBP，二者同时进行。',changed:['Rubisco','RuBP','C3'],flows:[['co2_rub','c'],['fix','c']],gate:[{p:'co2',min:0.05,msg:'无 CO₂：固定停止，卡尔文循环各步骤随之停止，光呼吸亦无从竞争。'}]},
+  {t:'C₃ 的还原：消耗光反应提供的 ATP 与 NADPH',d:'C₃ 消耗 ATP 与 NADPH，被还原为 G3P。所需 ATP 与 NADPH 由光反应提供——能量以分子为载体进入卡尔文循环。',changed:['C3','G3P'],flows:[['atp_go','atp'],['nadph_go','nadph'],['red','c']],gate:[{p:'co2',min:0.05,msg:'无 CO₂：无 C₃ 生成，还原不能进行。'},{p:'light',min:0.05,msg:'无光照：缺乏 ATP 与 NADPH，还原不能进行。'}]},
+  {t:'三碳糖输出',d:'G3P 一部分离开循环用于糖类合成，构成净产出；其余用于再生 RuBP，否则下一轮固定将缺乏 CO₂ 受体。',changed:['G3P','Sugar'],flows:[['out','c']],gate:[{p:'co2',min:0.05,msg:'无 CO₂：循环无净产出。'},{p:'light',min:0.05,msg:'无光照：循环停止，无输出。'}]},
+  {t:'RuBP 再生',d:'G3P 经重排生成 RuBP，并消耗 ATP。CO₂ 受体得以再生，循环方能持续运转。',changed:['Regen','RuBP'],flows:[['reg1','c'],['reg2','atp']],gate:[{p:'co2',min:0.05,msg:'无 CO₂：再生停止。'},{p:'light',min:0.05,msg:'无光照：缺乏 ATP，再生停止。'}]},
+  {t:'载体回流：ADP+Pi 与 NADP⁺ 返回类囊体膜',d:'消耗后的载体返回类囊体膜：NADP⁺ 返回 Fd/FNR 处用于 NADPH 的再生，ADP 与 Pi 返回 ATP 合酶处用于 ATP 的再合成。光反应与卡尔文循环由此互为前提：任一侧停止，另一侧即因缺乏底物而随之停止。',changed:['Fd','ATPsyn'],flows:[['adp_ret','ret'],['nadp_ret','ret']],gate:[{p:'co2',min:0.05,msg:'无 CO₂：循环停止，载体无从回流。'},{p:'light',min:0.05,msg:'无光照：载体供应停止，回流随之停止。'}]},
+  {t:'C4 途径：在维管束鞘中集中释放 CO₂',d:'高温强光下气孔部分关闭以减少水分散失，胞间 CO₂ 浓度降低、O₂ 相对升高，光呼吸增强。C4 植物由叶肉细胞中的 PEP 羧化酶先将 CO₂ 固定为 C4 酸（该酶不加氧、对 CO₂ 亲和力高），C4 酸运至维管束鞘细胞脱羧释放 CO₂，提高 Rubisco 周围 CO₂ 浓度，从而抑制光呼吸。其代价为额外消耗 ATP（丙酮酸返回叶肉再生 PEP 时消耗）。切换植物类型可观察光呼吸竞争的变化。',changed:['PEP','C4acid','Sheath'],flows:[['c4_supply','c'],['c4_pyr','ret']],module:'c4',rel:'c4',gate:[{p:'plant',equals:'c4',min:1,msg:'当前所选并非 C4 植物，该途径不运行；可切换植物类型，或展开模块查看结构。'}]},
+  {t:'CAM 夜间阶段：开放气孔，将 CO₂ 固定为苹果酸',d:'在干旱环境中，白昼开放气孔将导致水分过度散失；而夜间无光照，光反应不能进行，捕获的 CO₂ 无法立即用于糖的合成。CAM 植物将 CO₂ 捕获与光合作用在时间上分离：夜间开放气孔吸收 CO₂，经 PEP 固定为苹果酸并储存于液泡。此过程构成时间分隔的夜间阶段。',changed:['Stomata','CamNight','Malate'],flows:[['cam_sto','c'],['cam_night','c'],['cam_mal','c']],module:'cam',phase:0,rel:'cam',gate:[{p:'plant',equals:'cam',min:1,msg:'当前所选并非 CAM 植物，该途径不运行。'},{p:'phase',max:0.5,kind:'context',msg:'当前为白昼：夜间储酸画面不显示；夜间固定只发生在夜间时段。'}]},
+  {t:'CAM 白昼阶段：关闭气孔，利用夜间储存的 CO₂',d:'白昼关闭气孔以减少水分散失，液泡中的苹果酸脱羧释放 CO₂，供应卡尔文循环。Rubisco 周围 CO₂ 浓度升高，光呼吸受到抑制。此过程构成时间分隔的白昼阶段。',changed:['Malate','CamDay'],flows:[['cam_mal','c'],['cam_supply','c']],module:'cam',phase:1,rel:'cam',gate:[{p:'plant',equals:'cam',min:1,msg:'当前所选并非 CAM 植物，该途径不运行。'},{p:'phase',min:0.5,kind:'context',msg:'当前为夜间：白昼脱羧画面不显示；白昼脱羧只发生在白昼时段。'}]},
+  {t:'光呼吸：与卡尔文循环竞争 RuBP',d:'同一酶、同一底物 RuBP：CO₂ 与 O₂ 竞争其活性位点。加氧反应消耗的 RuBP 转化为乙醇酸（C2），经过过氧化物酶体与线粒体，释放部分 CO₂、回收 C3 返回卡尔文循环，并消耗 ATP。上述过程与固定、还原同时发生，而非依次进行。',changed:['Rubisco','C2','Perox','Mito','PRloss'],flows:[['pr_branch','branch'],['pr_c2','branch'],['pr_perox','branch'],['pr_loss','branch'],['pr_return','ret']],module:'photoresp',rel:'pr',gate:[{p:'share',min:0.08,msg:'Rubisco 周围 O₂/CO₂ 比过低（或已被浓缩机制压低）：光呼吸弱至可忽略。'}]},
+  {t:'光抑制：强光下与捕光同时发生',d:'光能输入超过利用限度时，电子传递链过度还原，电子漏予 O₂ 生成活性氧，损伤 PSII 的 D1 蛋白。损伤自电子传递步起与捕光同时发生。',changed:['Excess','ROS','Damage'],flows:[['pi_ros','branch'],['pi_dmg','branch'],['pi_eff','branch']],module:'photoinh',rel:'pi',gate:[{p:'excess',min:0.05,msg:'光强尚处于利用限度内，光抑制未发生；将光强提高至 1.2 以上，可观察其与捕光同时出现。'}]},
+  {t:'D1 蛋白的修复：与损伤同时进行',d:'防御开启时，D1 修复循环与损伤同时运行：损伤与替换并行。净损伤为损伤量减去修复量；光强超过 2 且防御关闭时，损伤进入不可逆区间。',changed:['Repair','Damage'],flows:[['pi_rep','ret']],module:'photoinh',rel:'pi',gate:[{p:'excess',min:0.05,msg:'无超额光能即无损伤，修复画面不显示。'},{p:'defense',min:1,msg:'防御修复已关闭：D1 蛋白得不到替换。'}]}
+];
+/* ---------- 联系卡：连续散文讲清为什么相连；读图与出处单独成行 ---------- */
+var REL = {
+  core:{prop:'光反应与卡尔文循环：相互依存的能量与物质联系',
+    prose:['光能不能直接用于碳同化，必须先转化为分子中的化学能：光反应将能量储存于 ATP 与 NADPH，二者进入叶绿体基质，供应卡尔文循环中 C₃ 的还原与 RuBP 的再生。',
+      '载体消耗后并非排出，而是返回类囊体膜重新参与合成：ADP 与 Pi 返回 ATP 合酶处用于 ATP 的再合成，NADP⁺ 返回 Fd/FNR 处用于 NADPH 的再生。因此光反应依赖卡尔文循环返回 ADP、Pi 与 NADP⁺，卡尔文循环依赖光反应供应 ATP 与 NADPH；任一侧停止，另一侧即因缺乏底物而随之停止。',
+      '这正是图中两区域必须并置、四条载体箭头必须成对出现的原因：若只绘制供应方向而缺少回流方向，能量与物质的联系即不完整。'],
+    fig:'读图：ATP/NADPH 两条实线供应边与 ADP+Pi/NADP⁺ 两条虚线回流边成对出现；任一条停止，对应回流边亦停止。卡尔文循环以粗实线碳主干（固定→还原→再生）闭合，计量徽章按每固定 3CO₂ 口径钉于各过程边旁。',
+    src:'课本光合作用原理页（页码未核对）；载体往返与区室分工为教材通识。',
+    xref:['pr','pi']},
+  pr:{prop:'光呼吸与卡尔文循环：对同一底物 RuBP 的竞争',
+    prose:['Rubisco 的活性位点既结合 CO₂ 也结合 O₂，此为进化遗留的双活性。O₂ 相对偏多时（高温与气孔关闭均可造成），加氧反应与羧化固定竞争同一批 RuBP，两条途径同时进行。',
+      '加氧反应消耗的 RuBP 转化为乙醇酸（C2），经过过氧化物酶体与线粒体处理：释放部分 CO₂，回收 C3 返回卡尔文循环，并消耗 ATP。因此光呼吸并非独立循环，而是自卡尔文循环分流、又部分回流的一条支路，其净效果为抵消光合收益。',
+      '由于该损失随 O₂/CO₂ 比升高而增大，C4 与 CAM 途径以额外消耗 ATP 为代价提高 Rubisco 周围 CO₂ 浓度，所抑制的正是这条支路。'],
+    fig:'读图：竞争边自 Rubisco 酶团块下缘的活性位点引出，自 CO₂ 固定步起与固定边同时活跃，其宽度随 O₂/CO₂ 比增大或减小；C4/CAM 开启时竞争边变窄。',
+    src:'课本光呼吸专题页（页码未核对）；"进化遗留双活性"为教学归纳，未核对原始文献。',
+    xref:['c4','cam','core']},
+  c4:{prop:'C4 途径：提高 Rubisco 周围 CO₂ 浓度以抑制光呼吸',
+    prose:['高温强光下植物为减少水分散失而部分关闭气孔，胞间 CO₂ 浓度降低、O₂ 相对升高，光呼吸增强。C4 途径以空间分工应对：叶肉细胞中的 PEP 羧化酶先将 CO₂ 固定为 C4 酸；该酶不加氧、对 CO₂ 亲和力高，在低 CO₂ 浓度下仍能有效固定。',
+      'C4 酸运至维管束鞘细胞后脱羧，集中释放 CO₂，使 Rubisco 处于高 CO₂ 环境，加氧竞争受到抑制。空间分隔由此换取 CO₂ 浓缩。',
+      '其代价为额外消耗 ATP（丙酮酸返回叶肉再生 PEP 时消耗）。只有当光呼吸造成的损失超过浓缩所需的能量消耗时，该途径才具有适应意义。'],
+    fig:'读图：C4 模块的脱羧边接回 CO₂ 入口；开启后竞争边变窄。',
+    src:'课本 C4 专题页（页码未核对）；花环结构（叶肉＋维管束鞘）为教材通识。',
+    xref:['pr','cam']},
+  cam:{prop:'CAM 途径：CO₂ 捕获与光合作用在时间上的分离',
+    prose:['在干旱环境中，白昼开放气孔将导致水分过度散失；而夜间无光照，光反应不能进行，捕获的 CO₂ 无法立即用于糖的合成。CAM 植物将二氧化碳捕获与光合作用在时间上分离：夜间开放气孔捕获 CO₂，转化为苹果酸储存于液泡；白昼关闭气孔以减少水分散失，苹果酸脱羧释放 CO₂，供应卡尔文循环进行光合作用。',
+      '夜间温度较低、湿度相对较高，开放气孔所致的水分散失较少；液泡的储存能力使夜间捕获的碳得以留存。白昼释放的 CO₂ 在关闭气孔的叶片内积累，Rubisco 周围 CO₂ 浓度升高，光呼吸亦受到抑制。',
+      '其代价同样存在：夜间固定与液泡储酸消耗能量，储酸容量亦限制白昼的供碳速率。因此 CAM 途径主要分布于干旱环境，而非湿润环境。'],
+    fig:'读图：CAM 模块夜/昼两阶段随相位切换显示；脱羧边接回 CO₂ 入口，开启后竞争边变窄。',
+    src:'课本 CAM 专题页（页码未核对）；因果叙述按用户提供的示例段落整理。',
+    xref:['c4','pr']},
+  pi:{prop:'光抑制：与光能传递同时发生的损伤过程',
+    prose:['光能输入超过利用能力时，电子传递链过度还原，多余电子漏予 O₂ 生成活性氧，损伤 PSII 反应中心的 D1 蛋白。损伤并非光合之后的后继步骤：自电子传递开始，即与捕光、传递同时发生。',
+      'D1 蛋白受损后捕光效率下降，整条光反应链随之减慢。防御开启时，修复循环与损伤同时运行，持续替换 D1 蛋白；光强超过 2 且防御关闭时，损伤累积进入不可逆区间。',
+      '若忽略光抑制，强光下的光合速率将被误表示为随光强线性增加；实际光合速率在高光强下下降。'],
+    fig:'读图：光抑制分支自电子传递步起与主链同帧活跃；捕光效率下降时光能箭头变窄、变淡。',
+    src:'课本光抑制专题页（页码未核对）；D1 周转与活性氧机制为教材通识；阈值与效率公式为本页示意模型，无文献出处。',
+    xref:['core','pr']},
+  c4cam:{prop:'C4 与 CAM：空间分隔与时间分隔的比较',
+    prose:['两者面对同一矛盾：减少水分散失要求关闭气孔，供应 CO₂ 要求开放气孔，二者不可兼得；而关闭气孔又使光呼吸增强。其共同策略是在 Rubisco 之前提高 CO₂ 浓度，抑制加氧竞争。',
+      'C4 采用空间分隔：叶肉先固定、维管束鞘再释放；CAM 采用时间分隔：夜间固定储酸、白昼脱羧释放，并以液泡作为储存结构。同一植株仅运行其中一种途径，因此图中二者为同一 CO₂ 入口上可切换的替代途径，而非共存结构。',
+      '两者均付代价：C4 额外消耗 ATP，CAM 受储酸容量与夜间耗能限制。何种途径占优，取决于环境中水分与光照的限制程度。'],
+    fig:'读图：植物类型选择器在 C3/C4/CAM 间切换；同一时刻仅一条替代入口活跃，收起时保留虚线连接边。',
+    src:'课本 C4/CAM 专题页（页码未核对）；对比归纳为教学整理。',
+    xref:['c4','cam','pr']}
+};
+var WHY = {
+  core:{prose:['光子由天线色素吸收；水在腔侧光解，电子补充至 PSII，释放 O₂ 并留存 H⁺。',
+      '电子传递将 H⁺ 泵入腔内形成跨膜梯度；梯度驱动 ATP 合酶，将能量转化至 ATP 中。',
+      'ATP 与 NADPH 供应卡尔文循环，ADP+Pi 与 NADP⁺ 返回类囊体膜再合成：受体与载体均须返回，循环方能闭合；任一环缺失，全循环停止。'],
+    src:'课本光合作用原理页（页码未核对）。'},
+  c4:{prose:['高温强光下气孔部分关闭以减少水分散失，胞间 CO₂ 浓度降低、O₂ 相对升高，光呼吸增强——此为 C4 途径存在的理由。',
+      '叶肉 PEP 羧化酶不加氧、亲和力高，先在低 CO₂ 浓度下将碳固定为 C4；维管束鞘脱羧集中释放 CO₂，Rubisco 周围 CO₂ 浓度升高，竞争受到抑制。',
+      '空间分隔的代价：额外消耗 ATP；只有当竞争损失超过浓缩成本时，该途径才具有适应意义。'],
+    src:'课本 C4 专题页（页码未核对）。'},
+  cam:{prose:['干旱环境中白昼开放气孔所致的水分散失过多；夜间无光照，光反应不能进行，捕获的 CO₂ 必须先储存——此为 CAM 途径存在的理由。',
+      '夜间开放气孔将 CO₂ 固定为苹果酸并储存于液泡，白昼关闭气孔脱羧释放供应卡尔文循环；夜间温度较低、湿度相对较高使水分散失较少，液泡提供储存结构。',
+      '时间分隔的代价：夜间固定消耗能量，储酸容量限制白昼供碳速率。'],
+    src:'课本 CAM 专题页（页码未核对）；因果叙述按用户示例段落整理。'},
+  photoresp:{prose:['Rubisco 活性位点既结合 CO₂ 也结合 O₂（进化遗留的双活性，教学归纳）；O₂ 偏多时加氧反应消耗 RuBP。',
+      '乙醇酸经过过氧化物酶体与线粒体：释放部分 CO₂、回收 C3 返回循环、消耗 ATP——与固定同时发生，净效果为抵消光合收益。',
+      '该损失随 O₂/CO₂ 比升高而增大，正是 C4/CAM 以额外 ATP 浓缩 CO₂ 所要抑制的对象。'],
+    src:'课本光呼吸专题页（页码未核对）。'},
+  photoinh:{prose:['光能超过利用限度时传递链过度还原，电子漏予 O₂ 生成活性氧，损伤 D1 蛋白——与捕光同时发生，而非后继步骤。',
+      'D1 损伤使捕光效率下降，影响整条光反应链；防御开启时修复与损伤同时替换 D1 蛋白。',
+      '修复耗能与蛋白周转为其代价；光强超过 2 且防御关闭时进入不可逆区间（示意模型）。'],
+    src:'课本光抑制专题页（页码未核对）；阈值与效率为本页示意模型。'}
+};
+var REL_OF_EDGE = {};
+EDGES.forEach(function(e){ if(e.rel) REL_OF_EDGE[e.id]=e.rel; });
+/* 活性位点：底物/产物箭头与酶轮廓的接触点（第三项为所属模块，收起时不绘制） */
+var SITES = [
+  [116,428],[124,428],[136,380],
+  [234,378],[260,424],
+  [396,424],[416,352],
+  [478,338],[478,362],
+  [549,320],[552,338],
+  [964,153],[985,189],[1005,152],
+  [1172,138,'c4'],[1150,175,'c4'],[1174,158,'c4'],
+  [1128,263,'c4'],[1174,263,'c4'],
+  [844,692,'photoresp'],[724,732,'photoresp'],[681,726,'photoresp'],[700,716,'photoresp']
+];
+/* ---------- 方程式集（R21/R26：教材正文/图/批注口径，最简整数比；画布旁注锚定过程节点） ---------- */
+var EQS = [
+  {id:'h2o',name:'水的光解',lhs:'2H₂O',rhs:'O₂ + 4H⁺ + 4e⁻',cond:'光 · PSII',steps:[1],anchor:'O2',ax:60,ay:590,lead:[150,588,168,542]},
+  {id:'nadph_make',name:'NADPH 生成',lhs:'NADP⁺ + H⁺ + 2e⁻',rhs:'NADPH',cond:'酶（Fd/FNR）',steps:[3,9],anchor:'NADPH',ax:380,ay:170,lead:[520,208,492,282]},
+  {id:'atp_make',name:'ATP 合成',lhs:'ADP + Pi + 能量',rhs:'ATP',cond:'ATP 合酶 · H⁺ 梯度',steps:[4,9],anchor:'ATPsyn',ax:435,ay:230,lead:[548,266,549,318]},
+  {id:'atp_use',name:'ATP 水解供能',lhs:'ATP',rhs:'ADP + Pi + 能量',cond:'酶',steps:[6,8],anchor:'Regen',ax:620,ay:176,lead:[712,214,724,246]},
+  {id:'nadph_use',name:'NADPH 氧化供氢',lhs:'NADPH',rhs:'NADP⁺ + H⁺ + 2e⁻',cond:'酶',steps:[6],anchor:'C3',ax:880,ay:302},
+  {id:'co2fix',name:'CO₂ 固定',lhs:'CO₂ + C₅',rhs:'2C₃',cond:'Rubisco',steps:[5],anchor:'Rubisco',ax:860,ay:48,lead:[985,86,985,141]},
+  {id:'calvin_net',name:'卡尔文循环净产出',lhs:'6G3P',rhs:'1糖类 + 5G3P',cond:'每 3CO₂ · 共耗 9ATP 6NADPH',steps:[7],anchor:'Sugar',ax:640,ay:508,lead:[856,512,800,528]}
+];
+/* ---------- 阐释一览（R22：全部联系卡与来龙去脉链接常驻右栏顶部） ---------- */
+var DIR = [
+  {label:'过程之间的联系',kind:'rel',links:[['core','光反应⇄卡尔文'],['pr','光呼吸竞争'],['c4','C4 浓缩'],['cam','CAM 时序'],['pi','光抑制'],['c4cam','C4/CAM 比较']]},
+  {label:'来龙去脉',kind:'why',links:[['core','主线'],['c4','C4'],['cam','CAM'],['photoresp','光呼吸'],['photoinh','光抑制']]}
+];
+/* ---------- 状态 ---------- */
+var S = {step:0, playing:false, params:{light:1,co2:1,ratio:1,phase:0,speed:1,defense:1,plant:'c3'},
+         open:{c4:false,cam:false,photoresp:false,photoinh:false}, rel:'core', focusMod:'core', railHidden:false};
+var V = {k:1,tx:0,ty:0};
+var phaseTarget = 0, phaseCur = 0, playAcc = 0, lastT = 0;
+var FLOWS = [], flowT = 0, flowTco2 = 0;
+var FLOW_RATE = {photon:0.3, e:0.22, h:0.16, atp:0.12, nadph:0.12, c:0.1, ret:0.08, branch:0.1};
+/* 卡尔文循环碳主干：粒子通量速率绑定 CO₂ 浓度（光反应侧绑定光强） */
+var CALVIN_FLOW = {co2_rub:1, fix:1, red:1, out:1, reg1:1, reg2:1};
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function $(id){return document.getElementById(id)}
+function excessLight(){return Math.max(0, S.params.light-1.2)}
+function concFactor(){ return S.params.plant==='c4' ? 4 : (S.params.plant==='cam' ? (phaseTarget>=0.5?3:1) : 1); }
+function model(){
+  var ex = excessLight(), def = S.params.defense;
+  var dmg = S.step>=2 ? ex*(def?0.3:1)*(S.step-1) : 0;
+  var rep = (S.step>=3 && def) ? 0.6*ex*(S.step-2) : 0;
+  var eff = Math.min(1, Math.max(0.2, 1-Math.max(0,dmg-rep)*0.3));
+  var conc = concFactor(), effRatio = S.params.ratio/conc;
+  return {ex:ex, dmg:dmg, rep:rep, eff:eff, irrev:(S.params.light>2 && !def && S.step>=2),
+          rate:Math.min(S.params.light,2)*eff, conc:conc, effRatio:effRatio,
+          share:effRatio/(effRatio+3)};
+}
+function gateOf(st){
+  if(!st.gate) return null;
+  for(var i=0;i<st.gate.length;i++){
+    var g = st.gate[i];
+    var val = g.p==='excess' ? excessLight()
+      : (g.p==='phase' ? phaseTarget
+      : (g.p==='defense' ? S.params.defense
+      : (g.p==='plant' ? (S.params.plant===g.equals?1:0)
+      : (g.p==='share' ? model().share : S.params[g.p]))));
+    if(g.min!=null && val<g.min) return g;
+    if(g.max!=null && val>g.max) return g;
+  }
+  return null;
+}
+/* 同时发生的分支：关系存在性只依赖 (params, step)，与播放顺序无关 */
+function parallel(){
+  var m = model(), p = S.params, out = {};
+  var prOn = S.step>=5 && m.share>=0.08 && p.light>=0.05 && p.co2>=0.05;
+  var piOn = S.step>=2 && m.ex>=0.05;
+  var c4On = p.plant==='c4' && S.step>=5;
+  var camOn = p.plant==='cam' && S.step>=5;
+  if(prOn){ out.pr_branch='branch';
+    if(S.open.photoresp){ out.pr_c2='branch'; out.pr_perox='branch'; out.pr_loss='branch'; out.pr_return='ret'; } }
+  if(piOn){ out.pi_eff='branch';
+    if(S.open.photoinh){ out.pi_ros='branch'; out.pi_dmg='branch'; if(p.defense) out.pi_rep='ret'; } }
+  if(c4On){ if(S.open.c4){ out.c4_co2='c'; out.c4_pep='c'; out.c4_she='c'; out.c4_supply='c'; out.c4_pyr='ret'; } else out.c4_chip='chipconn'; }
+  if(camOn){ if(S.open.cam){ out.cam_sto='c'; out.cam_night='c'; out.cam_mal='c'; out.cam_supply='c'; } else out.cam_chip='chipconn'; }
+  return {flows:out, prOn:prOn, piOn:piOn, c4On:c4On, camOn:camOn, m:m};
+}
+/* ---------- 渲染 ---------- */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function lipidBand(){
+  var skip = [[88,150],[234,286],[368,432],[532,548]];
+  var s = '<g class="lipid">';
+  for(var x=66;x<=594;x+=8){
+    var inP = skip.some(function(r){return x>=r[0]&&x<=r[1]});
+    if(inP) continue;
+    s += '<circle cx="'+x+'" cy="366" r="3.2" fill="var(--gold)"/>'
+      +  '<path d="M'+(x-1.5)+',369 L'+(x-2.5)+',384 M'+(x+1.5)+',369 L'+(x+2.5)+',384" stroke="var(--gold)" stroke-width="1" fill="none" opacity=".75"/>'
+      +  '<circle cx="'+x+'" cy="414" r="3.2" fill="var(--gold)"/>'
+      +  '<path d="M'+(x-1.5)+',411 L'+(x-2.5)+',396 M'+(x+1.5)+',411 L'+(x+2.5)+',396" stroke="var(--gold)" stroke-width="1" fill="none" opacity=".75"/>';
+  }
+  return s+'</g>';
+}
+function bead(kind,x,y){
+  if(kind==='photon') return '<path d="M'+(x-7)+','+y+' q3.5,-5 7,0 q3.5,5 7,0" stroke="var(--gold)" stroke-width="2" fill="none"/>';
+  if(kind==='e') return '<circle cx="'+x+'" cy="'+y+'" r="4" fill="var(--blue)"/>';
+  if(kind==='h') return '<rect x="'+(x-4)+'" y="'+(y-4)+'" width="8" height="8" fill="var(--green)"/>';
+  if(kind==='atp') return '<path d="M'+x+','+(y-5)+' L'+(x+5)+','+(y+4)+' L'+(x-5)+','+(y+4)+' Z" fill="var(--cinnabar)"/>';
+  if(kind==='nadph') return '<path d="M'+x+','+(y-5)+' L'+(x+5)+','+y+' L'+x+','+(y+5)+' L'+(x-5)+','+y+' Z" fill="var(--gold)"/>';
+  if(kind==='ret') return '<circle cx="'+x+'" cy="'+y+'" r="4" fill="none" stroke="var(--contour-strong)" stroke-width="1.6" stroke-dasharray="2 2"/>';
+  if(kind==='branch') return '<circle cx="'+x+'" cy="'+y+'" r="4" fill="var(--cinnabar)"/>';
+  return '<circle cx="'+x+'" cy="'+y+'" r="4.5" fill="var(--ink)"/><circle cx="'+x+'" cy="'+y+'" r="1.6" fill="var(--surface)"/>';
+}
+function edgeD(e){
+  /* 竞争/损伤的连接边：模块收起时落在 chip 上，展开时落入子图——联系永不断 */
+  if(e.id==='pr_branch') return S.open.photoresp ? e.d : 'M985,189 C990,400 960,520 946,600';
+  if(e.id==='pi_eff') return S.open.photoinh ? e.d : 'M300,607 C260,540 160,470 128,428';
+  return e.d;
+}
+function render(){
+  var m = model(), st = STEPS[S.step], g = gateOf(st), P = parallel();
+  var active = {};
+  if(!g || g.kind==='context') (st.flows||[]).forEach(function(f){ active[f[0]]=f[1]; });
+  Object.keys(P.flows).forEach(function(k){ active[k]=P.flows[k]; });
+  var s = '';
+  /* 空间区室法：先铺"地点"底色带（基质 / 膜 / 腔），再画反应 */
+  s += '<rect x="24" y="24" width="1232" height="336" rx="14" fill="var(--fill)" opacity=".45"/>'
+    +  '<rect x="60" y="362" width="540" height="56" fill="var(--fill-strong)" opacity=".5"/>'
+    +  '<rect x="60" y="420" width="540" height="140" rx="10" fill="var(--fill)" opacity=".6"/>';
+  s += '<rect class="comp" x="24" y="24" width="1232" height="560" rx="14"/>'
+    +  '<text class="complab" x="40" y="48">叶绿体基质（stroma）· 卡尔文循环在此</text>'
+    +  '<rect class="comp" x="60" y="420" width="540" height="140" rx="10"/>'
+    +  '<text class="complab" x="352" y="548">类囊体腔（H⁺ 在此积累）</text>'
+    +  '<text class="complab" x="240" y="600" style="paint-order:stroke;stroke:var(--surface);stroke-width:3px">类囊体膜由磷脂双分子层构成基本骨架，蛋白质镶嵌其中（流动镶嵌模型）</text>';
+  s += lipidBand();
+  /* 空间区室法：卡尔文循环区带——循环各步均发生在基质中，与膜上光反应分区并置 */
+  s += '<rect x="640" y="64" width="416" height="496" rx="12" fill="var(--green-soft)" opacity=".3"/>'
+    +  '<rect class="comp" x="640" y="64" width="416" height="496" rx="12"/>'
+    +  '<text class="complab" x="652" y="84">卡尔文循环区（基质中）</text>';
+  /* CAM 液泡：真实区室，苹果酸（物质，纯文字）储存于其中 */
+  if(S.open.cam){
+    s += '<g class="vacuole"><circle class="body" cx="1150" cy="490" r="38"/>'
+      +  '<text x="1150" y="466">液泡</text></g>';
+  }
+  Object.keys(ZONES).forEach(function(z){
+    var Z = ZONES[z], open = S.open[z];
+    if(open){
+      s += '<rect class="zonebox" x="'+Z.box[0]+'" y="'+Z.box[1]+'" width="'+Z.box[2]+'" height="'+Z.box[3]+'" rx="10"/>'
+        +  '<text class="zonelab" x="'+(Z.lab==='end'?Z.box[0]+Z.box[2]-8:Z.box[0]+8)+'" y="'+(Z.box[1]+16)+'"'+(Z.lab==='end'?' text-anchor="end"':'')+'>'+esc(Z.title.replace(' · 展开',''))+'（已展开）</text>';
+    } else {
+      s += '<g class="chipbox" data-mod="'+z+'" role="button" tabindex="0" aria-label="展开'+esc(Z.title)+'">'
+        +  '<rect x="'+(Z.chip[0]-75)+'" y="'+(Z.chip[1]-15)+'" width="150" height="30" rx="15"/>'
+        +  '<text x="'+Z.chip[0]+'" y="'+(Z.chip[1]+4)+'">'+esc(Z.title)+'</text></g>';
+    }
+  });
+  EDGES.forEach(function(e){
+    var zoneOpen = !e.zone || S.open[e.zone];
+    if(e.closedOnly){ if(zoneOpen) return; }
+    else if(!zoneOpen) return;
+    var isAct = active[e.id];
+    var cls = 'edge'+(e.cycle?' cycle':'')+(e.kind==='ret'?' ret':'')+(e.kind==='branch'?' branch':'')+(e.kind==='chipconn'?' chipconn':'')+(e.kind==='photon'?' photon':'')+(e.kind==='h'?' h':'')+(isAct?' active':'');
+    var w = e.width==='ratio' ? (1.5+4*m.share) : (e.kind==='chipconn'?1.2:(e.cycle?(isAct?2.8:2.2):(isAct?2.4:(e.kind==='branch'?1.8:1.6))));
+    var op = 1;
+    if(e.id==='ph680' || e.id==='ph700'){ w = 1.2+1.6*m.eff; op = 0.35+0.65*m.eff; }
+    if(e.kind==='h'){ w = isAct?5:4; op = 0.55; }
+    if(e.zone==='cam' && !e.closedOnly){
+      var nightish = ['cam_sto','cam_night','cam_mal'].indexOf(e.id)>=0;
+      op = nightish ? (1-phaseCur)*0.9+0.1 : phaseCur*0.9+0.1;
+      if(e.id==='cam_mal') op = 1;
+    }
+    s += '<path id="ep_'+e.id+'" class="'+cls+'" d="'+edgeD(e)+'" stroke-width="'+w+'" opacity="'+op.toFixed(2)+'"'
+      +  (e.rel?' data-rel="'+e.rel+'"':'')+' marker-end="url(#'+(isAct?'arrHot':(e.kind==='photon'?'arrGold':(e.kind==='h'?'arrGreen':'arr')))+')"/>';
+    if(e.label && zoneOpen && (!e.closedOnly)){
+      s += '<text class="elab'+(e.pre?' pre':'')+'" x="'+e.lx+'" y="'+e.ly+'" text-anchor="middle">'+esc(e.label)+'</text>';
+    }
+  });
+  Object.keys(NODES).forEach(function(id){
+    var n = NODES[id];
+    if(n.zone && !S.open[n.zone]) return;
+    var changed = (st.changed||[]).indexOf(id)>=0 && (!g || g.kind==='context');
+    if(n.protein){
+      if(n.calvin){
+        /* 结构拟态法：Rubisco 为基质中可溶酶复合体（L₈S₈），团块堆叠；羧化/加氧共用同一活性位点区域 */
+        var rshape = '<ellipse cx="985" cy="165" rx="24" ry="20"/><ellipse cx="964" cy="152" rx="14" ry="12"/><ellipse cx="1006" cy="152" rx="14" ry="12"/><ellipse cx="968" cy="180" rx="13" ry="11"/><ellipse cx="1002" cy="180" rx="13" ry="11"/><ellipse cx="985" cy="145" rx="12" ry="9"/>';
+        s += '<g class="protein calvin'+(changed?' changed':'')+'" data-node="'+id+'" role="button" tabindex="0" aria-label="'+esc(n.label)+'">'
+          +  rshape
+          +  '<text x="'+n.x+'" y="'+(n.y-2)+'">'+esc(n.label)+'</text>'
+          +  (n.sub?'<text class="ps" x="'+n.x+'" y="'+(n.y+13)+'">'+esc(n.sub)+'</text>':'')
+          +  '</g>';
+      } else {
+      /* 结构拟态法：嵌膜复合体=多团块堆叠；外周蛋白=贴膜表面团块；ATP合酶=头+跨膜通道 */
+      var shape = '';
+      if(id==='PSII') shape = '<ellipse cx="120" cy="352" rx="26" ry="18"/><ellipse cx="112" cy="390" rx="24" ry="34"/><ellipse cx="126" cy="432" rx="24" ry="26"/><ellipse cx="108" cy="452" rx="12" ry="9" fill="var(--gold-soft)" stroke="var(--gold)"/>';
+      else if(id==='Cyt') shape = '<ellipse cx="260" cy="390" rx="26" ry="36"/><ellipse cx="250" cy="366" rx="16" ry="12"/>';
+      else if(id==='PSI') shape = '<ellipse cx="400" cy="352" rx="26" ry="18"/><ellipse cx="392" cy="390" rx="24" ry="34"/><ellipse cx="406" cy="432" rx="24" ry="26"/>';
+      else if(id==='Fd') shape = '<ellipse cx="465" cy="349" rx="24" ry="14"/><ellipse cx="455" cy="338" rx="12" ry="8"/>';
+      else shape = '<rect x="534" y="330" width="12" height="92" rx="6"/><ellipse cx="540" cy="424" rx="16" ry="10"/><ellipse cx="528" cy="318" rx="13" ry="20"/><ellipse cx="552" cy="318" rx="13" ry="20"/><ellipse cx="540" cy="312" rx="12" ry="18"/><rect x="537" y="300" width="6" height="122" rx="3" fill="var(--surface)" opacity=".5" stroke="none"/>';
+      s += '<g class="protein'+(changed?' changed':'')+'" data-node="'+id+'" role="button" tabindex="0" aria-label="'+esc(n.label)+'">'
+        +  shape
+        +  '<text x="'+n.x+'" y="'+(id==='Fd'?353:382)+'">'+esc(n.label)+'</text>'
+        +  (n.sub?'<text class="ps" x="'+n.x+'" y="'+(id==='Fd'?362:398)+'">'+esc(n.sub)+'</text>':'')
+        +  '</g>';
+      /* 计量徽章：电子守恒钉在具体结构上 */
+      if(id==='PSII') s += '<g class="stoich"><circle cx="154" cy="444" r="10"/><text x="154" y="447">4e⁻</text></g>';
+      if(id==='Fd') s += '<g class="stoich"><circle cx="465" cy="322" r="10"/><text x="465" y="325">2e⁻</text></g>';
+      }
+    } else if(n.entity){
+      s += '<g class="entity '+n.entity+(changed?' changed':'')+'" data-node="'+id+'" role="button" tabindex="0" aria-label="'+esc(n.label)+'">'
+        +  '<circle class="body" cx="'+n.x+'" cy="'+n.y+'" r="'+n.r+'"/>'
+        +  '<text class="nl" x="'+n.x+'" y="'+(n.y+(n.sub?-1:4))+'" style="font-size:'+(n.label.length>=5?10:(n.label.length>=4?11:12))+'px">'+esc(n.label)+'</text>'
+        +  (n.sub?'<text class="ns" x="'+n.x+'" y="'+(n.y+11)+'">'+esc(n.sub)+'</text>':'')
+        +  '</g>';
+    } else if(n.stomata){
+      var ap = (1-phaseCur);
+      s += '<g data-node="'+id+'" role="button" tabindex="0" aria-label="气孔">'
+        +  '<path d="M'+(n.x-14)+','+(n.y-10)+' q14,'+(-(6+18*ap))+' 28,0" fill="none" stroke="'+(changed?'var(--cinnabar)':'var(--green)')+'" stroke-width="3"/>'
+        +  '<path d="M'+(n.x-14)+','+(n.y+10)+' q14,'+(6+18*ap)+' 28,0" fill="none" stroke="'+(changed?'var(--cinnabar)':'var(--green)')+'" stroke-width="3"/>'
+        +  '<text class="nl" x="'+n.x+'" y="'+(n.y+40)+'" text-anchor="middle">气孔</text>'
+        +  '<text class="ns" x="1076" y="592">气孔开度 '+Math.round(ap*100)+'%</text></g>';
+    } else {
+      s += '<g class="substance'+(changed?' changed':'')+'" data-node="'+id+'" role="button" tabindex="0" aria-label="'+esc(n.label)+'">'
+        +  '<text class="nl" x="'+n.x+'" y="'+(n.y+(n.sub?-1:4))+'" style="font-size:'+(n.small?10:(n.label.length>=4?11:13))+'px">'+esc(n.label)+'</text>'
+        +  (n.sub?'<text class="ns" x="'+n.x+'" y="'+(n.y+11)+'">'+esc(n.sub)+'</text>':'')
+        +  '</g>';
+    }
+    if(n.gloss){
+      var bx = n.protein ? (n.calvin ? n.x+33 : n.x+30) : (n.entity ? n.x+n.r*0.72 : (n.stomata ? n.x+18 : n.x+(n.small?12:20)));
+      var by = n.protein ? (n.calvin ? n.y-33 : 344) : (n.entity ? n.y-n.r*0.72 : (n.stomata ? n.y+56 : n.y-(n.small?10:14)));
+      s += '<g class="glossbadge" data-node="'+id+'" role="button" tabindex="0" aria-label="查看注解：'+esc(n.label)+'"><circle cx="'+bx+'" cy="'+by+'" r="7"/><text x="'+bx+'" y="'+(by+3)+'">注</text></g>';
+    }
+  });
+  /* 活性位点：箭头与酶/膜蛋白的接触处即催化位点（形状依托真实物体，非装饰） */
+  SITES.forEach(function(pt){
+    if(pt[2] && !S.open[pt[2]]) return;
+    s += '<circle class="site" cx="'+pt[0]+'" cy="'+pt[1]+'" r="2.6"/>';
+  });
+  /* 计量徽章：卡尔文循环化学计量钉在对应过程边旁（每固定 3CO₂ 的口径） */
+  s += '<g class="stoich"><circle cx="1032" cy="184" r="11"/><text x="1032" y="187">3CO₂</text></g>'
+    +  '<g class="stoich"><rect x="898" y="344" width="84" height="16" rx="8"/><text x="940" y="355">6ATP + 6NADPH</text></g>'
+    +  '<g class="stoich"><circle cx="795" cy="190" r="11"/><text x="795" y="193">3ATP</text></g>'
+    +  '<g class="stoich"><circle cx="798" cy="370" r="11"/><text x="798" y="373">5G3P</text></g>';
+  /* 方程式旁注（反应耦联标注法：紧贴催化位点，底物⟶产物弯箭头；随场景组缩放/导出） */
+  EQS.forEach(function(q){
+    var on = q.steps.indexOf(S.step)>=0;
+    if(q.lead) s += '<path class="eqlead" d="M'+q.lead[0]+','+q.lead[1]+' L'+q.lead[2]+','+q.lead[3]+'"/>';
+    var wL = q.lhs.length*7.2;
+    s += '<g class="eqann" data-eq="'+q.id+'" role="button" tabindex="0" aria-current="'+(on?'true':'false')+'" aria-label="'+esc(q.name)+'方程式，跳至第 '+(q.steps[0]+1)+' 步">'
+      +  '<text class="eqn" x="'+q.ax+'" y="'+(q.ay+10)+'">'+esc(q.name)+'</text>'
+      +  '<text class="eql" x="'+q.ax+'" y="'+(q.ay+24)+'">'+esc(q.lhs)+'</text>'
+      +  '<path class="eqarr'+(on?' on':'')+'" d="M'+(q.ax+wL+4)+','+(q.ay+20)+' Q'+(q.ax+wL+19)+','+(q.ay+33)+' '+(q.ax+wL+34)+','+(q.ay+20)+'" marker-end="url(#'+(on?'arrEqHot':'arrEq')+')"/>'
+      +  '<text class="eql" x="'+(q.ax+wL+40)+'" y="'+(q.ay+24)+'">'+esc(q.rhs)+'</text>'
+      +  '<text class="eqc" x="'+q.ax+'" y="'+(q.ay+37)+'">'+esc(q.cond)+'</text>'
+      +  '</g>';
+  });
+  s += '<text class="complab" x="1256" y="44" text-anchor="end">方程式旁注依据教材正文／图／批注（页码未核对）</text>';
+  /* 活跃流：动态粒子法——连续粒子沿路径运动，速率绑定光强（reduced-motion 时退化为静态珠粒） */
+  FLOWS = [];
+  Object.keys(active).forEach(function(eid){
+    if(active[eid]==='chipconn') return;
+    FLOWS.push([eid, active[eid]]);
+    if(reduced){
+      var p = document.getElementById('ep_'+eid);
+      if(!p) return;
+      var L = p.getTotalLength(), pt = p.getPointAtLength(L*0.62);
+      s += bead(active[eid], pt.x, pt.y);
+    }
+  });
+  /* 图例：载体编码＋形状语义（圆/块必有真实物体依托） */
+  s += '<g class="legend"><rect class="legendbox" x="1064" y="600" width="192" height="180" rx="10"/>'
+    +  '<text x="1076" y="620" font-weight="700">载体三重编码</text>';
+  var rows = [['photon','光子 / 光能'],['e','电子 e⁻'],['h','质子 H⁺'],['atp','ATP（高能）'],['nadph','NADPH（[H]）'],['c','含碳物质 · 循环主干粗线'],['ret','回流 / 修复（虚线）'],['branch','竞争 / 损伤（朱砂）']];
+  rows.forEach(function(r,i){
+    var y = 638+i*18;
+    s += bead(r[0], 1086, y-4) + '<text x="1102" y="'+y+'">'+esc(r[1])+'</text>';
+  });
+  s += '<rect class="legendbox" x="40" y="70" width="204" height="160" rx="10"/>'
+    +  '<text x="52" y="90" font-weight="700">形状语义（实体依托）</text>'
+    +  '<circle cx="62" cy="106" r="7" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>'
+    +  '<text x="78" y="110">酶 / 细胞器 / 区室（圆·团块）</text>'
+    +  '<rect x="55" y="122" width="14" height="11" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>'
+    +  '<text x="78" y="132">膜蛋白 / Rubisco（团块）</text>'
+    +  '<text x="62" y="154" text-anchor="middle" font-weight="700">C₅</text>'
+    +  '<text x="78" y="154">物质 / 过程＝纯文字</text>'
+    +  '<circle class="site" cx="62" cy="172" r="2.6"/>'
+    +  '<text x="78" y="176">箭头触点＝活性位点</text>'
+    +  '<text x="52" y="198">苹果酸存于液泡（CAM），</text>'
+    +  '<text x="52" y="214">H⁺ 积累于腔；圆圈均有所指</text>'
+    +  '</g>';
+  $('scene').innerHTML = s;
+  /* 面板：步骤 */
+  $('stepNo').textContent = '第 '+(S.step+1)+' / '+STEPS.length+' 步';
+  $('stepTitle').textContent = st.t;
+  $('stepDesc').textContent = st.d;
+  $('stepChips').innerHTML = (st.changed||[]).map(function(c){return '<span class="chip">'+esc(NODES[c]?NODES[c].label:c)+'</span>';}).join('');
+  var gm = $('gateMsg');
+  if(g){ gm.hidden=false; gm.textContent = (g.kind==='context'?'时段限制：':'条件不满足：')+g.msg; }
+  else gm.hidden=true;
+  /* 面板：此刻同时发生的联系 chips */
+  var pars = [];
+  if(S.step>=6 && S.params.light>=0.05 && S.params.co2>=0.05) pars.push(['core','光反应与卡尔文循环通过载体往返相互联系']);
+  if(P.prOn) pars.push(['pr','光呼吸与 CO₂ 固定竞争 RuBP']);
+  if(P.piOn) pars.push(['pi','光抑制与捕光同时发生'+(m.irrev?'，损伤不可逆':'')]);
+  if(P.c4On) pars.push(['c4','C4 途径提高维管束鞘内 CO₂ 浓度']);
+  if(P.camOn) pars.push(['cam','CAM 途径提高白昼 CO₂ 浓度']);
+  $('parChips').innerHTML = pars.map(function(p){
+    return '<button class="chip par" data-rel="'+p[0]+'">'+esc(p[1])+'</button>';
+  }).join('');
+  $('parEmpty').hidden = pars.length>0;
+  /* 面板：联系卡＋来龙去脉 */
+  renderRel(); renderWhy();
+  $('scrub').value = S.step;
+  $('out_light').textContent = S.params.light.toFixed(2);
+  $('out_co2').textContent = S.params.co2.toFixed(2);
+  $('out_ratio').textContent = S.params.ratio.toFixed(2);
+  $('out_phase').textContent = phaseCur.toFixed(2);
+  $('out_speed').textContent = S.params.speed+'×';
+  $('sel_plant').value = S.params.plant;
+  $('sel_focus').value = S.focusMod;
+  Object.keys(ZONES).forEach(function(z){ $('mod_'+z).setAttribute('aria-pressed', S.open[z]?'true':'false'); });
+  $('tg_defense').setAttribute('aria-pressed', S.params.defense?'true':'false');
+  $('tg_defense').textContent = '防御修复：'+(S.params.defense?'开':'关');
+  $('btnPlay').textContent = S.playing?'暂停':'播放';
+  $('btnPlay').setAttribute('aria-pressed', S.playing?'true':'false');
+  /* 阐释一览：当前条目（R22） */
+  syncDir();
+  /* 折叠态迷你条（R23） */
+  $('miniStep').textContent = '第 '+(S.step+1)+' / '+STEPS.length+' 步';
+  $('miniPlay').textContent = S.playing?'暂停':'播放';
+  $('miniPlay').setAttribute('aria-pressed', S.playing?'true':'false');
+}
+function renderRel(){
+  var r = REL[S.rel] || REL.core;
+  $('relProp').textContent = r.prop;
+  $('relBody').innerHTML = r.prose.map(function(p){return '<p>'+esc(p)+'</p>';}).join('');
+  $('relFig').textContent = r.fig;
+  $('relSrc').textContent = r.src;
+  $('relXref').innerHTML = (r.xref||[]).map(function(x){
+    return '<button class="btn" data-rel="'+x+'">→ '+esc(REL[x].prop.split('：')[0])+'</button>';
+  }).join('');
+}
+function renderWhy(){
+  var w = WHY[S.focusMod] || WHY.core;
+  $('whyBody').innerHTML = w.prose.map(function(p){return '<p>'+esc(p)+'</p>';}).join('')
+    + (w.src ? '<p class="relsrc">'+esc(w.src)+'</p>' : '');
+}
+function syncDir(){
+  var dls = document.querySelectorAll('.dirlink');
+  for(var di=0;di<dls.length;di++){ var db=dls[di];
+    db.setAttribute('aria-current', (db.dataset.kind==='rel' ? S.rel===db.dataset.id : S.focusMod===db.dataset.id)?'true':'false'); }
+}
+function showRel(id){ if(REL[id]){ S.rel=id;
+  var fm={core:'core',c4:'c4',cam:'cam',pr:'photoresp',pi:'photoinh'}[id];
+  if(fm){ S.focusMod=fm; renderWhy(); $('sel_focus').value=fm; }
+  renderRel(); syncDir(); } }
+/* ---------- 视图：缩放 / 平移（R24） ---------- */
+function applyView(){
+  $('vp').setAttribute('transform','translate('+V.tx.toFixed(2)+' '+V.ty.toFixed(2)+') scale('+V.k.toFixed(4)+')');
+  $('zoomPct').textContent=Math.round(V.k*100)+'%';
+}
+function clampK(k){return Math.min(6,Math.max(0.5,k))}
+function viewPt(cx,cy){
+  var svg=$('svg'), m=svg.getScreenCTM();
+  if(!m) return {x:640,y:410};
+  var pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy;
+  return pt.matrixTransform(m.inverse());
+}
+function zoomAt(px,py,f){
+  var nk=clampK(V.k*f); f=nk/V.k;
+  V.tx=px-(px-V.tx)*f; V.ty=py-(py-V.ty)*f; V.k=nk; applyView();
+}
+function resetView(){ V.k=1; V.tx=0; V.ty=0; applyView(); }
+/* ---------- 右栏折叠（R23：折叠不丢操作） ---------- */
+function applyRailUI(){
+  var h=S.railHidden;
+  $('layout').classList.toggle('rail-hidden',h);
+  var b=$('railToggle');
+  b.setAttribute('aria-expanded',h?'false':'true');
+  b.textContent=h?'展开右栏':'折叠右栏';
+}
+function setRail(h){ S.railHidden=h; applyRailUI(); syncHash(); }
+/* ---------- 阐释一览：原位阅读＋滚动定位（R22） ---------- */
+function revealCard(card){
+  var panel=document.querySelector('.panel'), beh=reduced?'auto':'smooth';
+  if(panel.scrollHeight>panel.clientHeight+4){
+    panel.scrollTo({top:Math.max(0,card.offsetTop-$('dirCard').offsetHeight-10),behavior:beh});
+  } else card.scrollIntoView({block:'nearest',behavior:beh});
+}
+/* ---------- 播放 / 相位 ---------- */
+function tick(ts){
+  var dt = Math.max(0, Math.min(0.05, (ts-lastT)/1000 || 0.016)); lastT = ts;
+  var need = false;
+  /* 动态粒子法：光反应侧通量速率绑定光强，卡尔文循环碳主干绑定 CO₂ 浓度 */
+  if(!reduced){
+    var fm = dt*S.params.speed*model().eff;
+    flowT += fm*Math.min(S.params.light,2);
+    flowTco2 += fm*Math.min(S.params.co2,2);
+    var fh = '';
+    FLOWS.forEach(function(f){
+      var p = document.getElementById('ep_'+f[0]); if(!p) return;
+      var L = p.getTotalLength(), n = (f[1]==='e'||f[1]==='h')?4:3;
+      var base = CALVIN_FLOW[f[0]] ? flowTco2 : flowT;
+      for(var i=0;i<n;i++){
+        var u = (base*(FLOW_RATE[f[1]]||0.1)+i/n)%1;
+        var pt = p.getPointAtLength(u*L);
+        fh += bead(f[1], pt.x, pt.y);
+      }
+    });
+    $('flows').innerHTML = fh;
+  }
+  if(Math.abs(phaseCur-phaseTarget)>0.001){
+    phaseCur += (phaseTarget-phaseCur)*(1-Math.pow(0.0015,dt));
+    if(Math.abs(phaseCur-phaseTarget)<=0.001) phaseCur=phaseTarget;
+    need = true;
+  }
+  if(S.playing){
+    var rate = Math.min(S.params.light,2);
+    if(rate<=0 && S.step<5){ S.playing=false; render(); }
+    else {
+      playAcc += dt*S.params.speed;
+      if(playAcc>=1.6){
+        playAcc=0;
+        if(S.step<STEPS.length-1){ setStep(S.step+1,true); if(S.step>=STEPS.length-1){S.playing=false;render();} }
+        else { S.playing=false; render(); }
+      }
+    }
+  }
+  if(need) render();
+  requestAnimationFrame(tick);
+}
+function setStep(i, animate){
+  var old = S.step;
+  S.step = Math.max(0, Math.min(STEPS.length-1, i));
+  if(S.step>old){
+    for(var k=old+1;k<=S.step;k++){ if(STEPS[k].module) S.open[STEPS[k].module]=true; }
+  }
+  var st = STEPS[S.step];
+  if(st.module) S.open[st.module]=true;
+  if(st.rel){ S.rel=st.rel; S.focusMod = st.module || (st.rel==='pr'?'photoresp':(st.rel==='pi'?'photoinh':'core')); }
+  if(st.phase!=null){ phaseTarget = st.phase; if(reduced) phaseCur=phaseTarget; }
+  render(); syncHash();
+}
+function syncHash(){ var h='#step='+S.step+'&plant='+S.params.plant;
+  if(S.params.light!==1)h+='&light='+S.params.light;
+  if(S.params.co2!==1)h+='&co2='+S.params.co2;
+  if(S.params.ratio!==1)h+='&ratio='+S.params.ratio;
+  if(!S.params.defense)h+='&defense=0';
+  if(S.railHidden)h+='&rail=0';
+  history.replaceState(null,'',h); }
+function applyHashParams(){
+  var hp = new URLSearchParams(location.hash.slice(1));
+  var pl = hp.get('plant');
+  if(pl && ['c3','c4','cam'].indexOf(pl)>=0){ S.params.plant=pl; $('sel_plant').value=pl; }
+  ['light','co2','ratio'].forEach(function(k){
+    var v = parseFloat(hp.get(k));
+    if(!isNaN(v)){ S.params[k]=v; $('sl_'+k).value=v; }
+  });
+  if(hp.get('defense')==='0'){ S.params.defense=0; }
+  S.railHidden = hp.get('rail')==='0';
+  applyRailUI();
+  return parseInt(hp.get('step'),10);
+}
+/* ---------- 交互 ---------- */
+function showGloss(id){
+  var n = NODES[id]; if(!n||!n.gloss) return;
+  var g = GLOSS[n.gloss];
+  $('glossDef').textContent = n.label+'：'+g.def;
+  $('glossRel').textContent = g.rel;
+  $('glossSrc').textContent = g.src;
+  if(S.railHidden) setRail(false);
+  revealCard($('glossCard'));
+}
+/* 指针捕获会把 click 目标重定向到 svg，故以坐标命中回退取真实被点元素 */
+function hitTarget(ev){
+  var t = ev.target.closest ? ev.target.closest('[data-node],[data-mod],[data-rel],[data-eq]') : null;
+  if(!t) t = clickCandidate;
+  if(!t && ev.clientX!=null){
+    var el = document.elementFromPoint(ev.clientX, ev.clientY);
+    if(el && el.closest) t = el.closest('[data-node],[data-mod],[data-rel],[data-eq]');
+  }
+  return t;
+}
+$('svg').addEventListener('click', function(ev){
+  if(suppressClick){ suppressClick=false; return; }
+  var t = hitTarget(ev);
+  if(!t) return;
+  if(t.dataset.eq){ var q=EQS.filter(function(x){return x.id===t.dataset.eq})[0]; if(q) setStep(q.steps[0],true); return; }
+  if(t.dataset.rel){ showRel(t.dataset.rel); return; }
+  if(t.dataset.mod){ S.open[t.dataset.mod]=!S.open[t.dataset.mod]; showRel(t.dataset.mod); render(); return; }
+  showGloss(t.dataset.node);
+});
+$('svg').addEventListener('keydown', function(ev){
+  if(ev.key!=='Enter' && ev.key!==' ') return;
+  var t = ev.target.closest('[data-node],[data-mod],[data-rel],[data-eq]');
+  if(!t) return;
+  ev.preventDefault();
+  if(t.dataset.eq){ var q=EQS.filter(function(x){return x.id===t.dataset.eq})[0]; if(q) setStep(q.steps[0],true); return; }
+  if(t.dataset.rel){ showRel(t.dataset.rel); return; }
+  if(t.dataset.mod){ S.open[t.dataset.mod]=!S.open[t.dataset.mod]; showRel(t.dataset.mod); render(); return; }
+  showGloss(t.dataset.node);
+});
+document.addEventListener('click', function(ev){
+  var t = ev.target.closest('.chip.par,[data-rel].btn');
+  if(t && t.dataset.rel) showRel(t.dataset.rel);
+});
+Object.keys(ZONES).forEach(function(z){
+  $('mod_'+z).addEventListener('click', function(){ S.open[z]=!S.open[z]; showRel(z); render(); });
+});
+['light','co2','ratio','phase','speed'].forEach(function(p){
+  $('sl_'+p).addEventListener('input', function(){
+    S.params[p]=parseFloat(this.value);
+    if(p==='phase'){ phaseTarget=S.params.phase; if(reduced) phaseCur=phaseTarget; }
+    render(); syncHash();
+  });
+});
+$('sel_plant').addEventListener('change', function(){
+  S.params.plant=this.value;
+  if(this.value==='c4') S.open.c4=true;
+  if(this.value==='cam') S.open.cam=true;
+  showRel(this.value==='c3'?'core':this.value);
+  S.focusMod = this.value==='c3'?'core':this.value;
+  render(); syncHash();
+});
+$('sel_focus').addEventListener('change', function(){
+  S.focusMod=this.value;
+  S.rel = this.value==='core'?'core':(this.value==='photoresp'?'pr':(this.value==='photoinh'?'pi':this.value));
+  render();
+});
+$('tg_defense').addEventListener('click', function(){ S.params.defense = S.params.defense?0:1; render(); syncHash(); });
+$('resetParams').addEventListener('click', function(){
+  S.params={light:1,co2:1,ratio:1,phase:0,speed:1,defense:1,plant:'c3'};
+  $('sl_light').value=1; $('sl_co2').value=1; $('sl_ratio').value=1; $('sl_phase').value=0; $('sl_speed').value=1;
+  phaseTarget=0; render(); syncHash();
+});
+$('btnPrev').addEventListener('click', function(){ setStep(S.step-1,true); });
+$('btnNext').addEventListener('click', function(){ setStep(S.step+1,true); });
+$('btnFirst').addEventListener('click', function(){ setStep(0,false); });
+$('btnLast').addEventListener('click', function(){ setStep(STEPS.length-1,false); });
+$('btnReset').addEventListener('click', function(){ S.playing=false; setStep(0,false); });
+$('btnPlay').addEventListener('click', function(){
+  S.playing=!S.playing; playAcc=0;
+  if(S.playing && S.step>=STEPS.length-1) setStep(0,false);
+  render();
+});
+$('scrub').addEventListener('input', function(){ setStep(parseInt(this.value,10), false); });
+$('theme').addEventListener('click', function(){
+  var d = document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme', d?'light':'dark');
+  this.textContent = d?'夜间':'白昼';
+  this.setAttribute('aria-pressed', d?'false':'true');
+  render();
+});
+/* 方程式旁注：点击跳步（R26，事件走 svg 委托） */
+/* 阐释一览：原位阅读（R22） */
+$('dirLinks').addEventListener('click', function(ev){
+  var b=ev.target.closest('.dirlink'); if(!b) return;
+  if(b.dataset.kind==='rel'){ showRel(b.dataset.id); revealCard($('relCard')); }
+  else { S.focusMod=b.dataset.id;
+    S.rel = b.dataset.id==='core'?'core':(b.dataset.id==='photoresp'?'pr':(b.dataset.id==='photoinh'?'pi':b.dataset.id));
+    render(); revealCard($('whyCard')); }
+});
+/* 右栏折叠（R23） */
+$('railToggle').addEventListener('click', function(){ setRail(!S.railHidden); });
+$('miniExpand').addEventListener('click', function(){ setRail(false); });
+$('miniPrev').addEventListener('click', function(){ setStep(S.step-1,true); });
+$('miniNext').addEventListener('click', function(){ setStep(S.step+1,true); });
+$('miniPlay').addEventListener('click', function(){ $('btnPlay').click(); });
+/* 缩放控件＋滚轮＋双击复位（R24） */
+$('zoomIn').addEventListener('click', function(){ zoomAt(640,410,1.25); });
+$('zoomOut').addEventListener('click', function(){ zoomAt(640,410,0.8); });
+$('zoomPct').addEventListener('click', resetView);
+$('svg').addEventListener('wheel', function(ev){
+  ev.preventDefault();
+  var p=viewPt(ev.clientX,ev.clientY);
+  zoomAt(p.x,p.y,Math.exp(-ev.deltaY*0.0016));
+},{passive:false});
+$('svg').addEventListener('dblclick', function(ev){
+  if(hitTarget(ev)) return;
+  ev.preventDefault(); resetView();
+});
+/* 拖动平移＋双指捏合（R24：位移>3px 抑制 click） */
+var ptrs={}, drag=null, pinch=null, dragMoved=false, suppressClick=false, clickCandidate=null;
+var svgEl=$('svg');
+svgEl.addEventListener('pointerdown', function(ev){
+  if(ev.pointerType==='mouse' && ev.button!==0) return;
+  suppressClick=false;
+  clickCandidate = ev.target.closest ? ev.target.closest('[data-node],[data-mod],[data-rel],[data-eq]') : null;
+  ptrs[ev.pointerId]={x:ev.clientX,y:ev.clientY};
+  try{ svgEl.setPointerCapture(ev.pointerId); }catch(e){}
+  var ids=Object.keys(ptrs);
+  if(ids.length===1){ drag={sx:ev.clientX,sy:ev.clientY,tx:V.tx,ty:V.ty}; dragMoved=false; }
+  else if(ids.length===2){ drag=null;
+    var a=ptrs[ids[0]],b=ptrs[ids[1]];
+    pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,k:V.k}; }
+});
+svgEl.addEventListener('pointermove', function(ev){
+  if(!ptrs[ev.pointerId]) return;
+  ptrs[ev.pointerId]={x:ev.clientX,y:ev.clientY};
+  var ids=Object.keys(ptrs);
+  if(pinch && ids.length>=2){
+    var a=ptrs[ids[0]],b=ptrs[ids[1]];
+    var d=Math.hypot(a.x-b.x,a.y-b.y);
+    var mid=viewPt((a.x+b.x)/2,(a.y+b.y)/2);
+    zoomAt(mid.x,mid.y,clampK(pinch.k*d/pinch.d)/V.k);
+    return;
+  }
+  if(drag){
+    var dx=ev.clientX-drag.sx, dy=ev.clientY-drag.sy;
+    if(!dragMoved && Math.hypot(dx,dy)>3){ dragMoved=true; svgEl.classList.add('dragging'); }
+    if(dragMoved){
+      var m=svgEl.getScreenCTM(), s=m?m.a:1;
+      V.tx=drag.tx+dx/s; V.ty=drag.ty+dy/s; applyView();
+    }
+  }
+});
+function endPtr(ev){
+  if(!ptrs[ev.pointerId]) return;
+  delete ptrs[ev.pointerId];
+  var ids=Object.keys(ptrs);
+  if(ids.length<2) pinch=null;
+  if(ids.length===1){ var a=ptrs[ids[0]]; drag={sx:a.x,sy:a.y,tx:V.tx,ty:V.ty}; dragMoved=false; }
+  if(ids.length===0){
+    drag=null; svgEl.classList.remove('dragging');
+    if(dragMoved) suppressClick=true;
+    dragMoved=false;
+  }
+}
+svgEl.addEventListener('pointerup', endPtr);
+svgEl.addEventListener('pointercancel', endPtr);
+function exportClone(){
+  var clone = $('svg').cloneNode(true);
+  var vpClone = clone.querySelector('#vp'); if(vpClone) vpClone.removeAttribute('transform');
+  return clone;
+}
+$('btnExport').addEventListener('click', function(){
+  var clone = exportClone();
+  var cs = getComputedStyle(document.documentElement);
+  var vars = ['--bg','--surface','--ink','--ink-2','--ink-3','--hairline','--fill','--fill-strong','--accent','--accent-soft','--cinnabar','--gold','--green','--blue','--vein','--contour','--contour-strong'];
+  var style = '<style>svg{background:'+cs.getPropertyValue('--surface')+'}text{font-family:sans-serif}'
+    + vars.map(function(v){return v+':'+cs.getPropertyValue(v)}).join(';')
+    + ';.comp{fill:none;stroke:var(--contour-strong);stroke-dasharray:5 5}.complab{font-size:13px;fill:var(--ink-3)}'
+    + '.edge{fill:none;stroke:var(--vein);stroke-width:1.6}.edge.cycle{stroke:var(--ink-2)}.edge.ret{stroke-dasharray:4 4;stroke:var(--contour-strong)}'
+    + '.edge.branch{stroke:var(--cinnabar);stroke-dasharray:6 4}.edge.chipconn{stroke:var(--contour-strong);stroke-dasharray:2 4}'
+    + '.edge.active{stroke:var(--cinnabar);stroke-dasharray:7 4}.edge.photon{stroke:var(--gold);stroke-dasharray:none}.edge.h{stroke:var(--green);stroke-dasharray:none}'
+    + '.elab{font-size:11.5px;fill:var(--ink-3)}.elab.pre{fill:var(--cinnabar);font-weight:700}'
+    + '.node circle.body{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.6}.node.changed circle.body{stroke:var(--cinnabar);stroke-width:3}'
+    + '.node text.nl{font-size:13px;font-weight:700;text-anchor:middle;fill:var(--ink)}.node text.ns{font-size:10.5px;fill:var(--ink-3);text-anchor:middle}'
+    + '.substance text{paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}'
+    + '.substance text.nl{font-size:13px;font-weight:700;text-anchor:middle;fill:var(--ink)}.substance text.ns{font-size:10.5px;fill:var(--ink-3);text-anchor:middle}'
+    + '.substance.changed text.nl{fill:var(--cinnabar)}'
+    + '.entity circle.body{fill:var(--fill);stroke:var(--ink-2);stroke-width:1.6}'
+    + '.entity.enzyme circle.body{fill:var(--accent-soft);stroke:var(--accent)}'
+    + '.entity.organelle circle.body{fill:var(--green-soft);stroke:var(--green)}'
+    + '.entity.compartment circle.body{fill:var(--gold-soft);stroke:var(--gold)}'
+    + '.entity.cell circle.body{fill:var(--blue-soft);stroke:var(--blue)}'
+    + '.entity.changed circle.body{stroke:var(--cinnabar);stroke-width:3}'
+    + '.entity text.nl{font-size:12px;font-weight:700;text-anchor:middle;fill:var(--ink)}.entity text.ns{font-size:9.5px;fill:var(--ink-3);text-anchor:middle}'
+    + '.site{fill:var(--cinnabar);stroke:var(--surface);stroke-width:1}'
+    + '.vacuole circle.body{fill:var(--gold-soft);stroke:var(--gold);stroke-width:1.6}.vacuole text{font-size:10.5px;fill:var(--ink-3);text-anchor:middle}'
+    + '.glossbadge circle{fill:var(--gold)}.glossbadge text{font-size:9px;fill:#fbfcf8;text-anchor:middle}'
+    + '.protein rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.6}.protein ellipse{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.6}'
+    + '.protein.changed rect,.protein.changed ellipse{stroke:var(--cinnabar);stroke-width:2.5}'
+    + '.protein text{font-size:11.5px;font-weight:700;fill:var(--accent);text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}.protein text.ps{font-size:9.5px;font-weight:400;fill:var(--ink-3)}'
+    + '.eqarr{fill:none;stroke:var(--contour-strong);stroke-width:1.4}.eqarr.on{stroke:var(--cinnabar)}'
+    + '.stoich circle{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.2}.stoich rect{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.2}.stoich text{font-size:8.5px;font-weight:700;text-anchor:middle;fill:var(--ink-2)}'
+    + '.chipbox rect{fill:var(--fill);stroke:var(--contour-strong)}.chipbox text{font-size:12px;fill:var(--ink-2);text-anchor:middle;font-weight:600}'
+    + '.zonebox{fill:var(--fill);stroke:var(--contour);stroke-dasharray:4 4}.zonelab{font-size:11px;fill:var(--ink-3)}'
+    + '.legendbox{fill:var(--surface);stroke:var(--hairline)}.legend text{font-size:11px;fill:var(--ink-2)}'
+    + '.eqann text{paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}'
+    + '.eqann .eqn{font-size:10px;fill:var(--ink-3);font-weight:600}.eqann .eql{font-family:Cambria Math,Times New Roman,serif;font-size:12.5px;fill:var(--ink)}'
+    + '.eqann .eqc{font-size:9.5px;fill:var(--ink-3)}'
+    + '.eqann[aria-current="true"] .eqn,.eqann[aria-current="true"] .eql{fill:var(--cinnabar);font-weight:700}'
+    + '.eqlead{fill:none;stroke:var(--contour-strong);stroke-width:1;stroke-dasharray:2 3}</style>';
+  clone.insertAdjacentHTML('afterbegin', style);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  var blob = new Blob([new XMLSerializer().serializeToString(clone)], {type:'image/svg+xml'});
+  var url = URL.createObjectURL(blob);
+  var img = new Image();
+  img.onload = function(){
+    var c = document.createElement('canvas'); c.width=2560; c.height=1640;
+    var g = c.getContext('2d');
+    g.fillStyle = cs.getPropertyValue('--surface'); g.fillRect(0,0,c.width,c.height);
+    g.drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);
+    var a = document.createElement('a');
+    a.download = '光合作用单画布-step'+(S.step+1)+'.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+  };
+  img.src = url;
+});
+document.addEventListener('keydown', function(ev){
+  if(ev.target.matches('input,select,textarea,button')) return;
+  if(ev.key==='ArrowRight'){ ev.preventDefault(); setStep(S.step+1,true); }
+  else if(ev.key==='ArrowLeft'){ ev.preventDefault(); setStep(S.step-1,true); }
+  else if(ev.key===' '){ ev.preventDefault(); $('btnPlay').click(); }
+  else if(ev.key==='0'){ ev.preventDefault(); S.playing=false; setStep(0,false); }
+  else if(ev.key==='+'||ev.key==='='){ ev.preventDefault(); zoomAt(640,410,1.25); }
+  else if(ev.key==='-'||ev.key==='_'){ ev.preventDefault(); zoomAt(640,410,0.8); }
+  else if(ev.key==='f'||ev.key==='F'){ ev.preventDefault(); resetView(); }
+});
+window.addEventListener('hashchange', function(){
+  var s = applyHashParams();
+  if(!isNaN(s)) setStep(s,false);
+});
+/* ---------- 初始化 ---------- */
+$('dirLinks').innerHTML = DIR.map(function(g){
+  return '<div class="dirgroup"><h4>'+esc(g.label)+'</h4><div class="dirlinks">'
+    + g.links.map(function(l){ return '<button class="dirlink" data-kind="'+g.kind+'" data-id="'+l[0]+'" aria-current="false">'+esc(l[1])+'</button>'; }).join('')
+    + '</div></div>';
+}).join('');
+applyView();
+$('glossList').innerHTML = Object.keys(GLOSS).map(function(k){
+  return '<li><b>'+esc(k)+'</b> — '+esc(GLOSS[k].def)+'（'+esc(GLOSS[k].rel)+'）</li>';
+}).join('');
+var hs = applyHashParams();
+if(hs>0) S.step = Math.min(STEPS.length-1, hs);
+for(var k0=0;k0<=S.step;k0++){ if(STEPS[k0].module) S.open[STEPS[k0].module]=true; }
+var st0 = STEPS[S.step];
+if(st0.rel){ S.rel=st0.rel; S.focusMod = st0.module || (st0.rel==='pr'?'photoresp':(st0.rel==='pi'?'photoinh':'core')); }
+if(st0.phase!=null){ phaseTarget=st0.phase; phaseCur=phaseTarget; $('sl_phase').value=phaseTarget; }
+render();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
