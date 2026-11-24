@@ -5,13 +5,51 @@
 
 ---
 
-## 2026-11-24 · QoderWang1 · 讲义配图契约、demo 图示与关联导图拖拽（进行中）
+## 2026-11-24 · QoderWang1 · 讲义配图契约、demo 图示与关联导图拖拽
 
 **用户指令**：教材必须为抽象概念配恰当图示，把该要求写进讲义书写规则并更新 demo；关联探索导图要能用鼠标拖动画布。
 
 **范围**：讲义生成契约与质量门、现有讲义/探索 demo 的解释性图示、关联图背景平移与回归测试。**不做**：私人 `workspace/`、重复部署、新建站点、合并 `main`、真实 API key 质量评测。
 
-**当前状态**：已认领交接 #54；正在建立“拖动背景后视口/scrollLeft 必须改变”的回归反馈。尚无通过证据，不宣称完成。
+**交付状态**：本地实现与验收完成，实现提交 `c713f19`；日志与证据随本轮文档提交，未部署。公网仍是 #52 / #53 发布版本。
+
+**改动**
+
+- `prompts/NOTE_GENERATION.md`、`prompts/CONNECTION_EXPLORER.md`、`prompts/QUALITY_BAR.md`：把“每节至少一张解释性图、核心定义/关键推导/对象映射首次出现处必须配图”写成硬要求；图须在正文就地引用，有连续编号、具体图注、可核对来源与许可、具体 alt，SVG 还须有 `title` / `desc`。`docs/QUALITY_GATES.md` 新增 A14 与对应手测项。
+- 主讲义补齐图 2-1～图 2-5：最近点、残差正交到法方程、最佳直线、参数不唯一、投影矩阵。四个探索示例分别补 1 / 3 / 1 / 1 张图，覆盖统一投影模型、向量组即映射、四个子空间、换基、机械臂奇异位形、生物连续动力学与人工静态映射。新增 8 张本项目原创 SVG（MIT），并给既有 SVG 补无障碍标题与描述；没有用装饰图凑数，也未引入 Mermaid 或新依赖。
+- `content/demo/linear-algebra/rendered/src.html` 与 `index.html` 同步，用仓库已有 KaTeX 重新生成静态样张；工作区文件树登记问题图与图 2-1～2-5，清除已改名的 `2-2.svg` 死链。
+- `ArgGraph.tsx` 给关联图容器补 Pointer Events 背景平移：记录起始 client 坐标与 `scrollLeft/scrollTop`，拖动时更新滚动偏移；显式排除节点、按钮、输入框与链接，因此节点拖拽和控件点击不走画布平移。CSS 增加 `grab/grabbing` 状态。
+- 阅读器窄屏修复：图片所在段落原继承正文 `text-indent: 2em`，满宽图被右移并裁切；仅为图片段落取消缩进，并让图片块级居中、自适应宽度。
+
+**确定性回归**
+
+- 新增 `apps/web/src/content/demoVisuals.test.ts`（15 项）：覆盖主讲义与四个探索文档，检查至少一图、编号连续、正文引用、具体 alt、本地文件存在、SVG `title` / `desc`、原创与 MIT 图注。
+- 扩充 `demoNote.test.ts`（23 项）：五张图的编号/位置、静态样张 `src.html` 与 `index.html` 同步、文件树六个图片地址均编码正确且指向真实文件。针对性命令 `npx vitest run src/content/demoNote.test.ts src/content/demoVisuals.test.ts`：38 项通过。
+- 新增 `scripts/e2e-connection-pan.mjs`：用 Node 内置 WebSocket 驱动本机无头 Chrome，不增加依赖；真实鼠标拖动背景 180px 后 `scrollLeft 677 -> 497`，节点坐标不变；另拖节点 45×20px，节点坐标改变。
+
+**浏览器验收**
+
+- 脚本按预置问题文本选择示例，并断言标题、图源与图数，避免同模式选错示例。最终四个预置均通过：碎片 1 图 / 143 组公式，元思考 3 图 / 253 组，机器人 1 图 / 78 组，生物神经 × AI 1 图 / 51 组；KaTeX 错误 0，桌面 1440×900 与窄屏 375×812 图片均加载且不越出纸张，页面无横向溢出。
+- 工作台文件树六张讲义图逐张真实打开成功；主讲义 5 图 / 193 组公式同样通过桌面与窄屏检查。应用控制台、运行时异常与资源错误均为 0（仅排除浏览器自动请求且应用未声明的 `/favicon.ico`）。
+- 截图：`docs/evidence/r2-explore-{fragments,meta,cross,cross-bio}-{desktop,figure,narrow,narrow-figure}.png`、`docs/evidence/r2-note-2-1-{desktop,figure,narrow,narrow-figure}.png`。已人工查看桌面与窄屏关键截图，生物神经图显示连续状态到离散更新/发放与人工静态映射的对照。
+
+**验收过程中修正的问题**
+
+- 首轮浏览器脚本只点击首个 `.cx-try`，`cross-bio` 实际重复打开了机器人示例；截图复查发现后，改为按问题文本选择并核对标题/图源，最终生物神经示例的 51 组公式与新图才被真正验收。
+- 最终 `typecheck` 曾报测试中未使用的 `KB_URL`，已删除；四道门随后全绿。
+
+**最终四道门**
+
+- `npm run verify:content`：内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接 / 资源来源 / 覆盖矩阵 / 布局与证据）。
+- `npm run typecheck`：通过。
+- `npm run test`：18 个测试文件、206 项测试全部通过。
+- `npm run build`：463 个模块，`✓ built in 818ms`，入口 `apps/web/dist/assets/index-TqAXAoQ5.js`。
+
+**已知限制 / 下一步**
+
+- 本轮全部图示为本项目原创 SVG；没有新增网络图片，因此不依赖外部图片服务。真实 API key 的生成质量仍未实测，自动检查不能证明模型以后会主动配恰当的图。
+- 既有 `generalizes` 方向冲突（#47）未在本轮处理。浏览器脚本依赖本机固定 Chrome 路径与 4174/9338 端口，适合当前环境复验，不是跨平台测试框架。
+- 未部署、未改访问范围、未碰 `main`；提交与推送仅限当前 `task/R2-L4-connection-QoderWang2` 分支。是否把本轮构建发布到现有公网站点，由用户后续明确。
 
 ---
 
