@@ -9,10 +9,10 @@ const PORT = 4174;
 const CDP_PORT = 9338;
 const EVIDENCE = resolve('docs/evidence');
 const CASES = [
-  { id: 'fragments', mode: 'fragments', ask: '最小二乘、点到平面的最短距离、异面直线的最短距离，是同一个问题吗？', title: '三种最短距离，同一个垂直条件', figures: 1, figure: 'fragments-统一投影模型.svg' },
-  { id: 'meta', mode: 'meta', ask: '从更高的层次看，线性代数这门课到底在研究什么？', title: '一种运算，四类对象，三个动作', figures: 3, figure: 'meta-向量组即映射.svg' },
-  { id: 'cross', mode: 'cross', ask: '线性代数 × 机器人运动学：两边真正共享的是什么？', title: '机械臂的每一个瞬间是一个矩阵', figures: 1, figure: 'cross-雅可比与奇异位形.svg' },
-  { id: 'cross-bio', mode: 'cross', ask: '生物神经网络 × 计算机科学/AI：两边真正共享的是什么？', title: '神经元不是一个会学习的加权求和', figures: 1, figure: 'cross-bio-动力系统与静态映射.svg' },
+  { id: 'fragments', mode: 'fragments', ask: '最小二乘、点到平面的最短距离、异面直线的最短距离，是同一个问题吗？', title: '点到平面、两点与异面直线的最短距离', figures: 1, figure: 'fragments-统一投影模型.svg' },
+  { id: 'meta', mode: 'meta', ask: '从更高的层次看，线性代数这门课到底在研究什么？', title: '线性代数的对象、运算与结构', figures: 3, figure: 'meta-向量组即映射.svg' },
+  { id: 'cross', mode: 'cross', ask: '线性代数 × 机器人运动学：两边真正共享的是什么？', title: '线性代数与机器人运动学', figures: 1, figure: 'cross-雅可比与奇异位形.svg' },
+  { id: 'cross-bio', mode: 'cross', ask: '生物神经网络 × 计算机科学/AI：两边真正共享的是什么？', title: '生物神经网络与计算机科学／人工智能', figures: 1, figure: 'cross-bio-动力系统与静态映射.svg' },
 ];
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 

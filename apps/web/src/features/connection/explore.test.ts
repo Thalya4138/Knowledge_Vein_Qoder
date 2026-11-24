@@ -46,6 +46,15 @@ describe('示例（金样例）', () => {
     expect(result.title.length).toBeGreaterThan(4);
   });
 
+  it('示例使用正式、直白的学术题名', () => {
+    expect(Object.fromEntries(PRESETS.map((p) => [p.id, presetResult(p).result.title]))).toEqual({
+      fragments: '点到平面、两点与异面直线的最短距离',
+      meta: '线性代数的对象、运算与结构',
+      cross: '线性代数与机器人运动学',
+      'cross-bio': '生物神经网络与计算机科学／人工智能',
+    });
+  });
+
   it('示例是规范不是模板：各篇不共用任何小节名，第一段直接给出判断', () => {
     const notes = PRESETS.map((p) => presetResult(p).result.note);
     const heads = notes.map((n) => [...n.matchAll(/^## (.+)$/gm)].map((m) => m[1]!.trim()));
@@ -271,7 +280,7 @@ describe('讲义方言与导出', () => {
     const fig = md.indexOf('[!figure] 图 1');
     expect(fig).toBeGreaterThan(0);
     expect(fig).toBeLessThan(md.search(/^## /m));
-    expect(lectureMarkdown(result, { demote: true })).toMatch(/^## 三种最短距离/);
+    expect(lectureMarkdown(result, { demote: true })).toMatch(/^## 点到平面、两点与异面直线的最短距离\n\n/);
   });
 
   it('粘进讲义后，阅读器把关联图块渲染成图（不是一段 JSON）', () => {
