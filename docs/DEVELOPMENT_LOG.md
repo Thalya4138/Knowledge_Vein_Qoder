@@ -5,6 +5,37 @@
 
 ---
 
+## 2026-11-24 · QoderWang2 · R2-L4 生物神经网络 × AI 示例：提交、推送与公网发布
+
+**用户指令**：「不把demo放网页里吗」。授权范围是当前任务分支与既有个人版公开站点；不推送 `main`、不新建站点、不改变现有公开访问范围。
+
+**提交与推送**
+
+- 将 #51 的 8 个文件提交为 `17bed90`（`feat: 新增生物神经与 AI 跨学科探索示例`），共 352 行新增、11 行删除；提交包含新的 `cross-bio.md`、预置注册、测试、提示词、产品规格与当时的过程记录。
+- 推送 `17bed90` 到 `origin/task/R2-L4-connection-QoderWang2`，推送后分支与上游一致、工作树干净。**更正 #51 的「未提交 / 未 push / 未部署」状态：代码已提交、已推送并已发布。**
+- 发布前复核 `apps/web/dist`：入口 `index-BONNVgzf.js`，`ConnectionPage-C92u2DAy.js` 含 `cross-bio` 与新标题；无 source map，私钥 / 常见 API key 模式扫描无命中。
+
+**部署**
+
+- 当前会话根目录不是站点源目录，因此由原站点所属的既有部署会话在 `C:\Users\Wang\Desktop\QODER` 执行发布；没有复制源码、切换站点或新建项目。
+- 复用 projectId `01a1ce04-6ca0-7221-9e4a-22dfca5a7d65`，以当前变化的 `dist` 新建 action `1c88e539-e7f9-49ba-8814-49731d3fdd54`，`webDirectory: dist`、`spa: true`；静态发布无 Function / 数据库依赖。
+- `publish_site` 后 `published: true`，operation `01a20d4e-6cd4-77f1-b818-7e9a2bb80f16` 为 `succeeded/committed`，`readiness: publication_completed`；deployment `01a20d4e-2b83-7a9f-ac66-1cf39bf40533`，release `01a20d4e-6cd4-77ae-a07f-a0182c816392`。
+- 站点保持 `active` / `public`，backend disabled，地址仍为 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`；Desktop 已用同一 action 打开发布确认。
+
+**线上验收**
+
+- 部署会话实际打开线上 `/connection`，切到「跨学科并联」后可选择并运行「生物神经网络 × 计算机科学/AI」；正文《神经元不是一个会学习的加权求和》完整，10 个章节、51 组 KaTeX，关联图 SVG 为 1651×732，五类 epistemic 图例齐全。
+- 本会话再次以匿名 Node HTTPS 请求实测：`/`、`/connection` 与任意不存在路径均返回 200 + 应用外壳，入口均为 `index-BONNVgzf.js`；线上 `/assets/ConnectionPage-C92u2DAy.js` 返回 200、`application/javascript`、143,046 B，且含 `cross-bio` 与新标题。
+- `Accept: */*` 的深链 404 是 ADR-0002 已记录的请求头相关回退行为；带文档请求头的匿名深链为 200，本次不是回退缺陷。
+
+**已知限制 / 下一步**
+
+- 内置浏览器面板仍不可见，指针与截图不可用；线上切换经脚本触发并做结构检查，**未宣称桌面视觉 / 截图 QA 通过**。
+- 控制台只有可选历史文件 `threads.json` 的一条预期 404（空历史路径，非本次引入）。
+- 未用真实 API key 生成；自动测试与示例审读不能替代真实模型质量实测。下一步由用户判断线上示例是否与机器人示例一样“点通”。
+
+---
+
 ## 2026-11-24 · QoderWang2 · R2-L4 关联探索追加示例：生物神经网络 × 计算机科学/AI
 
 **用户指令**：「跨学科可以像刚刚那样再做一个生物神经网络*计算机科学/AI的demo吗」。

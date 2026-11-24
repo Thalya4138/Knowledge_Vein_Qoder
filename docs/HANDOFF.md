@@ -111,11 +111,11 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #52（QoderWang1，2026-11-24，**#51 生物神经 × AI 示例已发布公网并验收**：`17bed90` 已 push，action `1c88e539`，线上入口 `index-BONNVgzf.js`，匿名路由与 `/connection` 浏览器实测通过；更正 #51 的「未提交/未部署」） |
-| 分支 | `task/R2-L4-connection-QoderWang2`（HEAD `3797e25`，与 `origin` 一致；#51 的 8 个文件改动未提交）；上一条分支 `task/R2-L3-QoderWang2` 已 push。PR 合并 main 由用户定 |
+| 最新接龙条目 | §4.5 #53（QoderWang2，2026-11-24，**#51 示例发布证据已回填并独立复核**；实际用户指令为「不把demo放网页里吗」，action `1c88e539-e7f9-49ba-8814-49731d3fdd54`，release `01a20d4e-6cd4-77ae-a07f-a0182c816392`。代码 `17bed90` 已 push；匿名根路径 / `/connection` / SPA 回退均 200，线上入口 `index-BONNVgzf.js`，线上 chunk 含 `cross-bio` 与新标题。保留 #51 / #52 历史行，并在本条更正其旧状态与图计数表述） |
+| 分支 | `task/R2-L4-connection-QoderWang2`（代码与发布源 HEAD `17bed90`，已 push；发布证据随本条提交）；上一条分支 `task/R2-L3-QoderWang2` 已 push。PR 合并 main 由用户定 |
 | 合并状态 | PR #1–#6 已进 `main`（T0-0 / T0-2 / T1-1 / T0-1 全部在内）。`task/T0-2-QoderWang1` 上未合并的 5 个文档提交已由 #18 并入，**该分支不必再开 PR**；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
-| 下一位的入口 | ① 用户读 #51 的生物神经 × AI 示例，判断是否与机器人示例一样“点通”；② 真实 key 的生成质量与 BYOK 公网跨域仍未实测；③ #51 截图接口因页面 surface 不可见而失败，桌面视觉 / 截图证据仍欠；④ 可视化实验室（并行进行中）→ L5 实验室接入 → 引导；⑤ 用户对 `docs/samples/r4-direction.html` 与拓印美工的表态仍待补进 `DESIGN.md` §14。读 `TASK_R2_LINKAGE.md` 顶部状态 |
-| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线、⑩ 方向反馈；⑪ **R2-L4 关联探索版本已发布并匿名路由验收通过**（#49，公网 `vein-probe-personal-dx7phlm8g8e.qoder.zone`），#51 新示例仅完成本地工作树，真实 key 生成质量与 BYOK 公网跨域实测、桌面视觉 QA、`probe/` 残留清理、PR 合并 main 仍待用户定 |
+| 下一位的入口 | ① 用户打开线上 `/connection` →「跨学科并联」→「生物神经网络 × 计算机科学/AI」，判断是否与机器人示例一样“点通”；② 真实 key 的生成质量与 BYOK 公网跨域仍未实测；③ 内置浏览器面板隐藏，桌面视觉 / 截图证据仍欠；④ 可视化实验室（并行进行中）→ L5 实验室接入 → 引导；⑤ 用户对 `docs/samples/r4-direction.html` 与拓印美工的表态仍待补进 `DESIGN.md` §14。读 `TASK_R2_LINKAGE.md` 顶部状态 |
+| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线、⑩ 方向反馈；⑪ **R2-L4 关联探索版本已发布并匿名验收通过**（#52 / #53，公网 `vein-probe-personal-dx7phlm8g8e.qoder.zone`），余真实 key 生成质量与 BYOK 公网跨域实测、桌面视觉 QA、`probe/` 残留清理、PR 合并 main 仍待用户定 |
 
 （旧版表格存档如下，保留原样以便追溯。）
 
@@ -284,7 +284,8 @@ CI 改写未经远端验证。
 | 50 | 2026-11-24 | QoderWang2 | **追加跨学科示例（用户指令：「跨学科可以像刚刚那样再做一个生物神经网络*计算机科学/AI的demo吗」）**：从干净起点 `3797e25` 认领；保留机器人示例，新增生物神经网络 × AI 独立预置，区分模型中的严格推导、实验支持的机制、计算建模、类比与猜想；同步注册、测试与说明。用户未要求提交、推送或部署 | **进行中**（本地工作树） | 内容质量由用户判断；真实 key 未实测；本轮不提交、不推送、不部署 | `DEVELOPMENT_LOG.md` 2026-11-24「关联探索追加示例」 |
 | 51 | 2026-11-24 | QoderWang2 | **完成 #50：生物神经网络 × 计算机科学/AI 示例**：新增第二个 `cross` 预置《神经元不是一个会学习的加权求和》，从两边原问题推进到膜动力学、时间表示、信用分配、局部可塑性、预测误差与硬件约束；30 节点 / 34 关系，C1 / C2 分开并复用已有最小二乘节点。只读科学审读后修正 LIF 不应期前提、固定正定精度矩阵、资源卡锚点、残差 C2 类比及加权切空间边界、等平均输入与同任务读出损失；注册、测试、`EXPLORE_CROSS.md` v5.1、registry 与产品规格同步。最终四道门全绿（188 tests / 463 modules），入口 `index-BONNVgzf.js`；596×620 实测 51 组 KaTeX、错误 0、34 条关系、无横向溢出、控制台 0，点开两条 C2 边均显示前提与失效边界。截图接口报 surface 不可见，未取得截图 | **已完成本地工作树；未提交、未 push、未部署**；线上仍是 #49 | 用户判断是否“点通”；真实 key 未实测；桌面视觉与截图证据未验证；提交 / 推送 / 部署须另获指令 | `DEVELOPMENT_LOG.md` 2026-11-24「关联探索追加示例」；`content/demo/linear-algebra/explore/cross-bio.md` |
 | 52 | 2026-11-24 | QoderWang1 | **发布 #51 示例到公网（用户「好歹给我网址吧 / 推送提交，写交接」；部署会话执行）——更正 #51：已提交并 push（`17bed90`，由关联探索会话完成），且已发布**。dist 已变化，按规则新建 action `1c88e539-e7f9-49ba-8814-49731d3fdd54`（不复用 #49 的 `0a30eb98`），复用既有公开站点与 projectId，`spa: true`、无后端。`published: true`、operation `01a20d4e-6cd4-77f1-b818-7e9a2bb80f16` succeeded/committed、deployment `01a20d4e-2b83-7a9f-ac66-1cf39bf40533`，`readiness: publication_completed`；站点 active/public/not_required。**匿名验收**：`/`、`/connection`、不存在路径均 200 + 应用外壳，线上入口 `index-BONNVgzf.js` 与本地构建一致，JS/CSS 200 且类型正确（`Accept: */*` 深链 404 为 ADR-0002 已知回退行为）。**浏览器实测 `/connection`**：跨学科并联 → 新预置「生物神经网络 × 计算机科学/AI」可运行，正文 10 章节、51 组 KaTeX、关联图 1651×732 / 34 个节点边元素 / 五类 epistemic 图例齐全；控制台唯一 404 是示例库可选历史文件 `.vein/explore/threads.json`（空历史路径，非本次引入）。限制：内置浏览器面板隐藏，交互经脚本触发 + 结构检查，无视觉 QA 与截图；未改源码、未动 main 与访问范围 | **已发布并验收**；本条交接随本文档提交 push | 用户判断新示例是否「点通」；真实 key 生成质量未实测；PR 合并 main 由用户定 | 本条；公网 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone` |
-**下一位从这里接第 53 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 53 | 2026-11-24 | QoderWang2 | **回填 #51 示例的发布证据并独立复核（实际用户指令：「不把demo放网页里吗」）**：保留 #51 / #52 历史行。更正 #51 的本地状态与 #52 的指令转述；图计数以源文件为准，是 30 节点 / 34 条关系（5 条 C2 类比），不是“34 个节点边元素”。发布 action `1c88e539-e7f9-49ba-8814-49731d3fdd54`，release `01a20d4e-6cd4-77ae-a07f-a0182c816392`。本会话再次匿名实测 `/`、`/connection`、不存在路径均 200 + `index-BONNVgzf.js`；线上 `ConnectionPage-C92u2DAy.js` 为 200 / JavaScript / 143,046 B，含 `cross-bio` 与《神经元不是一个会学习的加权求和》。发布前产物无 source map，私钥与常见 API key 模式无命中 | 已发布并独立匿名验收；开发日志与本条随文档提交 push | 用户判断新示例是否「点通」；真实 key 生成质量与 BYOK 公网跨域未实测；浏览器面板隐藏，桌面视觉 / 截图仍欠；PR 合并 main 由用户定 | `DEVELOPMENT_LOG.md` 2026-11-24「生物神经网络 × AI 示例：提交、推送与公网发布」；本条 |
+**下一位从这里接第 54 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 
