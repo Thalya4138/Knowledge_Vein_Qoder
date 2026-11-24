@@ -46,9 +46,11 @@ export function ArgGraph({
   const [editing, setEditing] = useState<string | null>(null);
   const [from, setFrom] = useState<string | null>(null);
   const grab = useRef<{ id: string; dx: number; dy: number; sx: number; sy: number } | null>(null);
+  const pan = useRef<{ id: number; x: number; y: number; left: number; top: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [panning, setPanning] = useState(false);
 
   useLayoutEffect(() => {
     const el = wrapRef.current;
@@ -100,6 +102,28 @@ export function ArgGraph({
     return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale };
   };
   const commitNodes = (next: XNode[]) => onChange({ ...graph, nodes: next });
+
+  const onPanDown = (e: RPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || (e.target as Element).closest('.xnode, button, input, textarea, select, a')) return;
+    const el = e.currentTarget;
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    pan.current = { id: e.pointerId, x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop };
+    setPanning(true);
+  };
+  const onPanMove = (e: RPointerEvent<HTMLDivElement>) => {
+    const p = pan.current;
+    if (!p || p.id !== e.pointerId) return;
+    const el = e.currentTarget;
+    el.scrollLeft = p.left - (e.clientX - p.x);
+    el.scrollTop = p.top - (e.clientY - p.y);
+  };
+  const onPanUp = (e: RPointerEvent<HTMLDivElement>) => {
+    if (pan.current?.id !== e.pointerId) return;
+    pan.current = null;
+    setPanning(false);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+  };
 
   const onDown = (e: RPointerEvent<HTMLDivElement>, n: XNode) => {
     if (editing === n.id) return;
@@ -160,7 +184,17 @@ export function ArgGraph({
   };
 
   return (
-    <div className={`xgraph${connecting ? ' connecting' : ''}${fit === 'width' ? ' fit-width' : ''}`} ref={wrapRef} tabIndex={0} onKeyDown={onKey} aria-label="关联图">
+    <div
+      className={`xgraph${connecting ? ' connecting' : ''}${fit === 'width' ? ' fit-width' : ''}${panning ? ' panning' : ''}`}
+      ref={wrapRef}
+      tabIndex={0}
+      onKeyDown={onKey}
+      onPointerDown={onPanDown}
+      onPointerMove={onPanMove}
+      onPointerUp={onPanUp}
+      onPointerCancel={onPanUp}
+      aria-label="关联图"
+    >
       <div className="xsizer" style={{ width: W * scale, height: H * scale }}>
       <div className="xstage" ref={stageRef} style={{ width: W, height: H, transform: `scale(${scale})` }} onPointerMove={onMove}>
         <svg className="xlines" width={W} height={H} viewBox={`0 0 ${W} ${H}`}>

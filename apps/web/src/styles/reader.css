@@ -186,6 +186,8 @@
 
 /* ---------- 图与表（编号写在源文件标题里：图 2-1、表 2-1） ---------- */
 .nr-fig { margin: 4px 0 12px; text-align: center; }
+.nr-main .nr-fig p { text-indent: 0; }
+.nr-fig img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
 .nr-fig-cap { font: 12.5px/1.6 var(--nr-sans); color: var(--nr-ink-soft); margin-top: 4px; }
 .nr-fig-cap p { margin: 0; text-indent: 0; }
 .nr-side .nr-fig { text-align: left; }

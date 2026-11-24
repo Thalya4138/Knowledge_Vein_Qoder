@@ -39,7 +39,10 @@ $$C(1,1,1)^{\mathsf T}+D(1,2,3)^{\mathsf T}=A\begin{bmatrix}C\\D\end{bmatrix},\q
 
 $$\min_{\mathbf z\in\mathbb R^n}\lVert\mathbf d-M\mathbf z\rVert^2,\qquad \mathbf d=\mathbf c-\mathbf a.$$
 
-对应不是只找一个相似比喻：三个问题的可行方向都写成 $M\mathbf z$，距离都写成同一个二次函数，正交条件也都会变成 $M^{\mathsf T}(\mathbf d-M\mathbf z)=0$。 ^p-unified
+对应不是只找一个相似比喻：三个问题的可行方向都写成 $M\mathbf z$，距离都写成同一个二次函数，正交条件也都会变成 $M^{\mathsf T}(\mathbf d-M\mathbf z)=0$。图 1 同时画出数据空间的最近点与参数空间的核：核方向改变参数，却不改变输出。 ^p-unified
+
+> [!figure] 图 1　统一投影模型：残差垂直于可行方向，参数可沿核方向移动而拟合点不变（本项目原创，MIT）
+> ![左图点到仿射子空间的最近点与垂直残差，右图参数解沿核方向移动但映到同一点](figures/fragments-统一投影模型.svg)
 
 ## 最近为什么恰好垂直
 

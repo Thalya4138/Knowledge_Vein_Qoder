@@ -30,7 +30,10 @@ running: 关联探索　学科元思考
 
 $$T:\ (a_1,a_2)\ \longmapsto\ a_1\mathbf v_1+a_2\mathbf v_2=\begin{bmatrix}1&2\\3&6\end{bmatrix}\begin{bmatrix}a_1\\a_2\end{bmatrix}.$$
 
-它是线性的，它的数表正是把这组向量排成列得到的矩阵 $A=\begin{bmatrix}1&2\\3&6\end{bmatrix}$。关于向量组的每一个概念，都是关于 $T$ 的一个概念。 ^p-hinge
+它是线性的，它的数表正是把这组向量排成列得到的矩阵 $A=\begin{bmatrix}1&2\\3&6\end{bmatrix}$。关于向量组的每一个概念，都是关于 $T$ 的一个概念。图 1 把这件事画成两个空间之间的映射：系数沿核方向移动，输出却停在同一个点。 ^p-hinge
+
+> [!figure] 图 1　向量组就是映射：相差一个核向量的两个系数给出同一个输出（本项目原创，MIT）
+> ![系数平面中两个相差核方向的输入，经同一个向量组映射到输出平面中的同一点](figures/meta-向量组即映射.svg)
 
 > [!table] 表 1　向量组的问题与映射的问题逐条对应
 > | 关于向量组 $\mathbf v_1,\dots,\mathbf v_k$ | 关于映射 $T:\mathbb R^k\to V$ | 例中的答案 |
@@ -71,10 +74,10 @@ $$\dim(\text{输入空间})=\dim(\text{核})+\dim(\text{像}).$$
 
 **行秩等于列秩**　$A$ 的每一列都是 $(1,3)$ 的倍数，所以 $A=\begin{bmatrix}1\\3\end{bmatrix}\begin{bmatrix}1&2\end{bmatrix}$。一般地，取 $r$ 个线性无关的列排成 $C$，把其余各列用它们表出，得到 $A=CR$，$R$ 只有 $r$ 行。这个式子按行读，$A$ 的每一行都是 $R$ 的 $r$ 行的组合，所以行秩不超过列秩。对 $A^{\mathsf T}$ 再做一遍，得到相反的不等式。独立的生成元有几个，独立的测量就有几个，这个共同的数是**秩**。 ^p-rank
 
-> [!figure] 图 1　$A=\begin{bmatrix}1&2\\3&6\end{bmatrix}$ 的四个子空间。输入 $\mathbf x=(1,0)$ 拆成行空间里的一份和零空间里的一份
+> [!figure] 图 2　$A=\begin{bmatrix}1&2\\3&6\end{bmatrix}$ 的四个子空间。输入 $\mathbf x=(1,0)$ 拆成行空间里的一份和零空间里的一份（本项目原创，MIT）
 > ![矩阵 A 的四个基本子空间：输入平面里的行空间与零空间，输出平面里的列空间与左零空间](figures/四个子空间.svg)
 
-图 1 把四条直线画了出来。左边，$\mathbf x=(1,0)=(0.2,\,0.4)+(0.8,\,-0.4)$：后一份在零空间里，被 $A$ 抹掉；前一份在行空间里，被送到 $(1,3)$。$A$ 限制在行空间上是一一对应，对面是列空间，两边都是 $r$ 维。四个子空间的维数分别是 $r$、$n-r$、$r$、$m-r$，上一节的清点在输入、输出两侧各做了一次。 ^p-four
+图 2 把四条直线画了出来。左边，$\mathbf x=(1,0)=(0.2,\,0.4)+(0.8,\,-0.4)$：后一份在零空间里，被 $A$ 抹掉；前一份在行空间里，被送到 $(1,3)$。$A$ 限制在行空间上是一一对应，对面是列空间，两边都是 $r$ 维。四个子空间的维数分别是 $r$、$n-r$、$r$、$m-r$，上一节的清点在输入、输出两侧各做了一次。 ^p-four
 
 四个子空间的定义只用到线性组合。图上的两个直角则多用了一样东西：把“这一行测得零”画成“与这一行垂直”，用的是点积。垂直是下一节的内容。
 
@@ -92,13 +95,13 @@ $$\dim(\text{输入空间})=\dim(\text{核})+\dim(\text{像}).$$
 
 $$\langle A\mathbf x,\mathbf y\rangle=(A\mathbf x)^{\mathsf T}\mathbf y=\mathbf x^{\mathsf T}(A^{\mathsf T}\mathbf y)=\langle\mathbf x,A^{\mathsf T}\mathbf y\rangle.$$
 
-由它直接读出图 1 的两个直角。$\mathbf y$ 与列空间垂直，即对一切 $\mathbf x$ 有 $\langle A\mathbf x,\mathbf y\rangle=0$，即对一切 $\mathbf x$ 有 $\langle\mathbf x,A^{\mathsf T}\mathbf y\rangle=0$，即 $A^{\mathsf T}\mathbf y=\mathbf 0$。所以左零空间恰是列空间的正交补。同理，零空间恰是行空间的正交补。 ^p-adj
+由它直接读出图 2 的两个直角。$\mathbf y$ 与列空间垂直，即对一切 $\mathbf x$ 有 $\langle A\mathbf x,\mathbf y\rangle=0$，即对一切 $\mathbf x$ 有 $\langle\mathbf x,A^{\mathsf T}\mathbf y\rangle=0$，即 $A^{\mathsf T}\mathbf y=\mathbf 0$。所以左零空间恰是列空间的正交补。同理，零空间恰是行空间的正交补。 ^p-adj
 
 回到最近点。列空间里离 $\mathbf b$ 最近的点 $\mathbf p=A\hat{\mathbf x}$，以误差 $\mathbf b-\mathbf p$ 垂直于列空间为特征。按刚才的结论，这就是 $A^{\mathsf T}(\mathbf b-A\hat{\mathbf x})=\mathbf 0$，即**法方程** $A^{\mathsf T}A\,\hat{\mathbf x}=A^{\mathsf T}\mathbf b$。对 $\mathbf b=(1,1)$：
 
 $$\begin{bmatrix}10&20\\20&40\end{bmatrix}\hat{\mathbf x}=\begin{bmatrix}4\\8\end{bmatrix}\quad\Longrightarrow\quad \hat x_1+2\hat x_2=0.4,\qquad \mathbf p=A\hat{\mathbf x}=(0.4,\,1.2).$$
 
-误差 $\mathbf b-\mathbf p=(0.6,-0.2)$，正是 $(3,-1)$ 的倍数，落在左零空间里。图 1 右半边画了这一步。 ^p-near
+误差 $\mathbf b-\mathbf p=(0.6,-0.2)$，正是 $(3,-1)$ 的倍数，落在左零空间里。图 2 右半边画了这一步。 ^p-near
 
 法方程的解有一整条直线，因为 $A^{\mathsf T}A$ 不可逆。它什么时候可逆，有一条完整的推理：若 $A^{\mathsf T}A\mathbf x=\mathbf 0$，则 $\mathbf x^{\mathsf T}A^{\mathsf T}A\mathbf x=\lVert A\mathbf x\rVert^2=0$，于是 $A\mathbf x=\mathbf 0$。所以 $A^{\mathsf T}A$ 与 $A$ 的零空间相同，秩也相同。同一个式子说明 $\mathbf x^{\mathsf T}(A^{\mathsf T}A)\mathbf x\ge 0$ 恒成立，等号只在 $\mathbf x=\mathbf 0$ 时取到，当且仅当 $A$ 的各列线性无关；这时 $A^{\mathsf T}A$ 可逆，最小二乘解唯一。 ^p-gram
 
@@ -116,7 +119,10 @@ $$\begin{bmatrix}10&20\\20&40\end{bmatrix}\hat{\mathbf x}=\begin{bmatrix}4\\8\en
 
 ## 同一张数表，三样东西
 
-数表 $B=\begin{bmatrix}2&1\\1&2\end{bmatrix}$ 记的是什么，要看换基时它怎样变。 ^p-three
+数表 $B=\begin{bmatrix}2&1\\1&2\end{bmatrix}$ 记的是什么，要看换基时它怎样变。图 3 先比较三种对象允许怎样换基；下一步的行列式与不变量，才会随这些规则不同而留下不同信息。 ^p-three
+
+> [!figure] 图 3　同一张数表的三种身份：映射、算子与双线性型使用不同的换基规则（本项目原创，MIT）
+> ![同一个矩阵 B 作为映射、算子和双线性型时分别使用两边各换、同换和合同换基规则](figures/meta-对象与换基.svg)
 
 - 记的是**映射** $V\to W$：输入、输出是两个空间，各换各的基，数表变成 $Q^{-1}BP$。
 - 记的是**算子** $V\to V$：输入、输出是同一个空间，只有一组基可换，数表变成 $P^{-1}BP$。
@@ -150,7 +156,7 @@ $$2x^2+2xy+2y^2=3u^2+v^2.$$
 
 **奇异值分解**是“有尺子的映射”那一行的定理：对任何 $m\times n$ 的实矩阵 $A$，秩为 $r$，输入空间有一组标准正交基 $\mathbf v_1,\dots,\mathbf v_n$，输出空间有一组标准正交基 $\mathbf u_1,\dots,\mathbf u_m$，使得 $A\mathbf v_i=\sigma_i\mathbf u_i$（$i\le r$，$\sigma_i>0$），$A\mathbf v_i=\mathbf 0$（$i>r$）。它**依赖**前面两样：$A^{\mathsf T}A$ 对称且 $\mathbf x^{\mathsf T}A^{\mathsf T}A\mathbf x\ge0$，谱定理给出它的一组标准正交特征向量，这就是 $\mathbf v_i$，对应的特征值记作 $\sigma_i^2$；再令 $\mathbf u_i=A\mathbf v_i/\sigma_i$（$i\le r$），其余的 $\mathbf u_i$ 补成标准正交基。 ^p-svd
 
-它把图 1 细化了一层。$\mathbf v_1,\dots,\mathbf v_r$ 是行空间的基，其余的 $\mathbf v_i$ 是零空间的基；$\mathbf u_1,\dots,\mathbf u_r$ 是列空间的基，其余的是左零空间的基。对 $A=\begin{bmatrix}1&2\\3&6\end{bmatrix}$：$\mathbf v_1=\tfrac{1}{\sqrt5}(1,2)$，$\mathbf u_1=\tfrac{1}{\sqrt{10}}(1,3)$，$\sigma_1=\sqrt{50}$，$\mathbf v_2=\tfrac{1}{\sqrt5}(2,-1)$，$\mathbf u_2=\tfrac{1}{\sqrt{10}}(3,-1)$。伪逆沿着同一对方向倒着走，除以 $\sigma_1$：$A^{+}\mathbf b=\tfrac{\langle\mathbf u_1,\mathbf b\rangle}{\sigma_1}\mathbf v_1$。代入 $\mathbf b=(1,1)$ 得 $(0.08,\,0.16)$，与上一节一致。
+它把图 2 细化了一层。$\mathbf v_1,\dots,\mathbf v_r$ 是行空间的基，其余的 $\mathbf v_i$ 是零空间的基；$\mathbf u_1,\dots,\mathbf u_r$ 是列空间的基，其余的是左零空间的基。对 $A=\begin{bmatrix}1&2\\3&6\end{bmatrix}$：$\mathbf v_1=\tfrac{1}{\sqrt5}(1,2)$，$\mathbf u_1=\tfrac{1}{\sqrt{10}}(1,3)$，$\sigma_1=\sqrt{50}$，$\mathbf v_2=\tfrac{1}{\sqrt5}(2,-1)$，$\mathbf u_2=\tfrac{1}{\sqrt{10}}(3,-1)$。伪逆沿着同一对方向倒着走，除以 $\sigma_1$：$A^{+}\mathbf b=\tfrac{\langle\mathbf u_1,\mathbf b\rangle}{\sigma_1}\mathbf v_1$。代入 $\mathbf b=(1,1)$ 得 $(0.08,\,0.16)$，与上一节一致。
 
 > [!res] 视频 @p-svd
 > [MIT 18.06 第 29 讲：奇异值分解](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/resources/lecture-29-singular-value-decomposition/)
@@ -185,7 +191,7 @@ $J=\begin{bmatrix}1&1\\0&1\end{bmatrix}$ 的特征值都是实数，特征方向
 
 **条件数**　$A$ 是可逆方阵时，解 $A\mathbf x=\mathbf b$ 的过程中，$\mathbf b$ 的相对误差最多被放大 $\sigma_{\max}/\sigma_{\min}$ 倍，并且这个倍数取得到。它问的是“离不可逆还有多远”，秩回答不了，奇异值可以。还是“有尺子的映射”那一行。
 
-**留给你的一格**　只允许左乘可逆矩阵，也就是只做行变换，输入一侧的基不许动。这时什么不变？最简形是什么？提示：消元法每天都在算这个最简形；不变的东西是图 1 里的一条线。 ^p-yours
+**留给你的一格**　只允许左乘可逆矩阵，也就是只做行变换，输入一侧的基不许动。这时什么不变？最简形是什么？提示：消元法每天都在算这个最简形；不变的东西是图 2 里的一条线。 ^p-yours
 
 这张表管不到的地方有三处。第一，它的对象最多吃两个向量。把 $n$ 个向量一起吃进去、对每一个都线性的函数不在表里；行列式作为各列的函数是这样的东西，张量也是。第二，维数必须有限。函数空间里“清点自由度”的办法失效，单射的算子可以不是满射，要另加收敛的概念才能往下走。第三，表里说的是最简形存在，没有说算出它要多少步、对舍入误差是否敏感。若尔当形对矩阵元素的微小改动不连续，数值计算里用别的分解代替它。 ^p-edge
 

@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 270" width="580" height="270" font-family="'Times New Roman','Songti SC','Noto Serif SC',SimSun,serif" font-size="15">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 270" width="580" height="270" role="img" aria-labelledby="title desc" font-family="'Times New Roman','Songti SC','Noto Serif SC',SimSun,serif" font-size="15">
+  <title id="title">一个矩阵的四个基本子空间</title>
+  <desc id="desc">输入空间中的 x 拆为行空间分量和零空间分量；矩阵 A 保留行空间分量并映到输出空间的列空间，零空间分量被映为零；左零空间与列空间垂直。</desc>
   <defs>
     <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#5a7a8e"/></marker>
     <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#1a8fd0"/></marker>

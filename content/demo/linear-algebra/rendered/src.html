@@ -32,7 +32,9 @@
         <p>2. 如果找不到，应当用什么标准，从无数条直线中挑出“最好”的一条？</p>
       </div>
       <figure class="inquiry-fig">
-        <svg viewBox="0 0 220 170" width="220" height="170">
+        <svg viewBox="0 0 220 170" width="220" height="170" role="img" aria-labelledby="inquiry-title inquiry-desc">
+          <title id="inquiry-title">三个数据点与两条候选直线</title>
+          <desc id="inquiry-desc">三个测得的数据点不在同一直线上，竖直虚线帮助比较两条候选直线。</desc>
           <g stroke="#9bb" stroke-width="1"><line x1="30" y1="145" x2="210" y2="145"/><line x1="30" y1="145" x2="30" y2="10"/></g>
           <g font-size="11" fill="#567" font-family="serif">
             <text x="205" y="160">t</text><text x="16" y="16">b</text>
@@ -44,7 +46,7 @@
           <line x1="40" y1="120" x2="200" y2="40" stroke="#c97fb0" stroke-width="1.2" stroke-dasharray="5 3"/>
           <g fill="#1f7fbf"><circle cx="73" cy="105" r="4"/><circle cx="123" cy="65" r="4"/><circle cx="173" cy="65" r="4"/></g>
         </svg>
-        <figcaption>三个数据点与两条候选直线</figcaption>
+        <figcaption>三个数据点与两条候选直线（本项目原创，MIT）</figcaption>
       </figure>
     </div>
   </div>
@@ -94,7 +96,9 @@
   <div class="row">
     <aside>
       <figure class="side-fig" data-role="旁栏 · 图（与正文对应段落同高）">
-        <svg viewBox="0 0 190 150" width="190" height="150">
+        <svg viewBox="0 0 190 150" width="190" height="150" role="img" aria-labelledby="fig21-title fig21-desc">
+          <title id="fig21-title">列空间中的最近点与残差</title>
+          <desc id="fig21-desc">b 位于列空间外，p 是最近点，残差 b 减 p 垂直于列空间。</desc>
           <polygon points="10,120 120,140 180,95 70,75" fill="#dcecf7" stroke="#8fbbd8"/>
           <text x="140" y="132" font-size="10" fill="#4a7fa5" font-family="serif">Col(A)</text>
           <line x1="40" y1="112" x2="112" y2="18" stroke="#1f5f8f" stroke-width="1.6" marker-end="url(#arr)"/>
@@ -111,7 +115,7 @@
             <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#d0702a"/></marker>
           </defs>
         </svg>
-        <figcaption><span class="fig-no">▲ 图 2-1</span>　$\mathbf b$ 在列空间上的最近点 $\mathbf p$，残差 $\mathbf e$ 垂直于列空间</figcaption>
+        <figcaption><span class="fig-no">▲ 图 2-1</span>　$\mathbf b$ 在列空间上的最近点 $\mathbf p$，残差 $\mathbf e$ 垂直于列空间（本项目原创，MIT）</figcaption>
       </figure>
     </aside>
     <div class="main">
@@ -168,7 +172,11 @@
       $$\mathbf a_i^{\mathsf T}(\mathbf b-A\hat{\mathbf x})=0,\qquad i=1,2,\dots,n .$$
       <p>把这 $n$ 个等式合写成矩阵形式 $A^{\mathsf T}(\mathbf b-A\hat{\mathbf x})=\mathbf 0$，整理得</p>
       $$A^{\mathsf T}A\,\hat{\mathbf x}=A^{\mathsf T}\mathbf b . \tag{2-1}$$
-      <p>方程组 (2-1) 叫作<b class="term">法方程</b>（normal equations）。“法”即垂直，这个名称记录了方程的来历：它是由残差垂直于列空间这一条件得出的。</p>
+      <p>方程组 (2-1) 叫作<b class="term">法方程</b>（normal equations）。“法”即垂直，这个名称记录了方程的来历：它是由残差垂直于列空间这一条件得出的。图 2-2 把这条推导拆成四步；箭头只表示推导方向，并不表示这些条件可以倒推回去。</p>
+      <figure class="main-fig">
+        <img src="../notes/figures/2-2-从正交到法方程.svg" alt="残差垂直于列空间，等价于与每列正交，再写成 A 的转置乘残差为零，最后整理成法方程">
+        <figcaption><span class="fig-no">图 2-2</span>　从残差正交到法方程：逐列内积为零，合成矩阵形式后整理（本项目原创，MIT）</figcaption>
+      </figure>
     </div>
   </div>
 
@@ -182,7 +190,9 @@
   <div class="row">
     <aside>
       <figure class="side-fig" data-role="旁栏 · 图">
-        <svg viewBox="0 0 190 150" width="190" height="150">
+        <svg viewBox="0 0 190 150" width="190" height="150" role="img" aria-labelledby="fig23-title fig23-desc">
+          <title id="fig23-title">最小二乘直线与三个残差</title>
+          <desc id="fig23-desc">橙色直线最接近三个数据点，紫色虚线表示各数据点到直线的残差。</desc>
           <g stroke="#9bb" stroke-width="1"><line x1="20" y1="135" x2="185" y2="135"/><line x1="20" y1="135" x2="20" y2="8"/></g>
           <g font-size="10" fill="#567" font-family="serif"><text x="60" y="148">1</text><text x="105" y="148">2</text><text x="150" y="148">3</text><text x="180" y="148">t</text><text x="8" y="14">b</text></g>
           <!-- b = 2/3 + t/2 ; y_px = 135 - 40*b ; x_px = 20 + 45*t -->
@@ -192,13 +202,13 @@
           </g>
           <g fill="#1f7fbf"><circle cx="65" cy="95" r="3.5"/><circle cx="110" cy="55" r="3.5"/><circle cx="155" cy="55" r="3.5"/></g>
         </svg>
-        <figcaption><span class="fig-no">▲ 图 2-2</span>　最佳直线 $b=\tfrac23+\tfrac12t$，虚线为各点的残差</figcaption>
+        <figcaption><span class="fig-no">▲ 图 2-3</span>　最佳直线 $b=\tfrac23+\tfrac12t$，虚线为各点的残差（本项目原创，MIT）</figcaption>
       </figure>
     </aside>
     <div class="main">
       <p>回到问题探讨中的三组数据。计算得</p>
       $$A^{\mathsf T}A=\begin{bmatrix}3&6\\6&14\end{bmatrix},\qquad A^{\mathsf T}\mathbf b=\begin{bmatrix}5\\11\end{bmatrix},$$
-      <p>解法方程得 $C=\tfrac23$，$D=\tfrac12$，最佳直线为 $b=\tfrac23+\tfrac12t$（图 2-2）。此时</p>
+      <p>解法方程得 $C=\tfrac23$，$D=\tfrac12$，最佳直线为 $b=\tfrac23+\tfrac12t$（图 2-3）。此时</p>
       $$\mathbf p=\begin{bmatrix}7/6\\5/3\\13/6\end{bmatrix},\qquad \mathbf e=\mathbf b-\mathbf p=\begin{bmatrix}-1/6\\1/3\\-1/6\end{bmatrix}.$$
       <p>可以验证，$\mathbf e$ 与 $A$ 的两列 $(1,1,1)^{\mathsf T}$、$(1,2,3)^{\mathsf T}$ 的内积都等于 0。</p>
     </div>
@@ -218,6 +228,11 @@
       <p>最近点由 $\mathbf b$ 和列空间共同决定，与选用哪一组向量来张成列空间无关。可以证明，它总是存在并且唯一。</p>
       <p>参数 $\hat{\mathbf x}$ 则不同。如果 $A$ 的列向量线性相关，就存在非零向量 $\mathbf d$ 使 $A\mathbf d=\mathbf 0$，此时 $\hat{\mathbf x}$ 与 $\hat{\mathbf x}+\mathbf d$ 给出同一个点 $\mathbf p$，参数便有无穷多组。只有当 $A$ 的列向量线性无关时，$A^{\mathsf T}A$ 才可逆，法方程有唯一解</p>
       $$\hat{\mathbf x}=(A^{\mathsf T}A)^{-1}A^{\mathsf T}\mathbf b .$$
+      <p>图 2-4 取 $A=[\mathbf a_1\ 2\mathbf a_1]$。左图中，参数可以沿 $\ker(A)$ 的方向移动；右图中，这些参数却都映到同一个 $\mathbf p$。这就是“点唯一，参数未必唯一”的几何含义。</p>
+      <figure class="main-fig">
+        <img src="../notes/figures/2-4-参数不唯一.svg" alt="左图参数解沿核方向移动，右图所有参数经同一个矩阵映到列空间直线上的同一点 p">
+        <figcaption><span class="fig-no">图 2-4</span>　列相关时，参数空间中的一整条直线经 $A$ 映到同一个最近点（本项目原创，MIT）</figcaption>
+      </figure>
     </div>
   </div>
 
@@ -231,6 +246,11 @@
     </aside>
     <div class="main">
       <p>相应地，$\mathbf p=A(A^{\mathsf T}A)^{-1}A^{\mathsf T}\mathbf b$。矩阵 $P=A(A^{\mathsf T}A)^{-1}A^{\mathsf T}$ 把任意向量变为它在列空间上的最近点，叫作向列空间的<b class="term">投影矩阵</b>（projection matrix）。</p>
+      <p>图 2-5 表明，$P$ 只保留向量在列空间上的分量；已经在列空间中的向量不会被它移动，因此 $P^2=P$。</p>
+      <figure class="main-fig">
+        <img src="../notes/figures/2-5-投影矩阵.svg" alt="两个平面外向量都沿垂直于列空间的方向映到同一点，列空间中的向量经投影保持不变">
+        <figcaption><span class="fig-no">图 2-5</span>　投影矩阵 $P$ 把平面外的向量沿垂直方向送到列空间，列空间中的向量保持不变（本项目原创，MIT）</figcaption>
+      </figure>
       <p>表 2-1 归纳了方程组 $A\mathbf x=\mathbf b$ 与最小二乘解在各种情形下的关系。</p>
     </div>
   </div>

@@ -71,8 +71,11 @@ export const DEMO_WORKSPACE: Workspace = {
       name: '插图',
       files: [
         { id: 'fig-2-0', name: '三个数据点与两条候选直线', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-0-问题探讨.svg`) },
-        { id: 'fig-2-1', name: '图 2-1 b 在列空间上的最近点', kind: 'image', url: `${BASE}/notes/figures/2-1.svg` },
-        { id: 'fig-2-2', name: '图 2-2 最佳直线与残差', kind: 'image', url: `${BASE}/notes/figures/2-2.svg` },
+        { id: 'fig-2-1', name: '图 2-1 b 在列空间上的最近点', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-1.svg`) },
+        { id: 'fig-2-2', name: '图 2-2 从残差正交到法方程', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-2-从正交到法方程.svg`) },
+        { id: 'fig-2-3', name: '图 2-3 最佳直线与残差', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-3.svg`) },
+        { id: 'fig-2-4', name: '图 2-4 参数不唯一', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-4-参数不唯一.svg`) },
+        { id: 'fig-2-5', name: '图 2-5 投影矩阵', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-5-投影矩阵.svg`) },
       ],
     },
   ],
