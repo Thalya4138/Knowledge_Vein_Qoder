@@ -5,6 +5,24 @@
 
 ---
 
+## 2026-11-25 · QoderWang2 · 本目录入库：新建 task 分支推送 GitHub，不开 PR
+
+**用户指令**：「GitHub 上面新建分支，把这个文件夹推送到新建分支上，不要 PR」。
+
+**范围**：只做入库与推送。**不做**：PR、合并 main、部署、改任何功能代码。
+
+**过程与事实**
+
+- 本目录此前不是 Git 仓库（#62–#65 如实标注）。本轮 `git init`，remote 与 `branch-mindmap` 克隆同为 `https://github.com/Thalya4138/Knowledge_Vein_Qoder.git`；基线取 `origin/main`（`68b280b`）。当时直连 GitHub 不通，基线对象从本地 `branch-mindmap` 克隆已 fetch 的 `refs/remotes/origin/main` 取，未碰该克隆的工作区（它有别人在制品）。
+- 新分支 `task/R2-L4-lab-QoderWang2`（沿用 `task/*` 约定，不 push main）。一笔提交 `8653a5d`：219 文件、+22381/−1102，即 #58–#65 的全部累积成果。提交前扫描：无密钥模式命中；`.gitignore` 排除 node_modules/dist/私有库；唯一 PDF 为 MIT OCW 公开讲义（content/demo 已带来源声明）；`visualization-demo/` 两份原创 prompt 训练稿随目录入库。
+- 推送波折：直连 443 失败；常见本地代理端口无监听；读系统代理被安全策略拦截（未绕过）。用户接通网络后直连推送成功，`git ls-remote` 与本地 commit 一致。**用户在问答里贴了一枚 ghp_ 令牌：本轮未使用（认证走既有凭据）、未写入任何文件/配置/URL；已提醒用户该令牌在对话中暴露、应去 GitHub 撤销重发。**
+- 未开 PR（用户明确不要）。合并 main 由用户另行决定。
+- 本条日志与交接 #66 随第二笔提交推送。
+
+**验证**：`git ls-remote origin task/R2-L4-lab-QoderWang2` = `8653a5d…`；推送后工作区干净；四道门对推送内容在推送前已全绿（217 tests）。
+
+---
+
 ## 2026-11-25 · QoderWang2 · 实验室顶栏只留视图操作、起点区移除、历史按钮立页面右缘
 
 **用户指令**（三张截图）：①顶栏「夜间 / 在新窗口打开 / 挂到主题上」三个按钮不需要；②入口页「当前工作区的起点」整区去掉；③历史按钮要像关联探索（图三）那样放在页面右边。
