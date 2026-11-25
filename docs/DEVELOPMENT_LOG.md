@@ -5,6 +5,31 @@
 
 ---
 
+## 2026-11-25 · QoderWang1 · 正式题名版本推送与公网发布（#61）
+
+**用户指令**：「为啥在你这个里面看到和我在谷歌浏览器打开网页看到的不一样」，确认版本差异后说「哦，push，部署」。
+
+**范围**：把 #60 已验证的 `apps/web/dist` 原样发布到现有公开站点，并核对公网版本。**不做**：改源码、重复构建、新建站点、改变访问范围、合并或推送 `main`、读取或上传私人 `workspace/`。
+
+**推送与发布**
+
+- 将 `task/R2-L4-connection-QoderWang2` 从 `4e076cf` 推送到 `60c8909594ab25c76836fbaaae8ff803c3c94f39`，远端与本地一致。
+- 复用 projectId `01a1ce04-6ca0-7221-9e4a-22dfca5a7d65` 与既有站点，新 action `76a6f715-3a9d-4a6a-86ff-976b17cd0524`，`webDirectory: dist`、`spa: true`，无 Function / 数据库依赖。
+- `get_publish_status`：`published: true`、`readiness: publication_completed`；publish operation `01a20e47-3f48-704b-a6f6-40cccd8f11e5` succeeded/committed。站点仍为 `active` / `public` / `not_required`。
+- deployment `01a20e44-434f-7827-bb0d-cb1b00af907a`，release `01a20e47-3f47-7f3d-bd48-1c4936e62048`，线上入口 `index-Cp19EP6A.js`，与 #60 本地构建一致。本轮未改源码、未重复构建。
+
+**公网验收**
+
+- 匿名文档请求：`/`、`/connection`、`/workspace?ws=linear-algebra`、`/atlas?ws=linear-algebra`、`/guide` 与不存在路径均返回 200 应用外壳；首页确认加载新入口，JS / CSS / 图片 / 字体请求均 200 或 304，MIME 类型正确。
+- 公网真实打开四个预置，标题依次为《点到平面、两点与异面直线的最短距离》《线性代数的对象、运算与结构》《线性代数与机器人运动学》《生物神经网络与计算机科学／人工智能》；图片 1 / 3 / 1 / 1 张全部 `complete=true`、`naturalWidth>0`，KaTeX 143 / 253 / 78 / 51 组、错误 0，桌面无横向溢出，控制台无消息。
+- 本地与公网显示不同的原因是 Chrome 已打开标签页仍运行旧前端包；公网已是新包，用户需硬刷新（Ctrl+Shift+R）或关闭后重新打开。Desktop 内置浏览器隐藏时截图操作不可用，本轮公网验收采用真实浏览器结构、资源与运行态检查，未生成新的公网截图。
+
+**已知限制 / 下一步**
+
+- 真实 API key 生成质量与 BYOK 公网跨域仍未实测；PR 合并 `main` 仍待用户决定。
+
+---
+
 ## 2026-11-24 · QoderWang1 · 关联探索示例正式题名调整（#60）
 
 **用户指令**：「改完哪些莫名其妙的标题就提交吧」。

@@ -111,11 +111,11 @@ Runtime: 本地 Qoder Desktop        # 或 非本地 / CI
 
 | 项 | 值 |
 | --- | --- |
-| 最新接龙条目 | §4.5 #60（QoderWang1，2026-11-24，**四个关联探索示例已改用正式学术题名，四道门与浏览器验收通过**；未 push、未部署） |
-| 分支 | `task/R2-L4-connection-QoderWang2`（#60 实现提交 `7e60041`，本地 ahead 3，未 push）；上一条分支 `task/R2-L3-QoderWang2` 已 push。PR 合并 main 由用户定 |
+| 最新接龙条目 | §4.5 #61（QoderWang1，2026-11-25，**#60 正式题名版本已 push 并发布到原公开站点，公网验收通过**） |
+| 分支 | `task/R2-L4-connection-QoderWang2`（#60 实现 `7e60041`、文档 `60c8909`，均已 push）；上一条分支 `task/R2-L3-QoderWang2` 已 push。PR 合并 main 由用户定 |
 | 合并状态 | PR #1–#6 已进 `main`（T0-0 / T0-2 / T1-1 / T0-1 全部在内）。`task/T0-2-QoderWang1` 上未合并的 5 个文档提交已由 #18 并入，**该分支不必再开 PR**；某条分支差多少用 `git log --oneline origin/main..<branch>` 现取，别在文档里写条数 |
-| 下一位的入口 | ① #60 已完成四个示例题名与生成契约调整，实现 `7e60041`，四道门和桌面/窄屏浏览器验收通过；尚未 push、未部署。② #55 / #56 已随 #58 发布到现有站点，旧标签页需硬刷新；③ 真实 key 的生成质量与 BYOK 公网跨域仍未实测；④ 可视化实验室（并行进行中）→ L5 实验室接入 → 引导；⑤ 用户对 `docs/samples/r4-direction.html` 与拓印美工的表态仍待补进 `DESIGN.md` §14。读 `TASK_R2_LINKAGE.md` 顶部状态 |
-| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线、⑩ 方向反馈；⑪ **R2-L4 关联探索配图与全屏版本已发布并公网验收通过**（#58，公网 `vein-probe-personal-dx7phlm8g8e.qoder.zone`），余真实 key 生成质量与 BYOK 公网跨域实测、`probe/` 残留清理、PR 合并 main 仍待用户定 |
+| 下一位的入口 | ① #60 四个示例题名已随 #61 发布，公网入口 `index-Cp19EP6A.js`，旧标签页需硬刷新；② 真实 key 的生成质量与 BYOK 公网跨域仍未实测；③ 可视化实验室（并行进行中）→ L5 实验室接入 → 引导；④ 用户对 `docs/samples/r4-direction.html` 与拓印美工的表态仍待补进 `DESIGN.md` §14。读 `TASK_R2_LINKAGE.md` 顶部状态 |
+| 还欠谁的 | ② D-2、⑤ 团队版站点处置、⑧ 评委路线、⑩ 方向反馈；⑪ **R2-L4 配图、全屏与正式题名版本均已发布并公网验收通过**（#58 / #61，公网 `vein-probe-personal-dx7phlm8g8e.qoder.zone`），余真实 key 生成质量与 BYOK 公网跨域实测、`probe/` 残留清理、PR 合并 main 仍待用户定 |
 
 （旧版表格存档如下，保留原样以便追溯。）
 
@@ -292,7 +292,8 @@ CI 改写未经远端验证。
 | 58 | 2026-11-24 | QoderWang1 | **发布 #55 / #56 并诊断公网图片反馈——更正 #55 / #57 的“未部署”状态：已发布。** 复用既有公开站点与 projectId，新 action `d076f9fa-9a52-4056-915a-6d97d6e1ba4d`，`dist` / `spa: true`；`published: true`、readiness `publication_completed`，publish operation succeeded/committed，站点 active/public。发布时 HEAD `4e076cf`，线上入口 `index-BC-iDKjR.js`。公网逐篇打开四个探索示例（1 / 3 / 1 / 1 图）与主讲义（问题图 + 图 2-1～2-5），所有图片 `complete=true`、`naturalWidth>0`。用户原标签页仍运行 `index-BONNVgzf.js` 且零图，硬刷新后恢复新包；根因是旧标签页未替换运行中的前端包，不是 demo 漏图。未改源码、未重建、未碰 main 或访问范围 | **已发布并公网运行态验收通过**；本条文档尚未提交 | 旧标签页需 Ctrl+Shift+R；四个探索示例的正式题名调整尚未实施；真实 key 与公网跨域仍未实测；PR 合并 main 由用户定 | `DEVELOPMENT_LOG.md` 2026-11-24「配图与全屏版本发布、公网图片验收」；`DECISIONS.md` ADR-0002 同日发布段 |
 | 59 | 2026-11-24 | QoderWang1 | **认领：四个关联探索示例的正式题名调整**（用户：「改完哪些莫名其妙的标题就提交吧」）。**更正 #58 的文档状态：已提交 `52c04f2`。** 范围：只改四篇示例的 H1、递增 rev、同步标题依赖的测试与当前说明，四道门验证后提交。**不做**：正文/关系图重写、交互修改、私人 `workspace/`、push、部署、合并 `main` | **进行中** | 先完成题名与引用替换，再跑四道门；本轮只提交，不 push、不部署 | 本条 + `DEVELOPMENT_LOG.md` 顶部 #59 |
 | 60 | 2026-11-24 | QoderWang1 | **完成 #59——更正 #59 的“进行中”状态：四个示例已改用正式学术题名。** 题名依次为《点到平面、两点与异面直线的最短距离》《线性代数的对象、运算与结构》《线性代数与机器人运动学》《生物神经网络与计算机科学／人工智能》，rev 分别递增；生成契约升 v7.1，H1 用规范术语命名主题，判断移到正文首段；精确标题、导出与浏览器用例同步。四道门全绿（207 tests / 463 modules），真实浏览器逐篇验收四个新标题、1/3/1/1 张图、桌面/窄屏无溢出，控制台与资源错误 0；16 张证据截图已人工查看 | **已提交（实现 `7e60041`；日志/证据随本条）；未 push、未部署** | 用户决定是否 push / 部署；真实 key 生成质量与公网跨域仍未实测；PR 合并 main 由用户定 | `DEVELOPMENT_LOG.md` 2026-11-24「关联探索示例正式题名调整」；`docs/evidence/r2-explore-*.png` |
-**下一位从这里接第 61 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
+| 61 | 2026-11-25 | QoderWang1 | **发布 #60——更正 #60 的“未 push、未部署”状态：已推送并上线。** 用户确认 Qoder 与 Chrome 显示不同后授权「push，部署」。分支已推至 `60c8909`；复用原公开站点与 projectId，新 action `76a6f715-3a9d-4a6a-86ff-976b17cd0524`，`dist` / `spa: true`。`published: true`、readiness `publication_completed`，publish operation succeeded/committed，站点 active/public。线上入口 `index-Cp19EP6A.js`；公网四个新题名、1/3/1/1 张图、KaTeX 143/253/78/51、资源与控制台、五个路由及不存在路径回退均验收通过。差异来自旧标签页仍运行旧包，需硬刷新；未改源码、未重建、未碰 main 或访问范围 | **已发布并公网运行态验收通过**；本条随发布文档提交 push | 旧标签页需 Ctrl+Shift+R；真实 key 与公网跨域仍未实测；Desktop 隐藏 surface 下未生成公网新截图；PR 合并 main 由用户定 | `DEVELOPMENT_LOG.md` 2026-11-25「正式题名版本推送与公网发布」；`DECISIONS.md` ADR-0002 同日发布段 |
+**下一位从这里接第 62 条。** **新行紧贴上一行写，中间不留空行**——空行会把表格截断，Obsidian 与 GitHub 都会把后面的行渲染成乱码。只加行；要更正前人的条目，就在自己条目里写"更正 #N：……"。
 
 ---
 

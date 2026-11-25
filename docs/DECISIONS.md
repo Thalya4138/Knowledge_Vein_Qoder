@@ -198,6 +198,16 @@ publish operation `01a20d01-687f-7aa6-bd0c-9a627b22d919`，deployment
 `/workspace`、`/atlas`、`/guide` 与不存在路径均 200 + 应用外壳，JS / CSS 资源 200 且类型正确。
 **未测**：真实 key 下三种模式的生成质量与公网跨域；桌面 / 移动端视觉与横向溢出。
 
+**2026-11-25 R2-L4 关联探索正式题名版本发布**：同一公开站点、同一 projectId，新 action
+`76a6f715-3a9d-4a6a-86ff-976b17cd0524`（`webDirectory: dist`、`spa: true`）。发布时分支
+`task/R2-L4-connection-QoderWang2` HEAD `60c8909`。`published: true`、
+`readiness: publication_completed`，publish operation `01a20e47-3f48-704b-a6f6-40cccd8f11e5`
+succeeded/committed，deployment `01a20e44-434f-7827-bb0d-cb1b00af907a`，release
+`01a20e47-3f47-7f3d-bd48-1c4936e62048`；站点仍为 active/public。线上入口
+`index-Cp19EP6A.js` 与本地已验证构建一致；匿名文档请求首页、四个板块、指南与不存在路径均 200。
+公网逐篇验收四个新题名，图片 1 / 3 / 1 / 1 张全部加载，KaTeX 143 / 253 / 78 / 51 组、错误 0。
+用户此前看到旧题名是已打开标签页仍运行旧前端包，硬刷新或重新打开即可加载新包。**未测**：真实 key 的生成质量与公网跨域。
+
 **2026-11-24 R2-L4 讲义配图与关联导图全屏版本发布**：同一公开站点、同一 projectId，
 新 action `d076f9fa-9a52-4056-915a-6d97d6e1ba4d`（`webDirectory: dist`、`spa: true`）。
 发布时分支 `task/R2-L4-connection-QoderWang2` HEAD `4e076cf`。`published: true`、
