@@ -111,6 +111,12 @@ a:hover {
   font-size: var(--t-13);
 }
 
+.btn.small {
+  min-height: 32px;
+  padding: 0 var(--s-16);
+  font-size: var(--t-13);
+}
+
 .btn.quiet:hover {
   background: var(--fill);
   color: var(--ink);
@@ -243,4 +249,11 @@ a:hover {
   ::view-transition-new(root) {
     animation: none !important;
   }
+}
+
+/* 工作区方块：跟着所在板块的颜色（「新建」与本机文件夹两种方块保留原样） */
+.rail-item:not(.new) .rail-glyph:not(.local),
+.pick-card:not(.disabled) .pick-glyph {
+  background: var(--space, var(--ink));
+  color: var(--space-ink, var(--surface));
 }

@@ -174,6 +174,30 @@
 `Accept: */*` 的 curl 对深链得 404（资源请求不回退），加文档头即 200——非缺陷。**未测**：
 设置里 BYOK「测试连接」在公网地址下的跨域结果（需浏览器与模型服务，留待用户）；IndexedDB 隔天清理仍未测。
 
+**2026-11-20 R2-L3 版本发布（工作区存储补全 + BYOK 导图生成）**：同一站点、同一 projectId，
+新 action `5f2551f9-a833-4365-9f30-c2f9f510dc0b`（`spa: true`）。发布时分支
+`task/R2-L3-QoderWang2` HEAD `9846d48`（真源单独一笔 `58a54b0`、代码 `41dd420`、文档 `9846d48`，
+均已 push）。`published: true`、`readiness: publication_completed`；线上入口
+`index-kHQR9TfK.js` 与本地构建一致。匿名 curl（文档请求头）五个路径含深链均 200。
+**未测**：真实 key 的导图生成质量与公网跨域——用户本轮选择跳过，留待下一轮（未达标先改
+`prompts/MINDMAP.md`，不改核对代码）。
+
+**2026-11-20 晚 R3/R4 版本发布（对齐文件夹 + 导图 AI 对话 + 博物图鉴拓印美工）**：同一站点、
+同一 projectId，新 action `c60fa45c-309f-40fc-99d9-9079a238ae4b`（`spa: true`）。发布时分支
+`task/R2-L3-QoderWang2` HEAD `27feae1`（代码 `709b9b5`、文档 `27feae1`，均已 push）。
+`published: true`；线上入口 `index-CBBbtEP0.js` 与本地构建一致；匿名 curl（文档请求头）
+五个路径含深链均 200。**未测**：真实模型的改图质量与跨域；拓印滤镜只在 Chrome 验证。
+
+**2026-11-24 R2-L4 关联探索版本发布（碎片串联 / 学科元思考 / 跨学科并联、PDF 读取与 PPT 导出）**：
+同一公开站点、同一 projectId，action `0a30eb98-0032-44e6-9faf-58da502245f1`（`spa: true`，
+`webDirectory: dist`）。发布时分支 `task/R2-L4-connection-QoderWang2` HEAD `5503acb`；三笔
+`5b1b275` / `81e6508` / `5503acb` 均已 push。`published: true`、`readiness: publication_completed`，
+publish operation `01a20d01-687f-7aa6-bd0c-9a627b22d919`，deployment
+`01a20d01-0c5d-70e5-b44b-ecff880f897b`，release `01a20d01-687f-7a41-bde3-e0f381014e87`。
+线上入口 `index-yujg0S_A.js` 与本地构建一致；匿名 curl（文档请求头）`/`、`/connection`、
+`/workspace`、`/atlas`、`/guide` 与不存在路径均 200 + 应用外壳，JS / CSS 资源 200 且类型正确。
+**未测**：真实 key 下三种模式的生成质量与公网跨域；桌面 / 移动端视觉与横向溢出。
+
 **访问模式由订阅套餐决定（已解决，但留作决策依据）**：团队版账号下 `available_modes` 里没有
 `public`，站点只能 `organization`/`selected`（评委打不开）。用户账号套餐是「团队版 · 成员」，
 官方文档原文："Individual plans offer 'Anyone can access' (public) or 'Only invited users'.

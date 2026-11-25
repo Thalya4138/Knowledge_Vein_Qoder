@@ -115,5 +115,7 @@ export interface NoteDocument {
   headings: HeadingRef[];
   wikiLinks: WikiLinkRef[];
   rows: LayoutRow[];
+  /** 脚注定义（不进 blocks）；渲染某块时按引用补进去。 */
+  footnotes: import('mdast').FootnoteDefinition[];
   diagnostics: Diagnostic[];
 }

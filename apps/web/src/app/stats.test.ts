@@ -19,8 +19,8 @@ describe('countRealTools', () => {
   it('只统计真实可用的工具，planned 不算', () => {
     expect(
       countRealTools([
-        { id: 'a', name: 'a', status: 'real' },
-        { id: 'b', name: 'b', status: 'planned' },
+        { id: 'a', name: 'a', status: 'real', runStatus: 'pre-rendered' },
+        { id: 'b', name: 'b', status: 'planned', runStatus: 'example' },
       ]),
     ).toBe(1);
   });

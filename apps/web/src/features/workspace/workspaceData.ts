@@ -3,7 +3,10 @@ import type { FileKind, Workspace, WsFile, WsFolder } from '../../store/types';
 
 export type { FileKind, Workspace, WsFile, WsFolder };
 
-const BASE = '/demo/linear-algebra';
+export const DEMO_BASE = '/demo/linear-algebra';
+const BASE = DEMO_BASE;
+/** 示例工作区里随网站发布的讲义原件（相对 DEMO_BASE） */
+export const DEMO_NOTE_PATHS = ['notes/2.1-列空间中的最近点.md'];
 
 const RESOURCE_KIND: Record<string, string> = {
   video: '视频',
@@ -68,8 +71,11 @@ export const DEMO_WORKSPACE: Workspace = {
       name: '插图',
       files: [
         { id: 'fig-2-0', name: '三个数据点与两条候选直线', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-0-问题探讨.svg`) },
-        { id: 'fig-2-1', name: '图 2-1 b 在列空间上的最近点', kind: 'image', url: `${BASE}/notes/figures/2-1.svg` },
-        { id: 'fig-2-2', name: '图 2-2 最佳直线与残差', kind: 'image', url: `${BASE}/notes/figures/2-2.svg` },
+        { id: 'fig-2-1', name: '图 2-1 b 在列空间上的最近点', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-1.svg`) },
+        { id: 'fig-2-2', name: '图 2-2 从残差正交到法方程', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-2-从正交到法方程.svg`) },
+        { id: 'fig-2-3', name: '图 2-3 最佳直线与残差', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-3.svg`) },
+        { id: 'fig-2-4', name: '图 2-4 参数不唯一', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-4-参数不唯一.svg`) },
+        { id: 'fig-2-5', name: '图 2-5 投影矩阵', kind: 'image', url: encodeURI(`${BASE}/notes/figures/2-5-投影矩阵.svg`) },
       ],
     },
   ],

@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 170" width="220" height="170">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 170" width="220" height="170" role="img" aria-labelledby="title desc">
+  <title id="title">三个数据点与两条候选直线</title>
+  <desc id="desc">在 t 为 1、2、3 时分别测得 b 为 1、2、2；三条竖直虚线帮助比较候选直线，三个点不在同一直线上。</desc>
           <g stroke="#9bb" stroke-width="1"><line x1="30" y1="145" x2="210" y2="145"/><line x1="30" y1="145" x2="30" y2="10"/></g>
           <g font-size="11" fill="#567" font-family="serif">
             <text x="205" y="160">t</text><text x="16" y="16">b</text>

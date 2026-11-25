@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cognitive-atlas.local/schemas/map.schema.json",
+  "title": "WorkspaceMaps",
+  "description": "工作区 maps/ 目录下的两份文件：maps/mind.json（思维导图 MDoc）与 maps/memory.json（个人记忆图谱的练习状态）。导图是 Markdown 与图谱的衍生物，不反向覆盖原文（AGENTS.md §1 第 6 条）。两类连线严格分开：知识关系来自 graph.json、导图里只读，不写进本文件；links 只放用户手画的「我的连线」（ADR-0006），理由选填。字段的权威定义在 apps/web/src/features/atlas/mindDoc.ts 与 maps.ts；additionalProperties 为 true，未知字段导入时保留。",
+  "$defs": {
+    "topic": {
+      "type": "object",
+      "required": ["id", "text", "kids"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string" },
+        "kids": { "type": "array", "items": { "$ref": "#/$defs/topic" } },
+        "ref": { "type": "string", "description": "对应 graph.json 的节点 id（AGENTS.md §1 第 5 条：四板块同一 node.id）" },
+        "f": { "type": "array", "items": { "type": "string" }, "description": "一行一条 LaTeX，只抄讲义原文" },
+        "src": { "type": "string", "description": "出处；生成时只允许笔记片段锚点「路径#标题」" },
+        "tag": { "type": "string" },
+        "tagNote": { "type": "string" },
+        "phen": { "type": "string" },
+        "contrast": { "type": "string" },
+        "notes": { "type": "string" },
+        "viz": { "type": "string", "description": "挂载的预置实验 id（对应一次 VisualizationRun）；只影响主题与实验室之间的跳转，不写知识关系" },
+        "bold": { "type": "boolean" },
+        "mark": { "type": "boolean" },
+        "color": { "enum": ["accent", "cinnabar"] },
+        "fold": { "type": "boolean" },
+        "band": { "type": "integer", "minimum": 0 },
+        "side": { "enum": [1, -1] }
+      }
+    },
+    "mind": {
+      "type": "object",
+      "required": ["version", "title", "root", "links", "view", "seq"],
+      "additionalProperties": true,
+      "properties": {
+        "version": { "const": 2 },
+        "title": { "type": "string" },
+        "root": { "$ref": "#/$defs/topic" },
+        "links": {
+          "type": "array",
+          "description": "我的连线（PersonalEdge）：只表达「我怎么记」，不进逻辑视图与结构视图",
+          "items": {
+            "type": "object",
+            "required": ["id", "from", "to", "label", "reason", "src"],
+            "properties": {
+              "id": { "type": "string" },
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "label": { "type": "string" },
+              "reason": { "type": "string" },
+              "src": { "type": "string" }
+            }
+          }
+        },
+        "view": {
+          "type": "object",
+          "properties": {
+            "links": { "enum": ["sel", "all", "none"] },
+            "fx": { "type": "boolean" },
+            "chips": { "type": "boolean" },
+            "layout": { "enum": ["both", "right"] },
+            "level": { "type": ["integer", "null"] }
+          }
+        },
+        "seq": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "description": "练习状态只属于用户，AI 不得改写（AGENTS.md §1 第 4 条）",
+      "additionalProperties": true,
+      "properties": {
+        "collapsed": { "type": "array", "items": { "type": "string" } },
+        "covered": { "type": "array", "items": { "type": "string" } },
+        "blanks": { "type": "array", "items": { "type": "string" } },
+        "answers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "offsets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["dx", "dy"],
+            "properties": { "dx": { "type": "number" }, "dy": { "type": "number" } }
+          }
+        },
+        "autoAlign": { "type": "boolean" }
+      }
+    }
+  },
+  "anyOf": [{ "$ref": "#/$defs/mind" }, { "$ref": "#/$defs/memory" }]
+}

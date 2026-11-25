@@ -1,0 +1,175 @@
+/*
+ * 博物图鉴 · 拓印（DESIGN.md §14）：标本拓片、印章、背景图版。
+ * 颜料色由外层 .pg-* 给出 --pg；拓印质感在 ui/plate/rub.tsx 的滤镜里，这里只管颜色、透明度与位置。
+ */
+
+.pg-workspace { --pg: var(--c-workspace); }
+.pg-lab { --pg: var(--c-lab); }
+.pg-connection { --pg: var(--c-connection); }
+.pg-atlas { --pg: var(--c-atlas); }
+
+.specimen {
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform var(--d-long) var(--ease);
+}
+
+.specimen svg,
+.plate-backdrop {
+  overflow: visible;
+}
+
+.specimen .pg,
+.plate-backdrop .pg {
+  fill: var(--pg);
+}
+
+.specimen .pg-line,
+.plate-backdrop .pg-line {
+  fill: none;
+  stroke: var(--pg);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 颜料上「留白」的线：画成纸色 */
+.specimen .paper-line,
+.plate-backdrop .paper-line {
+  fill: none;
+  stroke: var(--plate-paper);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:hover > .specimen {
+    transform: rotate(calc(var(--tilt, 0deg) - 6deg));
+  }
+}
+
+/* ---------- 背景图版 ---------- */
+
+.plate-backdrop {
+  position: fixed;
+  left: 0;
+  top: var(--header-h);
+  z-index: 0;
+  width: 100vw;
+  height: calc(100vh - var(--header-h));
+  pointer-events: none;
+}
+
+.plate-backdrop .rub {
+  opacity: var(--rub-opacity);
+}
+
+.plate-backdrop .rub-faint {
+  opacity: 0.55;
+}
+
+.plate-backdrop .wash {
+  opacity: 0.18;
+}
+
+.plate-backdrop .engrave {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: var(--engrave-opacity);
+}
+
+.plate-backdrop .engrave-dot {
+  fill: var(--ink);
+}
+
+.plate-backdrop .hatch-line {
+  stroke: var(--ink);
+  stroke-width: 0.7;
+}
+
+.plate-backdrop .plate-math {
+  fill: var(--ink);
+  stroke: none;
+  font-family: var(--font-math);
+  font-style: italic;
+  font-size: 20px;
+}
+
+.plate-frame rect {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+  opacity: 0.16;
+}
+
+.plate-caption {
+  fill: var(--ink-3);
+  font-family: var(--font-text);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.plate-backdrop .thread {
+  fill: none;
+  stroke: var(--pg);
+  stroke-width: 1.2;
+  opacity: 0.55;
+}
+
+.plate-backdrop .strap rect {
+  fill: var(--plate-paper);
+  stroke: var(--ink);
+  stroke-width: 0.6;
+  opacity: 0.7;
+}
+
+.plate-backdrop .plate-pin circle {
+  fill: var(--seal);
+}
+
+.plate-backdrop .plate-pin .pin-glint {
+  fill: var(--plate-paper);
+  opacity: 0.8;
+}
+
+.plate-backdrop .tag rect {
+  fill: var(--plate-paper);
+  stroke: var(--ink);
+  stroke-width: 0.8;
+  opacity: 0.85;
+}
+
+.plate-backdrop .tag line {
+  stroke: var(--ink);
+  stroke-width: 0.5;
+  opacity: 0.4;
+}
+
+.plate-backdrop .tag text {
+  fill: var(--ink-2);
+  font-family: var(--font-text);
+}
+
+.plate-backdrop .tag-no {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.plate-backdrop .tag-name {
+  font-size: 14px;
+}
+
+/* 窄屏：图版被裁掉两侧，标本看不全，连线与标签就失去了指向——只留拓片和图框 */
+@media (max-width: 700px) {
+  .plate-backdrop .engrave,
+  .plate-backdrop .tag,
+  .plate-backdrop .thread,
+  .plate-backdrop .strap,
+  .plate-backdrop .plate-pin,
+  .plate-backdrop .plate-caption {
+    display: none;
+  }
+}

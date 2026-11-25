@@ -1,22 +1,35 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { demoGraph, demoKb } from '../../app/demo';
 import { useWorkspace } from '../../app/WorkspaceProvider';
+import { openStore } from '../../store/open';
+import type { Workspace, WorkspaceStore } from '../../store/types';
 import { AskBar } from '../../ui/AskBar';
 import { MiniTerrain } from '../../ui/cover/Terrain';
 import { Icon } from '../../ui/Icon';
+import { loadMaps, mapWriter, MEMORY_PATH, MIND_PATH, savedLabel, type MemoryState, type WorkspaceMaps } from './maps';
+import { MapGenerate } from './MapGenerate';
+import { MindAssist } from './MindAssist';
+import type { MindCanvas } from './mindCanvas';
 import { MemoryMap } from './MemoryMap';
 import { MindEditor } from './MindEditor';
-import { buildDemoMap, mapNodeCount } from './mindmapData';
+import { indexDoc, normalizeDoc, seedDoc, type MDoc } from './mindDoc';
+import { labHref, toolById } from '../lab/tools';
 import '../../styles/atlas.css';
 
 /**
  * 认知记忆图谱：选工作区 → 选图谱 → 画布。选择写进地址（?ws= &map=），可以直接分享到画布。
+ * 每个工作区的导图与练习存在它自己的 maps/ 里（R2-L L3）；还没有导图的工作区先生成或从空白开始。
  */
 
-const MAPS = [
+const MAPS: { id: string; name: string; line: string; demoOnly?: boolean }[] = [
   { id: 'mind', name: '思维导图', line: '像 WPS 一样用 Tab、Enter 编辑，公式用 LaTeX，改完自动保存。' },
   { id: 'memory', name: '个人记忆图谱', line: '从思维导图出发：收起、遮盖、挖空，考考自己。' },
-] as const;
+  { id: 'mechanics', name: '力学思维导图', line: '整张预置的力学概念网络：逐层展开，可缩放、可检索。', demoOnly: true },
+];
+
+/** 力学导图是随站发布的静态页，不属于任何工作区的 maps/；只有示例工作区展示它。 */
+const MECHANICS_SRC = '/visualizations/mechanics-mindmap.html';
 
 /** 选图谱卡片上的小图：一棵横向分层的树；记忆图谱的几个叶子是挖空的框。 */
 function MapSketch({ blank }: { blank: boolean }) {
@@ -42,8 +55,7 @@ function MapSketch({ blank }: { blank: boolean }) {
 
 export function AtlasPage() {
   const [params] = useSearchParams();
-  const { spaces, ready, error, workspace } = useWorkspace();
-  const map = MAPS.find((m) => m.id === params.get('map'));
+  const { spaces, ready, error, workspace, replace } = useWorkspace();
 
   if (!ready) return <div className="atlas-pick" role="status">正在读取工作区…</div>;
 
@@ -83,79 +95,280 @@ export function AtlasPage() {
     );
   }
 
-  if (workspace.origin !== 'demo') {
+  return <WorkspaceAtlas key={workspace.id} workspace={workspace} mapId={params.get('map')} onWorkspace={replace} />;
+}
+
+function Crumbs({ workspace, map }: { workspace: Workspace; map?: string }) {
+  return (
+    <p className="crumb-back">
+      <Link to="/atlas" viewTransition>
+        工作区
+      </Link>
+      <Icon name="chevron" className="icon crumb-sep" />
+      {map ? (
+        <>
+          <Link to={`?ws=${encodeURIComponent(workspace.id)}`} viewTransition>
+            {workspace.name}
+          </Link>
+          <Icon name="chevron" className="icon crumb-sep" />
+          <strong>{map}</strong>
+        </>
+      ) : (
+        workspace.name
+      )}
+    </p>
+  );
+}
+
+type Load =
+  | { kind: 'loading' }
+  | { kind: 'auth' }
+  | { kind: 'error'; message: string }
+  | { kind: 'ready'; store: WorkspaceStore; maps: WorkspaceMaps };
+
+/** 一个工作区的图谱：读它的 maps/，思维导图与记忆图谱共用同一份导图。 */
+function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspace; mapId: string | null; onWorkspace: (w: Workspace) => void }) {
+  const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  const [notice, setNotice] = useState<string | null>(null);
+  const mapCards = MAPS.filter((m) => !m.demoOnly || workspace.origin === 'demo');
+  const map = mapCards.find((m) => m.id === mapId);
+  const wsQuery = `?ws=${encodeURIComponent(workspace.id)}`;
+  // 画布就地修改导图；切到记忆图谱时要拿最新的那一份，所以记下「最近写出的」
+  const mindRef = useRef<MDoc | null>(null);
+  const memRef = useRef<MemoryState | null>(null);
+  // 浏览器工作区写 maps/ 后文件栏会变，始终用最新的工作区对象
+  const wsRef = useRef(workspace);
+  wsRef.current = workspace;
+  const canvasRef = useRef<MindCanvas | null>(null);
+  const [syncTick, setSyncTick] = useState(0);
+  // 全屏阅读 / 编辑：优先用浏览器全屏；浏览器不给时退回铺满窗口
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const on = () => setFull(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', on);
+    return () => document.removeEventListener('fullscreenchange', on);
+  }, []);
+  useEffect(() => {
+    // 画板尺寸变了，重新放进窗口
+    const t = window.setTimeout(() => canvasRef.current?.fit(), 120);
+    return () => window.clearTimeout(t);
+  }, [full]);
+  useEffect(() => {
+    if (!full || document.fullscreenElement) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setFull(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [full]);
+  const toggleFull = () => {
+    if (document.fullscreenElement) return void document.exitFullscreen();
+    if (full) return setFull(false);
+    const el = frameRef.current;
+    if (el?.requestFullscreen) el.requestFullscreen().catch(() => setFull(true));
+    else setFull(true);
+  };
+
+  const start = useCallback(async (request: boolean) => {
+    try {
+      const opened = await openStore(wsRef.current, request);
+      if (opened.status === 'auth') return setLoad({ kind: 'auth' });
+      if (opened.status === 'missing') return setLoad({ kind: 'error', message: opened.message });
+      const maps = await loadMaps(opened.store, wsRef.current);
+      mindRef.current = maps.mind;
+      memRef.current = maps.memory;
+      setLoad({ kind: 'ready', store: opened.store, maps });
+    } catch (e) {
+      setLoad({ kind: 'error', message: (e as Error).message });
+    }
+  }, []);
+
+  useEffect(() => {
+    void start(false);
+  }, [start]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = window.setTimeout(() => setNotice(null), 3600);
+    return () => window.clearTimeout(t);
+  }, [notice]);
+
+  const store = load.kind === 'ready' ? load.store : null;
+  const writers = useMemo(() => {
+    if (!store) return null;
+    const track = (w: Workspace) => {
+      wsRef.current = w;
+      onWorkspace(w);
+    };
+    const mind = mapWriter(store, wsRef.current, MIND_PATH, track);
+    const memory = mapWriter(store, wsRef.current, MEMORY_PATH, track);
+    return {
+      mind: async (json: string) => {
+        mindRef.current = normalizeDoc(JSON.parse(json)) ?? mindRef.current;
+        await mind(json);
+      },
+      memory: async (json: string) => {
+        memRef.current = JSON.parse(json) as MemoryState;
+        await memory(json);
+      },
+    };
+  }, [store, onWorkspace]);
+  const onError = useCallback((msg: string) => setNotice(msg), []);
+
+  if (load.kind === 'loading') return <div className="atlas-pick" role="status">正在读取「{workspace.name}」的图谱…</div>;
+
+  if (load.kind === 'auth' || load.kind === 'error') {
     return (
       <div className="atlas-pick">
-        <p className="crumb-back">
-          <Link to="/atlas" viewTransition>工作区</Link>
-          <Icon name="chevron" className="icon crumb-sep" />
-          {workspace.name}
-        </p>
-        <h1 className="display">这个工作区还没有图谱</h1>
+        <Crumbs workspace={workspace} />
+        {/* 这两句里有标题字体子集之外的字，用正文字体，免得一半标题体一半回落 */}
+        <h1 className="gen-title">{load.kind === 'auth' ? '需要重新授权这个文件夹' : '没有读到这个工作区'}</h1>
         <p>
-          当前不会按文件夹结构自动生成知识关系，也不会伪造节点。可以先回工作台整理 Markdown；
-          新工作区的种子图谱策略确定后，再从这里开始编辑。
+          {load.kind === 'auth'
+            ? `导图存在你的文件夹里（${MIND_PATH}）。浏览器每次新开都要你点一次允许，才能读写这个文件夹。`
+            : load.message}
         </p>
         <p>
-          <Link className="btn primary" to={`/workspace?ws=${encodeURIComponent(workspace.id)}`} viewTransition>
-            回工作台整理资料
-          </Link>
+          {load.kind === 'auth' ? (
+            <button type="button" className="btn primary" onClick={() => void start(true)}>
+              允许读写「{workspace.name}」
+            </button>
+          ) : (
+            <Link className="btn primary" to={`/workspace${wsQuery}`} viewTransition>
+              回工作台
+            </Link>
+          )}
         </p>
       </div>
     );
   }
 
+  const { maps } = load;
+  const mind = mindRef.current;
+  const mechanics = map?.id === 'mechanics';
+
+  if (!mechanics && (!mind || !writers)) {
+    return (
+      <div className="atlas-pick">
+        <Crumbs workspace={workspace} />
+        {/* 标题只用标题字体子集里有的字；工作区名是用户内容，放在面包屑里 */}
+        <h1 className="display">这个工作区没有导图</h1>
+        <MapGenerate
+          name={workspace.name}
+          store={load.store}
+          graph={maps.graph}
+          writeLabel={workspace.origin === 'folder' ? `文件夹的 ${MIND_PATH}` : MIND_PATH}
+          onAccept={async (doc) => {
+            await writers!.mind(JSON.stringify(doc));
+            setLoad({ kind: 'ready', store: load.store, maps: { ...maps, mind: doc, fresh: false } });
+            setNotice(`已写入 ${MIND_PATH}`);
+          }}
+        />
+      </div>
+    );
+  }
+
+  const count = mind ? indexDoc(mind).byId.size : 0;
+
   if (!map) {
     return (
       <div className="atlas-pick">
-        <p className="crumb-back">
-          <Link to="/atlas" viewTransition>
-            工作区
-          </Link>
-          <Icon name="chevron" className="icon crumb-sep" />
-          {workspace.name}
-        </p>
+        <Crumbs workspace={workspace} />
         <h1 className="display">选一张图</h1>
         <ul className="pick-grid">
-          {MAPS.map((m) => (
+          {mapCards.map((m) => (
             <li key={m.id}>
-              <Link className="pick-card art" to={`?ws=linear-algebra&map=${m.id}`} viewTransition>
+              <Link className="pick-card art" to={`${wsQuery}&map=${m.id}`} viewTransition>
                 <MapSketch blank={m.id === 'memory'} />
                 <span className="pick-name">{m.name}</span>
                 <span className="pick-meta">{m.line}</span>
-                <span className="pick-meta">{mapNodeCount(buildDemoMap())} 个节点</span>
+                <span className="pick-meta">
+                  {m.id === 'mechanics'
+                    ? '预置示例 · 整图可交互'
+                    : `${count} 个主题 · 存在 ${m.id === 'mind' ? MIND_PATH : MEMORY_PATH}`}
+                </span>
               </Link>
             </li>
           ))}
         </ul>
+        {notice && <p role="status">{notice}</p>}
       </div>
     );
   }
 
   return (
-    <div className="atlas-canvas">
+    <div className={full ? 'atlas-canvas full' : 'atlas-canvas'} ref={frameRef}>
       <header className="atlas-head">
-        <p className="crumb-back">
-          <Link to="/atlas" viewTransition>
-            工作区
-          </Link>
-          <Icon name="chevron" className="icon crumb-sep" />
-          <Link to="?ws=linear-algebra" viewTransition>
-            {workspace.name}
-          </Link>
-          <Icon name="chevron" className="icon crumb-sep" />
-          <strong>{map.name}</strong>
-        </p>
-        <div className="segmented" role="group" aria-label="切换图谱">
-          {MAPS.map((m) => (
-            <Link key={m.id} to={`?ws=linear-algebra&map=${m.id}`} aria-current={m.id === map.id ? 'page' : undefined} replace>
-              {m.name}
-            </Link>
-          ))}
+        <Crumbs workspace={workspace} map={map.name} />
+        <div className="atlas-tools">
+          {map.id === 'mind' && (
+            <button
+              type="button"
+              className="btn quiet"
+              onClick={() => setSyncTick((n) => n + 1)}
+              title="工作区里的笔记改过之后，让 AI 对照最新的笔记更新这张图；先给你看改了什么，确认后才应用"
+            >
+              <Icon name="refresh" />
+              按资料更新
+            </button>
+          )}
+          <button type="button" className="btn quiet" onClick={toggleFull} aria-pressed={full} title={full ? '退出全屏（Esc）' : '全屏阅读与编辑'}>
+            <Icon name={full ? 'shrink' : 'expand'} />
+            {full ? '退出全屏' : '全屏'}
+          </button>
+          <div className="segmented" role="group" aria-label="切换图谱">
+            {mapCards.map((m) => (
+              <Link key={m.id} to={`${wsQuery}&map=${m.id}`} aria-current={m.id === map.id ? 'page' : undefined} replace>
+                {m.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </header>
-      {map.id === 'mind' ? <MindEditor /> : <MemoryMap />}
-      <AskBar placeholder={map.id === 'mind' ? '问这张图，或让它帮你改：比如「把同一类问题合并成一支」' : '让它帮你出题，或照你的想法新建一张图'} />
+      {mechanics ? (
+        <div className="atlas-embed">
+          <iframe className="atlas-embed-frame" src={MECHANICS_SRC} title="力学思维导图（示例）" />
+          <p className="atlas-embed-note">
+            这是随站发布的整张力学导图示例，不是从当前工作区生成的。
+            <a href={MECHANICS_SRC} target="_blank" rel="noreferrer">
+              在新窗口打开
+            </a>
+          </p>
+        </div>
+      ) : map.id === 'mind' ? (
+        <MindEditor
+          key={workspace.id}
+          doc={mind!}
+          knowledge={maps.knowledge}
+          persist={writers!.mind}
+          fresh={maps.fresh}
+          savedLabel={savedLabel(workspace, MIND_PATH)}
+          seed={workspace.origin === 'demo' ? seedDoc : undefined}
+          vizOf={(id, nodeId) => {
+            const exp = toolById(id);
+            return exp ? { name: exp.name, href: labHref({ ws: workspace.id, viz: id, node: nodeId }) } : null;
+          }}
+          onCanvas={(c) => (canvasRef.current = c)}
+        />
+      ) : (
+        <MemoryMap
+          key={workspace.id}
+          doc={mind!}
+          knowledge={maps.knowledge}
+          memory={memRef.current ?? maps.memory}
+          persist={writers!.memory}
+          onError={onError}
+        />
+      )}
+      {notice && (
+        <p className="atlas-notice" role="status">
+          {notice}
+        </p>
+      )}
+      {mechanics ? null : map.id === 'mind' ? (
+        <MindAssist canvas={() => canvasRef.current} store={load.store} graph={maps.graph} name={workspace.name} syncTick={syncTick} />
+      ) : (
+        <AskBar placeholder="让它帮你出题，或照你的想法新建一张图" />
+      )}
     </div>
   );
 }

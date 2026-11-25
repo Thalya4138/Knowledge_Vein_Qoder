@@ -4,7 +4,7 @@
  * 只做确定性的结构解析：不渲染、不访问网络、不读 manifest。
  * 同一份源码永远得到同一份结构，检索索引与阅读器都从这里取锚点与行号。
  */
-import type { Blockquote, Html, Nodes, Paragraph, PhrasingContent, Root, RootContent } from 'mdast';
+import type { Blockquote, FootnoteDefinition, Html, Nodes, Paragraph, PhrasingContent, Root, RootContent } from 'mdast';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkFrontmatter from 'remark-frontmatter';
@@ -14,6 +14,7 @@ import { ALIGN_RE, createSlugger, takeBlockAnchor } from './anchors';
 import { isCalloutKind, placementOf } from './callouts';
 import { parseFrontmatter } from './frontmatter';
 import { transformWikiLinks } from './wikiLink';
+import { OB_CALLOUT, preprocessObsidian, transformObsidianInline } from './obsidian';
 import type {
   CalloutBlock, Diagnostic, HeadingRef, LayoutRow, LineRange, NoteBlock, NoteDocument, WikiLinkRef,
 } from './types';
@@ -25,10 +26,14 @@ export function parseMarkdown(source: string): Root {
   return parser.parse(source);
 }
 
-export function parseNote(source: string): NoteDocument {
+export function parseNote(raw: string): NoteDocument {
+  // Obsidian 写法先逐行改写（行号不变），再交给 remark
+  const source = preprocessObsidian(raw);
   const tree = parseMarkdown(source);
   promoteDisplayMath(tree, source);
+  transformObsidianInline(tree);
   transformWikiLinks(tree);
+  const footnotes: FootnoteDefinition[] = [];
 
   const diagnostics: Diagnostic[] = [];
   const blocks: NoteBlock[] = [];
@@ -62,6 +67,11 @@ export function parseNote(source: string): NoteDocument {
     }
     // 引用式链接的定义不产出可见内容；见本目录 README"已知限制"
     if (node.type === 'definition') continue;
+    // 脚注定义不单独成块：阅读器把它补进引用它的那一块里渲染
+    if (node.type === 'footnoteDefinition') {
+      footnotes.push(node);
+      continue;
+    }
 
     if (node.type === 'heading') {
       const text = plainText(node.children);
@@ -125,7 +135,7 @@ export function parseNote(source: string): NoteDocument {
   const blockById = new Map(blocks.map((b) => [b.id, b]));
 
   return {
-    frontmatter, title, blocks, blockById, anchors, headings,
+    frontmatter, title, blocks, blockById, anchors, headings, footnotes,
     wikiLinks: collectWikiLinks(blocks),
     rows: buildRows(blocks),
     diagnostics,
@@ -165,7 +175,8 @@ function toCallout(
   body.push(...node.children.slice(1));
 
   const known = isCalloutKind(kind);
-  if (!known) {
+  // Obsidian 自带的提示框类型（tip、warning……）不是错误，只是不归教材栏目管
+  if (!known && !OB_CALLOUT[kind]) {
     diagnostics.push({
       severity: 'warning', code: 'unknown-callout',
       message: `未定义的块类型 [!${kind}]，按普通框渲染（白名单见 callouts.ts）`, line: lines.start,

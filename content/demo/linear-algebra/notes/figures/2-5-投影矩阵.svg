@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" font-family="'Times New Roman','Songti SC','Noto Serif SC',SimSun,serif" font-size="15">
+  <title>投影矩阵把任意向量送到列空间中的最近点</title>
+  <desc>数据空间中蓝色平面是列空间。矩阵 P 把平面外的 b 和 b 撇沿垂直于平面的方向送到 p；已经在平面内的向量保持不变。</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#355c72"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#b5661f"/></marker>
+  </defs>
+  <rect x="12" y="12" width="696" height="244" rx="10" fill="#f7fafc" stroke="#c7d6df"/>
+  <polygon points="162,212 398,230 620,94 388,76" fill="#dfeef7" stroke="#6e9db7" stroke-width="1.5"/>
+  <text x="478" y="188" fill="#355c72">Col(A)</text>
+  <line x1="388" y1="76" x2="374" y2="23" stroke="#355c72" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="398" y1="230" x2="579" y2="266" stroke="#355c72" stroke-width="2" marker-end="url(#a)"/>
+  <circle cx="388" cy="152" r="5" fill="#b5661f"/>
+  <circle cx="374" cy="31" r="5" fill="#355c72"/>
+  <circle cx="579" cy="263" r="5" fill="#355c72"/>
+  <line x1="378" y1="37" x2="385" y2="145" stroke="#b5661f" stroke-width="1.7" stroke-dasharray="6 4" marker-end="url(#b)"/>
+  <line x1="574" y1="257" x2="394" y2="159" stroke="#b5661f" stroke-width="1.7" stroke-dasharray="6 4" marker-end="url(#b)"/>
+  <polyline points="371,131 380,139 388,127" fill="none" stroke="#b5661f" stroke-width="1.4"/>
+  <polyline points="381,163 392,169 404,157" fill="none" stroke="#b5661f" stroke-width="1.4"/>
+  <text x="342" y="30" fill="#355c72" font-style="italic">b</text>
+  <text x="585" y="258" fill="#355c72" font-style="italic">b′</text>
+  <text x="397" y="151" fill="#8e4e17" font-style="italic">p</text>
+  <text x="39" y="51" fill="#173f56" font-style="italic" font-size="18">P = A(AᵀA)⁻¹Aᵀ</text>
+  <text x="39" y="79" fill="#355c72">Pb = p，Pb′ = p</text>
+  <text x="39" y="112" fill="#5c6f7a" font-size="14">两条虚线都垂直于平面：</text>
+  <text x="39" y="134" fill="#5c6f7a" font-size="14">P 只保留每个向量在 Col(A) 上的分量。</text>
+  <text x="39" y="220" fill="#173f56">若 q ∈ Col(A)，则 Pq = q；所以 P² = P。</text>
+</svg>

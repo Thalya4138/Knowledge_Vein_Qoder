@@ -4,6 +4,7 @@ import {
   addSibling,
   answerKey,
   assumptionsOf,
+  attachViz,
   demoKnowledge,
   foldToLevel,
   indexDoc,
@@ -11,6 +12,8 @@ import {
   loadDoc,
   moveNode,
   moveSibling,
+  nodesWithViz,
+  normalizeDoc,
   parseImported,
   parseOutline,
   pasteBranches,
@@ -153,5 +156,39 @@ describe('粘贴与导出', () => {
     expect(answerKey('残差 $\\mathbf e=\\mathbf b-\\mathbf p$')).toBe(answerKey('残差 e = b − p'));
     expect(answerKey('$A^{\\top}A$')).toBe(answerKey('A^TA'));
     expect(answerKey('法方程')).not.toBe(answerKey('正交条件'));
+  });
+});
+
+describe('可视化挂载（TASK_R2_LINKAGE L5）', () => {
+  it('attachViz 写主题上的 viz，重复挂同一张返回 false，取消后字段消失', () => {
+    const doc = seedDoc();
+    const id = doc.root.kids[0]!.id;
+    expect(attachViz(doc, id, 'viz.photosynthesis')).toBe(true);
+    expect(indexDoc(doc).byId.get(id)!.viz).toBe('viz.photosynthesis');
+    expect(attachViz(doc, id, 'viz.photosynthesis')).toBe(false);
+    expect(attachViz(doc, 'nope', 'viz.photosynthesis')).toBe(false);
+    expect(attachViz(doc, id, null)).toBe(true);
+    expect(indexDoc(doc).byId.get(id)!.viz).toBeUndefined();
+    expect(attachViz(doc, id, null)).toBe(false);
+  });
+
+  it('nodesWithViz 只列出挂着同一张实验的主题', () => {
+    const doc = seedDoc();
+    const [a, b] = doc.root.kids;
+    attachViz(doc, a!.id, 'viz.quadric-surfaces');
+    attachViz(doc, b!.id, 'viz.photosynthesis');
+    expect(nodesWithViz(doc, 'viz.quadric-surfaces').map((n) => n.id)).toEqual([a!.id]);
+    expect(nodesWithViz(doc, 'viz.photosynthesis').map((n) => n.id)).toEqual([b!.id]);
+    expect(nodesWithViz(doc, 'viz.none')).toEqual([]);
+  });
+
+  it('viz 经导出与导入原样保留', () => {
+    const doc = seedDoc();
+    const id = doc.root.kids[1]!.id;
+    attachViz(doc, id, 'viz.photosynthesis');
+    const back = parseImported(serialize(doc));
+    expect(back && indexDoc(back).byId.get(id)!.viz).toBe('viz.photosynthesis');
+    const norm = normalizeDoc(JSON.parse(serialize(doc)));
+    expect(norm && indexDoc(norm).byId.get(id)!.viz).toBe('viz.photosynthesis');
   });
 });

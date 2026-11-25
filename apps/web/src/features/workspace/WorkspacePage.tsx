@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { createBrowserNote, createBrowserWorkspace } from '../../store/browser';
+import { createBrowserNote, createBrowserWorkspace, importBrowserFolder } from '../../store/browser';
 import { useWorkspace } from '../../app/WorkspaceProvider';
-import { unregisterWorkspace } from '../../store/registry';
+import { renameWorkspace, unregisterWorkspace } from '../../store/registry';
 import type { Workspace } from '../../store/types';
 import { Icon, type IconName } from '../../ui/Icon';
 import { AiDock, type Hit } from './AiDock';
 import { canEdit, FileViewer, type LocateRequest } from './FileViewer';
+import { FolderAlign } from './FolderAlign';
 import { forgetLocalFolder, localFolderSupported, openLocalFolder, restoreLocalFolder } from './localFolder';
 import { DEMO_WORKSPACE, findFile, folderOf, type FileKind } from './workspaceData';
 import '../../styles/workspace.css';
+import { FileTree } from './FileTree';
 
 const KIND_ICON: Record<FileKind, IconName> = {
   lecture: 'doc',
@@ -31,7 +33,11 @@ export function WorkspacePage() {
   const [params, setParams] = useSearchParams();
   const { spaces, ready, error, reload, replace, workspace } = useWorkspace();
   const ws = workspace ?? DEMO_WORKSPACE;
-  const fallback = ws.id === DEMO_WORKSPACE.id ? findFile(ws, DEFAULT_FILE) : ws.folders[0]?.files[0];
+  // 默认打开第一份 Markdown 笔记；maps/ 下的导图数据是给图谱读的，不当作开门第一页
+  const allFiles = useMemo(() => ws.folders.flatMap((f) => f.files), [ws]);
+  const fallback = ws.id === DEMO_WORKSPACE.id
+    ? findFile(ws, DEFAULT_FILE)
+    : allFiles.find((x) => x.lang === 'markdown') ?? allFiles.find((x) => !x.path?.startsWith('maps/')) ?? allFiles[0];
   const file = findFile(ws, params.get('file')) ?? fallback;
   const view = params.get('view') === 'source' ? 'source' : 'read';
   const folder = file ? folderOf(ws, file.id) : undefined;
@@ -43,6 +49,8 @@ export function WorkspacePage() {
   const [status, setStatus] = useState<string | null>(null);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [folderReady, setFolderReady] = useState(false);
+  const importInput = useRef<HTMLInputElement>(null);
+  const [alignOpen, setAlignOpen] = useState(false);
 
   useEffect(() => setEditing(false), [file?.id, view]);
   useEffect(() => {
@@ -143,7 +151,7 @@ export function WorkspacePage() {
       setFolderReady(true);
       setTreeOpen(true);
       const n = res.ws.folders.reduce((s, f) => s + f.files.length, 0);
-      setStatus(`已打开「${res.ws.name}」：${n} 个文件${res.skipped ? `，另有 ${res.skipped} 个暂不支持的文件未列出` : ''}`);
+      setStatus(`已打开「${res.ws.name}」：${n} 个文件${res.skippedNote ? `。${res.skippedNote}` : ''}`);
     } catch (e) {
       setStatus(`没有打开文件夹：${(e as Error).message}`);
     }
@@ -173,6 +181,39 @@ export function WorkspacePage() {
       setStatus(`已创建 ${created.file.path}`);
     } catch (e) {
       setStatus(`没有创建笔记：${(e as Error).message}`);
+    }
+  };
+
+  const rename = async (workspace: Workspace) => {
+    const name = window.prompt(
+      workspace.origin === 'folder' ? '新名字（只改知脉里显示的名字，硬盘上的文件夹名不变）' : '新名字',
+      workspace.name,
+    );
+    if (name === null || name.trim() === workspace.name) return;
+    try {
+      const renamed = await renameWorkspace(workspace, name);
+      replace(renamed);
+      setStatus(`已改名为「${renamed.name}」`);
+    } catch (e) {
+      setStatus(`没有改名：${(e as Error).message}`);
+    }
+  };
+
+  /** 导入文件夹：任何浏览器都能用，把文件复制成一个浏览器工作区（改动不写回硬盘）。 */
+  const importFolder = async (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = [...(e.target.files ?? [])];
+    e.target.value = '';
+    if (!picked.length) return;
+    const top = picked[0]!.webkitRelativePath.split('/')[0] || '导入的文件夹';
+    const files = picked.map((f) => ({ path: f.webkitRelativePath.split('/').slice(1).join('/') || f.name, data: f as Blob }));
+    try {
+      const res = await importBrowserFolder(top, files);
+      await reload();
+      setParams({ ws: res.workspace.id }, { replace: true });
+      setTreeOpen(true);
+      setStatus(`已导入「${top}」：${res.count} 个文件复制到浏览器里${res.skipped ? `，${res.skipped} 个暂不支持的文件没有导入` : ''}；改动不会写回原文件夹`);
+    } catch (err) {
+      setStatus(`没有导入：${(err as Error).message}`);
     }
   };
 
@@ -216,6 +257,17 @@ export function WorkspacePage() {
                   <button
                     type="button"
                     className="rail-remove"
+                    onClick={() => void rename(w)}
+                    aria-label={`给工作区「${w.name}」改名`}
+                    title="改名"
+                  >
+                    <Icon name="edit" />
+                  </button>
+                )}
+                {w.origin !== 'demo' && (
+                  <button
+                    type="button"
+                    className="rail-remove"
                     onClick={() => void removeWorkspace(w)}
                     aria-label={`移除工作区「${w.name}」`}
                     title={w.origin === 'folder' ? '只断开本站引用，不删磁盘文件' : '移除这个浏览器工作区'}
@@ -247,6 +299,25 @@ export function WorkspacePage() {
               </span>
               <span className="rail-name">打开本地文件夹</span>
             </button>
+            <button
+              type="button"
+              className="rail-item new"
+              onClick={() => importInput.current?.click()}
+              title="把一个文件夹复制进浏览器（任何浏览器可用；改动不写回原文件夹）"
+            >
+              <span className="rail-glyph" aria-hidden="true">
+                <Icon name="folder" />
+              </span>
+              <span className="rail-name">导入文件夹</span>
+            </button>
+            <input
+              ref={importInput}
+              type="file"
+              hidden
+              multiple
+              onChange={(e) => void importFolder(e)}
+              {...{ webkitdirectory: '' }}
+            />
             <button type="button" className="collapse-btn" onClick={() => setRailOpen(false)} title="收起工作区栏">
               <Icon name="sidebar" />
               <span className="sr-only">收起工作区栏</span>
@@ -271,6 +342,17 @@ export function WorkspacePage() {
               <span className="sr-only">收起文件栏</span>
             </button>
           </div>
+          {ws.origin === 'browser' && (
+            <button
+              type="button"
+              className="btn quiet tree-auth"
+              onClick={() => setAlignOpen(true)}
+              title={ws.link ? `与「${ws.link.folder}」对齐：写进改动、读入新改动` : '选一个电脑上的文件夹，让这里的改动和它保持一致'}
+            >
+              <Icon name="folder" />
+              {ws.link ? `对齐「${ws.link.folder}」` : '对齐文件夹'}
+            </button>
+          )}
           {needsAuth && ws.origin === 'folder' && (
             <button type="button" className="btn quiet tree-auth" onClick={() => void authorize(ws)}>
               重新授权本地文件夹
@@ -281,27 +363,7 @@ export function WorkspacePage() {
               {ws.origin === 'browser' ? '这是空白工作区，可以从一份 Markdown 笔记开始。' : '这个文件夹里没有可以打开的文件（Markdown、PDF、图片、HTML、JSON）。'}
             </p>
           )}
-          {ws.folders.map((f) => (
-            <section key={f.id} className="tree-folder">
-              <h2>{f.name}</h2>
-              <ul>
-                {f.files.map((x) => (
-                  <li key={x.id}>
-                    <button
-                      type="button"
-                      className={x.id === file?.id ? 'tree-file active' : 'tree-file'}
-                      aria-current={x.id === file?.id ? 'page' : undefined}
-                      onClick={() => open(x.id)}
-                      title={x.path ?? x.name}
-                    >
-                      <Icon name={KIND_ICON[x.kind]} />
-                      <span>{x.name}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
+          <FileTree ws={ws} activeId={file?.id} onOpen={open} icons={KIND_ICON} />
         </nav>
       ) : (
         <button type="button" className="ws-strip" onClick={() => setTreeOpen(true)} title="展开文件栏">
@@ -353,7 +415,7 @@ export function WorkspacePage() {
               )}
             </header>
             <div className="ws-content">
-              <FileViewer file={file} view={view} locate={locate} editing={editing} onStatus={setStatus} />
+              <FileViewer file={file} view={view} locate={locate} editing={editing} files={allFiles} onStatus={setStatus} />
             </div>
           </>
         ) : (
@@ -372,6 +434,15 @@ export function WorkspacePage() {
           </p>
         )}
         {error && <p className="ws-status" role="alert">工作区存储异常：{error}</p>}
+        {ws.origin === 'browser' && (
+          <FolderAlign
+            workspace={ws}
+            open={alignOpen}
+            onClose={() => setAlignOpen(false)}
+            onWorkspace={replace}
+            onStatus={setStatus}
+          />
+        )}
         <AiDock onLocate={onLocate} noteName={findFile(DEMO_WORKSPACE, DEFAULT_FILE)?.name ?? '讲义'} />
       </section>
     </div>

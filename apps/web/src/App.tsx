@@ -9,6 +9,7 @@ import { usePrefs } from './ui/prefs';
 import { SettingsDialog } from './ui/SettingsDialog';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { SPACES, spaceForPath } from './ui/spaces';
+import { HerbariumPlate, LabPlate, VenationPlate } from './ui/plate/Backdrops';
 
 // 封面直接打包：评委落地即见。四个板块按路由懒加载，进哪个才下载哪个（ADR-0002 包体预算）。
 const WorkspacePage = lazy(() =>
@@ -127,6 +128,10 @@ export default function App() {
         <TopbarActions />
       </header>
 
+      {/* 背景图版：按板块挂一张，钉在视口里（DESIGN.md §14）。工作台是阅读区，不挂。 */}
+      {space?.key === 'lab' && <LabPlate />}
+      {space?.key === 'connection' && <HerbariumPlate />}
+      {space?.key === 'atlas' && <VenationPlate />}
       <main id="main" className="main">
         {/* 页面级错误边界：页面出错或代码块下载失败时页眉仍在；换路由即重置。 */}
         <ErrorBoundary key={pathname}>

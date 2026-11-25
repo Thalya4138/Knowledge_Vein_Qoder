@@ -58,6 +58,24 @@
   --band-2: #f1e1d3;
   --band-2-line: #9a5634;
 
+  /*
+   * 四色：一个板块一种矿物颜料，像手工上色的博物图版——赭石、藤黄、花青、石绿；朱砂只用于印章与图钉。
+   * 只用在「你在哪个板块」的标识上：页眉当前项、标本拓片、背景图版。底色与正文颜色不跟着变。
+   */
+  --c-workspace: #9a5b3e;
+  --c-lab: #b38a35;
+  --c-connection: #3f5e86;
+  --c-atlas: #4d7a62;
+  --c-workspace-ink: #f8f4ec;
+  --c-lab-ink: #f8f4ec;
+  --c-connection-ink: #f8f4ec;
+  --c-atlas-ink: #f8f4ec;
+  --seal: #b5392b;
+  /* 拓片里「留白」的纸色、图版上拓片与刻线的浓淡 */
+  --plate-paper: var(--bg);
+  --rub-opacity: 0.2;
+  --engrave-opacity: 0.26;
+
   /* 实验室（深色） */
   --lab-bg: #0a0e16;
   --lab-surface: #121826;
@@ -136,6 +154,17 @@
   --mark: rgb(240 138 93 / 0.22);
   --danger: #f0866b;
   --board: #141c20;
+  --c-workspace: #c48a6b;
+  --c-lab: #d2b065;
+  --c-connection: #8aa6c8;
+  --c-atlas: #8db59c;
+  --c-workspace-ink: #11181c;
+  --c-lab-ink: #11181c;
+  --c-connection-ink: #11181c;
+  --c-atlas-ink: #11181c;
+  --seal: #d0563f;
+  --rub-opacity: 0.16;
+  --engrave-opacity: 0.22;
   --dot: rgb(229 235 230 / 0.12);
   --cinnabar-ink: #11181c;
   --band-0: #22323e;
