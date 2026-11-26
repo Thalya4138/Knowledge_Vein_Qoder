@@ -45,11 +45,10 @@ const AUTO = '自动选择';
 
 type Result = 'projection' | 'photosynthesis' | 'quadric-surfaces';
 
-const PRESETS: { q: string; result: Result | null }[] = [
+const PRESETS: { q: string; result: Result }[] = [
   { q: '为什么最近点就是正交投影？', result: 'projection' },
   { q: '光合作用的全过程', result: 'photosynthesis' },
   { q: '二次曲面的标准型与截线', result: 'quadric-surfaces' },
-  { q: '单摆从小角度到大角度，周期怎么变', result: null },
 ];
 
 /** 预置结果对应的注册表 id；正交投影是站内 React 实验，不在注册表里。 */
@@ -461,7 +460,7 @@ export function LabPage() {
             <li key={p.q}>
               <button type="button" className="lab-try" onClick={() => ask(p.q)}>
                 {p.q}
-                {p.result && <span>{tr('示例', 'Sample')}</span>}
+                <span>{tr('示例', 'Sample')}</span>
               </button>
             </li>
           ))}
@@ -587,7 +586,7 @@ export function LabPage() {
         <p className="lab-note">
           {tr('示例模式只准备了这几道题。', 'Sample mode only has these prepared questions. ')}
           <span className="lab-note-asks">
-            {presetList.filter((p) => p.result).map((p) => (
+            {presetList.map((p) => (
               <button key={p.q} type="button" className="lab-link" onClick={() => ask(p.q)}>
                 {p.q}
               </button>
