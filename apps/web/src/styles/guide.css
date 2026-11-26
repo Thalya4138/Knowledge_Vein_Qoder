@@ -10,19 +10,36 @@
   padding: var(--s-64) 0 var(--s-96);
 }
 
+/* 目录做成一张标本签：双细框纸卡 + 朱印小标 + 等宽编号，右下角压一枚叶脉拓片 */
 .guide-toc {
   position: sticky;
   top: calc(var(--header-h) + var(--s-40));
   align-self: start;
   display: grid;
-  gap: var(--s-8);
+  gap: var(--s-12);
+  padding: var(--s-16);
+  border: 1px solid color-mix(in srgb, var(--ink) 70%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow:
+    inset 0 0 0 4px color-mix(in srgb, var(--surface) 88%, transparent),
+    inset 0 0 0 5px var(--hairline);
 }
 
 .guide-toc-title {
+  justify-self: start;
+  padding: 2px 7px;
+  border-radius: 2px;
+  background: var(--seal);
+  color: var(--surface);
   font-size: var(--t-13);
   font-weight: 600;
-  color: var(--ink-3);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.18em;
+}
+
+.guide-toc-rub {
+  justify-self: end;
+  opacity: 0.45;
 }
 
 .guide-toc ol {
@@ -45,10 +62,12 @@
   border-left: 2px solid transparent;
   color: var(--ink-2);
   font-size: var(--t-13);
+  transition: transform var(--d-micro) var(--ease);
 }
 
 .guide-toc a::before {
   content: counter(toc, decimal-leading-zero);
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
   color: var(--ink-3);
@@ -56,13 +75,14 @@
 }
 
 .guide-toc a:hover {
-  border-left-color: var(--accent);
+  border-left-color: var(--cinnabar);
   color: var(--ink);
   text-decoration: none;
+  transform: translateX(2px);
 }
 
 .guide-toc a:hover::before {
-  color: var(--accent);
+  color: var(--cinnabar);
 }
 
 .guide-body {
@@ -95,6 +115,15 @@
 
 .guide-hero > * {
   position: relative;
+}
+
+/* 页首右上角压一张大蛛网拓片，纯装饰 */
+.guide-hero .guide-hero-rub {
+  position: absolute;
+  top: calc(-1 * var(--s-24));
+  right: calc(-1 * var(--s-40));
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .guide-overline {
@@ -202,6 +231,17 @@
 
 .guide-dl dt {
   font-weight: 600;
+}
+
+.guide-dl div[data-space] dt {
+  display: flex;
+  align-items: center;
+  gap: var(--s-12);
+}
+
+.guide-space-rub {
+  margin-left: auto;
+  opacity: 0.8;
 }
 
 .guide-dl dd {
@@ -315,6 +355,11 @@ kbd {
 
   .guide-hero::before {
     inset: calc(-1 * var(--s-24)) calc(-1 * var(--s-24)) 0 45%;
+  }
+
+  /* 窄屏放不下页首大拓片，收掉避免横向溢出 */
+  .guide-hero .guide-hero-rub {
+    display: none;
   }
 }
 

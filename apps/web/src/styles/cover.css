@@ -657,29 +657,30 @@
   }
 }
 
-/* 导览入口：实色胶囊按钮，第一次来的人一眼看到它 */
+/* 导览入口：磨砂玻璃胶囊（半透明 + 背景模糊 + 内侧高光），落在四张标本签下面 */
 .cover-tour {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--s-12);
-  justify-self: stretch;
-  margin-top: var(--s-8);
+  margin-top: var(--s-16);
   padding: var(--s-12) var(--s-24);
   border: 0;
   border-radius: var(--r-pill);
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--surface) 52%, transparent);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  color: var(--ink);
   font: inherit;
   font-size: var(--t-17);
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--lift);
+  box-shadow: 0 0 0 1px var(--hairline), inset 0 1px 0 color-mix(in srgb, var(--surface) 65%, transparent), var(--lift);
   transition: background-color var(--d-micro) var(--ease), transform var(--d-micro) var(--ease);
 }
 
 .cover-tour:hover {
-  background: var(--accent-hover);
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
   transform: translateY(-1px);
 }
 
@@ -687,35 +688,14 @@
   transform: scale(0.97);
 }
 
-/* 宽且够高的屏：胶囊吊在页面底部正中，纸环光晕把它从地形图上托起来。
-   用 fixed 是因为封面在这一档恰好一屏不滚动；矮屏回落为左栏通栏按钮。 */
-@media (min-width: 1200px) and (min-height: 801px) {
-  .cover-tour {
-    position: fixed;
-    left: 50%;
-    bottom: var(--s-24);
-    z-index: 6;
-    justify-self: center;
-    margin-top: 0;
-    transform: translateX(-50%);
-    box-shadow: 0 0 0 6px var(--glass-strong), var(--lift);
-  }
-
-  .cover-tour:hover {
-    transform: translateX(-50%) translateY(-1px);
-  }
-
-  .cover-tour:active {
-    transform: translateX(-50%) scale(0.97);
-  }
-}
-
 .cover-tour .icon {
   width: 18px;
   height: 18px;
+  color: var(--accent);
 }
 
 .cover-tour-arrow {
+  color: var(--accent);
   transition: transform var(--d-micro) var(--ease);
 }
 

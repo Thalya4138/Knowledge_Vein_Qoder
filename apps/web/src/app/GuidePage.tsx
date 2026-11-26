@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { PROVIDERS } from '../ai/providers';
 import { usePrefs, useT } from '../ui/prefs';
+import { Specimen } from '../ui/plate/Specimen';
 import { useTour } from './tour/Tour';
 import '../styles/guide.css';
 
@@ -41,12 +42,14 @@ export function GuidePage() {
             </li>
           ))}
         </ol>
+        <Specimen name="leaf" pigment="atlas" size={84} tilt={-8} className="guide-toc-rub" />
       </nav>
 
       <article className="guide-body">
         <header className="guide-hero">
-          <p className="guide-overline">{t('知脉 · 入门文档', 'Vein · Field guide')}</p>
-          <h1 className="display">{t('从一节讲义开始', 'Start from one lesson')}</h1>
+          <Specimen name="web" pigment="connection" size={200} tilt={12} className="guide-hero-rub" />
+          <p className="guide-overline">{t('从一节讲义开始', 'Start from one lesson')}</p>
+          <h1 className="display">{t('知脉 · 入门文档', 'Vein · Field guide')}</h1>
           <p className="guide-lede">
             {t(
               '知脉把一门课的资料整理成能读的讲义，再把讲义里的知识连成一张每条线都有理由的网。下面用内置的示例课程「线性代数：从线性方程组到最小二乘」带你走一遍。',
@@ -116,7 +119,7 @@ export function GuidePage() {
           <h2>{t('四个工作空间', 'The four spaces')}</h2>
           <dl className="guide-dl">
             <div data-space="workspace">
-              <dt>{t('学习工作台', 'Study Desk')}</dt>
+              <dt>{t('学习工作台', 'Study Desk')}<Specimen name="feather" pigment="workspace" size={40} tilt={4} className="guide-space-rub" /></dt>
               <dd>
                 {t(
                   '一门课一个工作区，工作区就是一个文件夹。按教科书版式读讲义；点「编辑」一段一段直接改；选中文字可以高亮、批注，批注单独存放、不改原文。讲义兼容 Obsidian 的写法（callout、双链、高亮）。',
@@ -126,7 +129,7 @@ export function GuidePage() {
               <Link className="guide-open" to={`/workspace${WS}`}>{t('打开学习工作台', 'Open Study Desk')} →</Link>
             </div>
             <div data-space="lab">
-              <dt>{t('可视化实验室', 'Visual Lab')}</dt>
+              <dt>{t('可视化实验室', 'Visual Lab')}<Specimen name="nautilus" pigment="lab" size={40} tilt={-6} className="guide-space-rub" /></dt>
               <dd>
                 {t(
                   '用一句话说出想看懂的东西，接入模型后现场生成一张能拖动、能播放的实验页，在隔离的沙箱里运行（读不到你的 key 和工作区）；跑不起来会自动修一次，仍不行就照实显示错误。可以指定工具：GeoGebra、JSXGraph、Plotly、D3、Three.js、Matter.js、3Dmol、Matplotlib（浏览器里跑真正的 Python）直接在网页里运行；PhET 从官方模拟里挑一个嵌入；Manim、MATLAB、PyTorch 这类只能在自己电脑上跑的，给可以直接运行的代码；Desmos、BioDigital 这类要第三方授权的，换成能用的工具并写明原因。不接模型时，正交投影、光合作用、二次曲面三张示例页照样可用。实验页可以挂到导图的某个主题上。',
@@ -136,7 +139,7 @@ export function GuidePage() {
               <Link className="guide-open" to={`/lab${WS}`}>{t('打开可视化实验室', 'Open Visual Lab')} →</Link>
             </div>
             <div data-space="connection">
-              <dt>{t('知识关联探索', 'Connection Explorer')}</dt>
+              <dt>{t('知识关联探索', 'Connection Explorer')}<Specimen name="web" pigment="connection" size={40} tilt={8} className="guide-space-rub" /></dt>
               <dd>
                 {t(
                   '三种任务，各有写法：碎片串联（自下而上找零散知识的共同结构）、学科元思考（从整体结构重新组织一门课）、跨学科并联（两个领域之间的双向映射，每条联系标明性质）。回答旁有一张可编辑的关联图；回答可以导出为 Markdown、Word、PPT、PDF 或图片，也可以存进工作区、接到讲义末尾、加入思维导图。',
@@ -146,7 +149,7 @@ export function GuidePage() {
               <Link className="guide-open" to={`/connection${WS}`}>{t('打开关联探索', 'Open Connection Explorer')} →</Link>
             </div>
             <div data-space="atlas">
-              <dt>{t('认知记忆图谱', 'Memory Atlas')}</dt>
+              <dt>{t('认知记忆图谱', 'Memory Atlas')}<Specimen name="leaf" pigment="atlas" size={40} tilt={-10} className="guide-space-rub" /></dt>
               <dd>
                 {t(
                   '两种图。思维导图用 Tab、Enter 编辑，公式用 LaTeX，自动保存到工作区的 maps/mind.json，可导出 Markdown；接入模型后可以按讲义生成或更新导图，改动先给你看差异再应用。个人记忆图谱从同一张导图出发，可以收起、遮盖、挖空自测，也可以切到「自由摆放」，把节点摆成你记忆里的样子——这张图的布局 AI 永远不会自动重排。',
