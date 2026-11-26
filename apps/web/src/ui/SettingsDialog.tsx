@@ -18,6 +18,8 @@ const TABS: { id: SettingsTab; zh: string; en: string; icon: IconName }[] = [
   { id: 'account', zh: '账号', en: 'Account', icon: 'user' },
 ];
 
+const TEST_TIMEOUT_MS = 15000;
+
 /** 测试连接：列出这个 key 能用的模型（只读请求，不产生对话费用）。返回说明与模型 id 列表。 */
 async function testConnection(m: ModelConfig, t: T, lang: Lang): Promise<{ text: string; ids: string[] }> {
   const base = m.baseUrl.replace(/\/+$/, '');
@@ -27,8 +29,17 @@ async function testConnection(m: ModelConfig, t: T, lang: Lang): Promise<{ text:
       : { Authorization: `Bearer ${m.apiKey}` };
   let res: Response;
   try {
-    res = await fetch(`${base}/models`, { headers });
-  } catch {
+    // 有的服务从某些网络连过去会一直挂着不回，不设上限按钮就永远停在「正在测试…」
+    res = await fetch(`${base}/models`, { headers, signal: AbortSignal.timeout(TEST_TIMEOUT_MS) });
+  } catch (e) {
+    if ((e as Error).name === 'TimeoutError')
+      return {
+        text: t(
+          `等了 ${TEST_TIMEOUT_MS / 1000} 秒服务都没有回应。多半是你的网络到这家服务不通（可以换个网络或开关代理再试），也可能是地址写错了。`,
+          `No response after ${TEST_TIMEOUT_MS / 1000} seconds. Your network most likely cannot reach this service (try another network or toggle your proxy), or the URL is wrong.`,
+        ),
+        ids: [],
+      };
     return { text: t('浏览器连不上这个地址。', 'The browser could not reach this address. ') + networkHint(m.baseUrl, lang), ids: [] };
   }
   if (res.status === 401 || res.status === 403)
@@ -57,6 +68,16 @@ export function SettingsDialog() {
   const [result, setResult] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [modelIds, setModelIds] = useState<string[]>([]);
+  const [remember, setRemember] = useState(p.modelRemembered);
+  const [searchDraft, setSearchDraft] = useState(p.searchKey);
+  const [searchRemember, setSearchRemember] = useState(p.searchRemembered);
+  const [searchResult, setSearchResult] = useState<string | null>(null);
+  const resultRef = useRef<HTMLParagraphElement>(null);
+
+  // 结果排在按钮下方，矮屏上可能落在可视区外：出了新结果就滚到能看见的位置（新版 Chrome 返回 Promise，别 return 它）
+  useEffect(() => {
+    if (result) resultRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [result]);
 
   useEffect(() => {
     const d = ref.current;
@@ -64,11 +85,15 @@ export function SettingsDialog() {
     if (p.settingsOpen && !d.open) {
       setTab(p.settingsTab);
       setDraft(p.model);
+      setRemember(p.modelRemembered);
+      setSearchDraft(p.searchKey);
+      setSearchRemember(p.searchRemembered);
+      setSearchResult(null);
       setResult(null);
       d.showModal();
     }
     if (!p.settingsOpen && d.open) d.close();
-  }, [p.settingsOpen, p.settingsTab, p.model]);
+  }, [p.settingsOpen, p.settingsTab, p.model, p.modelRemembered, p.searchKey, p.searchRemembered]);
 
   const field = (k: keyof ModelConfig, v: string) => {
     setDraft((d) => ({ ...d, [k]: v }));
@@ -96,19 +121,29 @@ export function SettingsDialog() {
         </button>
 
         {tab === 'model' && (
+          <>
           <form
             className="settings-form"
             onSubmit={(e) => {
               e.preventDefault();
-              p.setModel(draft);
-              setResult(t('已保存。只存在本页内存里，刷新页面就会清除。', 'Saved. It lives only in this page’s memory and is cleared when you reload.'));
+              p.setModel(draft, remember);
+              // 测试连接列出过模型、而填的名字不在其中：多半一用就报错，保存时直接说
+              const unknown = modelIds.length > 0 && !modelIds.includes(draft.model);
+              setResult(
+                (unknown
+                  ? t(`注意：服务列出的模型里没有「${draft.model}」，用的时候多半会报错。建议从「模型名」的下拉里选一个再保存。`, `Note: “${draft.model}” is not among the models the service lists; requests will likely fail. Pick one from the Model list and save again.`) + ' '
+                  : '') +
+                (remember
+                  ? t('已保存，并记在这台电脑的浏览器里。不用时点「清除已保存的 key」。', 'Saved and remembered in this browser. Use “Clear saved key” when you are done.')
+                  : t('已保存。刷新页面不会丢，关掉这个标签页就清除。', 'Saved. It survives a reload and is cleared when you close this tab.')),
+              );
             }}
           >
             <h2>{t('模型', 'Model')}</h2>
             <p className="settings-lede">
               {t(
-                '用你自己的 key。key 只存在本页内存里，不写进浏览器存储，也不经过任何第三方服务器。',
-                'Bring your own key. It stays in this page’s memory only — never written to browser storage, never sent through any server of ours.',
+                '用你自己的 key。浏览器直接把它发给你选的模型服务，不经过知脉或任何第三方服务器。默认只存在当前标签页，关掉就清除。',
+                'Bring your own key. The browser sends it straight to the model service you choose — never through any server of ours. By default it lives only in this tab and is cleared when you close it.',
               )}
             </p>
             <div className="chips" role="group" aria-label={t('常用服务', 'Common providers')}>
@@ -181,7 +216,29 @@ export function SettingsDialog() {
               <span>API key</span>
               <input type="password" value={draft.apiKey} onChange={(e) => field('apiKey', e.target.value)} autoComplete="off" />
             </label>
+            <label className="settings-check">
+              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+              <span>
+                {t('在这台电脑上记住', 'Remember on this computer')}
+                <small>{t('关掉浏览器也不用重填。公用电脑上不要勾。', 'No need to re-enter after closing the browser. Don’t tick this on a shared computer.')}</small>
+              </span>
+            </label>
             <div className="settings-actions">
+              {(p.model.apiKey || p.modelRemembered) && (
+                <button
+                  type="button"
+                  className="btn quiet settings-forget"
+                  onClick={() => {
+                    p.forgetModel();
+                    setDraft((d) => ({ ...d, apiKey: '' }));
+                    setRemember(false);
+                    setModelIds([]);
+                    setResult(t('已清除这台电脑和这个标签页里保存的 key。', 'Cleared the key saved in this browser and tab.'));
+                  }}
+                >
+                  {t('清除已保存的 key', 'Clear saved key')}
+                </button>
+              )}
               <button
                 type="button"
                 className="btn"
@@ -200,8 +257,13 @@ export function SettingsDialog() {
                 {t('保存', 'Save')}
               </button>
             </div>
+            {draft.baseUrl && draft.apiKey && !draft.model && (
+              <p className="settings-hint">
+                {t('还差模型名才能保存。不知道填什么，先点「测试连接」，再从列表里选一个。', 'A model name is needed before saving. Not sure which? Run “Test connection” and pick one from the list.')}
+              </p>
+            )}
             {result && (
-              <p className="settings-result" role="status">
+              <p className="settings-result" role="status" ref={resultRef}>
                 {result}
               </p>
             )}
@@ -217,6 +279,65 @@ export function SettingsDialog() {
               )}
             </p>
           </form>
+          <form
+            className="settings-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              p.setSearchKey(searchDraft.trim(), searchRemember);
+              setSearchResult(
+                searchRemember
+                  ? t('已保存，并记在这台电脑的浏览器里。不用时点「清除已保存的搜索 key」。', 'Saved and remembered in this browser. Use “Clear saved search key” when you are done.')
+                  : t('已保存。刷新页面不会丢，关掉这个标签页就清除。', 'Saved. It survives a reload and is cleared when you close this tab.'),
+              );
+            }}
+          >
+            <h2>{t('联网搜索（可选）', 'Web search (optional)')}</h2>
+            <p className="settings-lede">
+              {t(
+                '填博查搜索 key 后，工作台「找资源」会实时联网检索，候选如实标注「待核对」。不填则降级为模型提案候选或预置样例。key 由浏览器直接发给博查，默认只存在当前标签页。',
+                'With a Bocha search key, “Find resources” on the desk searches the live web and marks candidates “unverified”. Without one, it falls back to model-proposed candidates or presets. The key goes straight from your browser to Bocha and lives only in this tab by default.',
+              )}
+            </p>
+            <label>
+              <span>{t('博查 API key', 'Bocha API key')}</span>
+              <input type="password" value={searchDraft} onChange={(e) => setSearchDraft(e.target.value)} autoComplete="off" placeholder="sk-…" />
+            </label>
+            <label className="settings-check">
+              <input type="checkbox" checked={searchRemember} onChange={(e) => setSearchRemember(e.target.checked)} />
+              <span>
+                {t('在这台电脑上记住', 'Remember on this computer')}
+                <small>{t('关掉浏览器也不用重填。公用电脑上不要勾。', 'No need to re-enter after closing the browser. Don’t tick this on a shared computer.')}</small>
+              </span>
+            </label>
+            <div className="settings-actions">
+              {(p.searchKey || p.searchRemembered) && (
+                <button
+                  type="button"
+                  className="btn quiet settings-forget"
+                  onClick={() => {
+                    p.forgetSearchKey();
+                    setSearchDraft('');
+                    setSearchRemember(false);
+                    setSearchResult(t('已清除这台电脑和这个标签页里保存的搜索 key。', 'Cleared the search key saved in this browser and tab.'));
+                  }}
+                >
+                  {t('清除已保存的搜索 key', 'Clear saved search key')}
+                </button>
+              )}
+              <button type="submit" className="btn primary" disabled={!searchDraft.trim()}>
+                {t('保存', 'Save')}
+              </button>
+            </div>
+            {searchResult && (
+              <p className="settings-result" role="status">
+                {searchResult}
+              </p>
+            )}
+            <p className="settings-hint">
+              {t('博查：2026-11 实测网页可直连。key 在 open.bochaai.com 获取。', 'Bocha: tested 2026-11, callable directly from the browser. Get a key at open.bochaai.com.')}
+            </p>
+          </form>
+          </>
         )}
 
         {tab === 'storage' && (
@@ -247,8 +368,8 @@ export function SettingsDialog() {
                 </dt>
                 <dd>
                   {t(
-                    '可用。在学习工作台左栏点「同步 GitHub」：填仓库与一个只授权这个仓库的令牌，先比较两边、再推上去或拉下来，两边都改过的文件逐个选。令牌只存在内存里。',
-                    'Available. In Study Desk, choose “Sync with GitHub” in the file column: enter the repository and a token scoped to it, compare, then push or pull; files changed on both sides are resolved one by one. The token stays in memory only.',
+                    '可用。工作区栏点「从 GitHub 导入」，把仓库复制成工作区、长期保存在这台电脑的浏览器里（公开仓库不需要令牌）；之后在文件栏点「同步 GitHub」拉取更新或推回去，两边都改过的文件逐个选。令牌默认只存在当前标签页，可选记住。',
+                    'Available. Choose “Import from GitHub” in the workspace rail to copy a repository into a workspace kept in this browser (public repositories need no token); later use “Sync with GitHub” in the file column to pull or push, resolving files changed on both sides one by one. The token stays in this tab unless you choose to remember it.',
                   )}
                 </dd>
               </div>

@@ -5,24 +5,38 @@
   "slots": {
     "workspace.ask": {
       "where": "学习工作台 · 悬浮对话框：问一个知识点",
-      "prompt": "SMART_SEARCH.md",
+      "prompt": "WORKSPACE_ASK.md（设计依据 SMART_SEARCH.md）",
       "input": "问题 + 确定性检索命中的讲义段落 + 图谱中相关的关系",
       "output": "讲解正文 + 命中位置列表（位置只来自检索，模型不得生成位置）",
-      "status": "示例模式"
+      "status": "已接入（BYOK）；无 key 时为示例模式"
     },
     "workspace.organize": {
-      "where": "学习工作台 · 悬浮对话框：整理资料、补写笔记、维护工作区",
-      "prompt": "RESOURCE_DISCOVERY.md",
-      "input": "工作区文件清单 + 用户放入的资料",
-      "output": "ProposedChange 列表（新建 / 移动 / 改名 / 补写），须用户预览确认",
-      "status": "未接入"
+      "where": "学习工作台 · 悬浮对话框「整理」：接收资料、拟整理方案与讲义目录",
+      "prompt": "WORKSPACE_ORGANIZE.md（设计依据 RESOURCE_DISCOVERY.md + NOTE_GENERATION.md §3.6）",
+      "input": "工作区文件清单 + 用户放入的资料（文本 / PDF 正文 / 网页 / 截图）+ 整理要求",
+      "output": "整理方案 JSON（folders / moves / lessons 目录 / stillMissing）→ 程序做成 ProposedChange，用户预览差异确认后落盘，可撤销",
+      "status": "已接入（BYOK）；无 key 时为标注「示例」的确定性方案。真实模型质量未实测"
     },
     "note.generate": {
       "where": "学习工作台 · 生成与修订讲义",
       "prompt": "NOTE_GENERATION.md",
-      "input": "资料片段与出处（SourceSpan）",
-      "output": "教材式讲义 Markdown（栏目、旁栏资源卡、证据标注）",
-      "status": "未接入（离线生成过示例）"
+      "input": "资料片段与出处（SourceSpan）+ 讲义目录 + 已采纳资源",
+      "output": "教材式讲义 Markdown（栏目、旁栏资源卡、证据标注）→ ProposedChange 存进 notes/，预览确认后写入，可撤销",
+      "status": "已接入（BYOK）；无 key 时用 content/demo 预置产出并标注「示例」。真实模型质量未实测"
+    },
+    "workspace.resources": {
+      "where": "学习工作台 · 逐节资源发现（旁栏资源卡）",
+      "prompt": "RESOURCE_DISCOVERY.md",
+      "input": "讲义目录的一节 + 工作区已有资源 + 缺口",
+      "output": "候选资源 JSON（status=candidate，uri / license / limitations / trustWhy / fillsGap / stillMissing）→ 登记 resources/manifest.json，采纳是用户的动作",
+      "status": "已接入（BYOK，模型提案候选，不实时抓取）；无 key 时为标注「示例」的预置候选。浏览器直连搜索引擎受 CORS 限制，实时抓取路线见 SYNC_AND_API.md §6，未实测"
+    },
+    "workspace.rewrite": {
+      "where": "学习工作台 · 讲义阅读视图：改写选中段落",
+      "prompt": "WORKSPACE_REWRITE.md（设计依据 NOTE_GENERATION.md §5 / §6）",
+      "input": "选中的原文段落 + 前后上下文 + 改写要求",
+      "output": "改写后的段落 JSON（after / reason / risk）→ 程序做成差异预览，确认后写入，沿用阅读视图的一步撤销",
+      "status": "已接入（BYOK）；无 key 时如实提示需接入模型（改写是纯生成能力，无确定性替身）。真实模型质量未实测"
     },
     "connection.fragments": {
       "where": "知识关联探索 · 碎片串联",

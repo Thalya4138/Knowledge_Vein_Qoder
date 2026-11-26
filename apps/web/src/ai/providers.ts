@@ -15,8 +15,10 @@ export interface Provider {
 }
 
 export const PROVIDERS: Provider[] = [
-  { name: 'DeepSeek', cfg: { provider: 'openai-compatible', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' }, cors: 'ok' },
-  { name: '通义千问', cfg: { provider: 'openai-compatible', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }, cors: 'ok' },
+  // 模型名 2026-11-26 查官方文档：DeepSeek 推荐 deepseek-flash（另有 deepseek-v4-pro），旧名 deepseek-chat 已不在文档里；
+  // 通义千问当前一代是 qwen3.7-plus / qwen4-max / qwen3.8-flash。过期了以「测试连接」列出的为准，再改这里。
+  { name: 'DeepSeek', cfg: { provider: 'openai-compatible', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-flash' }, cors: 'ok' },
+  { name: '通义千问', cfg: { provider: 'openai-compatible', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen3.7-plus' }, cors: 'ok' },
   { name: 'Kimi', cfg: { provider: 'openai-compatible', baseUrl: 'https://api.moonshot.cn/v1', model: '' }, cors: 'ok' },
   { name: '硅基流动', cfg: { provider: 'openai-compatible', baseUrl: 'https://api.siliconflow.cn/v1', model: '' }, cors: 'ok' },
   { name: 'OpenRouter', cfg: { provider: 'openai-compatible', baseUrl: 'https://openrouter.ai/api/v1', model: '' }, cors: 'ok' },

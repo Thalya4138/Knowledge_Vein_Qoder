@@ -6,11 +6,16 @@ import { NoteReader } from '../../reader/NoteReader';
 import { demoManifest } from '../../app/demo';
 import { localFileUrl, saveLocalText } from './localFolder';
 import { browserFileUrl, saveBrowserText } from '../../store/browser';
-import { DEMO_WORKSPACE, type WsFile } from './workspaceData';
+import { DEMO_WORKSPACE, filePath, type WsFile } from './workspaceData';
+import { readDemoOverlay } from '../../store/demo';
 import { useWorkspace } from '../../app/WorkspaceProvider';
+import { modelReady, usePrefs } from '../../ui/prefs';
 import { useHeadingLinks } from './headingLinks';
 import { loadAnnotations, saveAnnotations } from '../../reader/annotationStore';
 import type { Annotation } from '../../reader/annotations';
+import { ChangePreview } from './ChangePreview';
+import type { ChangeSet } from './changes';
+import { deskRewrite, replaceSelection, rewriteChanges } from './deskRewrite';
 
 export interface LocateRequest {
   heading: string;
@@ -102,6 +107,12 @@ function NoteView({
   const past = useRef<string[]>([]);
   const future = useRef<string[]>([]);
   const [, bump] = useState(0);
+  const { model } = usePrefs();
+  const liveModel = modelReady(model);
+  const readRef = useRef<HTMLDivElement>(null);
+  const [sel, setSel] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [rewriting, setRewriting] = useState(false);
+  const [rw, setRw] = useState<{ cs: ChangeSet; controller: { before: Record<string, string | null>; apply: () => void; undo: () => void } } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -112,10 +123,22 @@ function NoteView({
     future.current = [];
     const saved = file.local || file.browser ? null : localStorage.getItem(draftKey(`${file.id}.md`));
     setDraft(saved !== null);
-    const load = saved !== null ? Promise.resolve(saved) : fetch(url).then((r) => {
-      if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
-      return r.text();
-    });
+    // 示例优先读覆盖层（AI 写入的那份），没有覆盖才回退发布原件
+    const load =
+      saved !== null
+        ? Promise.resolve(saved)
+        : (async () => {
+            if (ws.origin === 'demo') {
+              const p = filePath(file);
+              if (p) {
+                const over = await readDemoOverlay(ws.id, p);
+                if (over !== null) return over;
+              }
+            }
+            const r = await fetch(url);
+            if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
+            return r.text();
+          })();
     load
       .then(async (t) => {
         if (!alive) return t;
@@ -144,7 +167,7 @@ function NoteView({
     return () => {
       alive = false;
     };
-  }, [file, url, nonce, files]);
+  }, [file, url, nonce, files, ws]);
 
   useEffect(() => {
     let alive = true;
@@ -244,6 +267,53 @@ function NoteView({
     saveAnnotations(ws, file, next).catch((e: Error) => onStatus(`批注没有保存：${e.message}`));
   };
 
+  // 选中正文里的一段 → 浮出「AI 改写」；改写先看差异，确认后写入，沿用上面的撤销
+  const captureSel = () => {
+    const s = window.getSelection();
+    if (!s || s.isCollapsed || !readRef.current || !readRef.current.contains(s.anchorNode)) {
+      setSel(null);
+      return;
+    }
+    const raw = s.toString();
+    if (!raw.trim()) {
+      setSel(null);
+      return;
+    }
+    const rect = s.getRangeAt(0).getBoundingClientRect();
+    setSel({ text: raw, x: rect.left + rect.width / 2, y: rect.top });
+  };
+
+  const startRewrite = async () => {
+    if (!sel || rewriting || text === null) return;
+    if (!liveModel) {
+      onStatus('改写需要接入你自己的模型。请在设置里接入 API key；定位、补入与撤销不需要 key。');
+      setSel(null);
+      return;
+    }
+    const instruction = window.prompt('想怎么改这一段？', '讲得更清楚，保持原意与术语');
+    if (instruction === null) return;
+    const selection = sel.text;
+    const before = text;
+    setSel(null);
+    setRewriting(true);
+    try {
+      const res = await deskRewrite(model, ws, selection, '', '', instruction);
+      if (res.status !== 'ok') {
+        onStatus(res.reason);
+      } else {
+        const next = replaceSelection(before, selection, res.after);
+        if (next === null) onStatus('在原文里找不到选中的段落，没有改写。');
+        else {
+          const path = file.path ?? file.id;
+          setRw({ cs: rewriteChanges(path, next, res.reason), controller: { before: { [path]: before }, apply: () => change(next), undo } });
+        }
+      }
+    } catch (e) {
+      onStatus((e as Error).message);
+    }
+    setRewriting(false);
+  };
+
   if (error) return <p className="viewer-state">{error}</p>;
   if (text === null) return <p className="viewer-state">正在读取…</p>;
 
@@ -274,17 +344,41 @@ function NoteView({
           </button>
         </div>
       )}
-      <NoteReader
-        source={text}
-        manifest={file.local || file.browser ? undefined : demoManifest}
-        resourceBase={DEMO_BASE}
-        assetUrl={assetUrl}
-        embedUrl={embedUrl}
-        editable={editing}
-        onSourceChange={change}
-        annotations={anns}
-        onAnnotationsChange={changeAnns}
-        headingLinks={headingLinks}
+      <div ref={readRef} onMouseUp={captureSel} onKeyUp={captureSel}>
+        <NoteReader
+          source={text}
+          manifest={file.local || file.browser ? undefined : demoManifest}
+          resourceBase={DEMO_BASE}
+          assetUrl={assetUrl}
+          embedUrl={embedUrl}
+          editable={editing}
+          onSourceChange={change}
+          annotations={anns}
+          onAnnotationsChange={changeAnns}
+          headingLinks={headingLinks}
+        />
+      </div>
+      {sel && !editing && (
+        <button
+          type="button"
+          className="rewrite-fab"
+          style={{ position: 'fixed', left: sel.x, top: Math.max(8, sel.y - 44), transform: 'translateX(-50%)' }}
+          onClick={() => void startRewrite()}
+          disabled={rewriting}
+        >
+          <Icon name="edit" />
+          {rewriting ? '改写中…' : 'AI 改写'}
+        </button>
+      )}
+      <ChangePreview
+        open={rw !== null}
+        title={rw?.cs.title ?? ''}
+        changes={rw?.cs.changes ?? []}
+        store={null}
+        ws={ws}
+        controller={rw?.controller}
+        onStatus={onStatus}
+        onClose={() => setRw(null)}
       />
     </>
   );
@@ -306,6 +400,8 @@ function SourceView({
   const [text, setText] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const { workspace } = useWorkspace();
+  const ws = workspace ?? DEMO_WORKSPACE;
   const local = Boolean(file.local);
   const browser = Boolean(file.browser);
   const persisted = local || browser;
@@ -320,11 +416,19 @@ function SourceView({
       setDraft(saved);
       return;
     }
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
-        return r.text();
-      })
+    const load = (async () => {
+      if (ws.origin === 'demo') {
+        const p = filePath(file);
+        if (p) {
+          const over = await readDemoOverlay(ws.id, p);
+          if (over !== null) return over;
+        }
+      }
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
+      return r.text();
+    })();
+    load
       .then((t) => {
         if (!alive) return;
         const shown = file.lang === 'json' && !persisted ? JSON.stringify(JSON.parse(t), null, 2) : t;
@@ -335,7 +439,7 @@ function SourceView({
     return () => {
       alive = false;
     };
-  }, [url, file.id, file.lang, persisted]);
+  }, [url, file.id, file.lang, persisted, ws]);
 
   if (error) return <p className="viewer-state">{error}</p>;
   if (text === null) return <p className="viewer-state">正在读取…</p>;

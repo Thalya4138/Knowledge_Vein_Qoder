@@ -4,7 +4,7 @@ import { Icon } from '../../ui/Icon';
 import { modelReady, usePrefs } from '../../ui/prefs';
 import { rich, type MindCanvas } from './mindCanvas';
 import type { GraphLike, MNode } from './mindDoc';
-import { collectInput, diffDocs, diffSize, SYNC_REQUEST, updateMind, type MindDiff, type Updated } from './mindGen';
+import { collectInput, diffDocs, diffSize, SYNC_REQUEST, UPDATE_BUDGET, updateMind, type MindDiff, type Updated } from './mindGen';
 
 /**
  * 导图页的 AI 对话框：提问，或让它代你改图；「按资料更新」是同一条路，只是要求固定。
@@ -78,7 +78,8 @@ export function MindAssist({
     setPhase({ kind: 'running', label });
     try {
       const prev = c.docCopy();
-      const { input } = await collectInput(store, name, graph);
+      // 改图只带与这次要求相关的笔记（旧图本身已含全部主题）；「按资料更新」要发现新材料，按原序收满预算
+      const { input } = await collectInput(store, name, graph, ask === SYNC_REQUEST ? { ranked: false } : { query: ask, budget: UPDATE_BUDGET });
       const result = await updateMind(model, store, { ...input, existingMap: prev, userRequest: ask }, ctrl.signal);
       if (ctrl.signal.aborted) return;
       setPhase({ kind: 'result', ask, result, diff: result.checked ? diffDocs(prev, result.checked.doc) : null });
@@ -119,7 +120,7 @@ export function MindAssist({
     <div className="askbar assist">
       {phase.kind === 'nokey' && (
         <div className="askbar-note">
-          <p>让 AI 改图需要接入你自己的模型。知脉不提供 key，key 只存在本页内存里。</p>
+          <p>让 AI 改图需要接入你自己的模型。知脉不提供 key，key 默认只存在当前标签页。</p>
           <button type="button" className="btn primary small" onClick={() => openSettings('model')}>
             接入我的模型
           </button>

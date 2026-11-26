@@ -278,8 +278,8 @@ export function GuidePage() {
           </table>
           <p>
             {t(
-              'key 只存在本页内存里，刷新即清除，不写进浏览器存储、不进地址栏，也不经过任何第三方服务器。',
-              'The key lives only in this page’s memory and is cleared on refresh. It is never written to browser storage or the address bar, and never passes through any third-party server.',
+              'key 默认只存在当前标签页，刷新不丢、关掉就清除；勾选「在这台电脑上记住」才会留在浏览器里，可随时一键清除。它不进地址栏，也不经过任何第三方服务器。',
+              'By default the key lives only in this tab: it survives a refresh and is cleared when you close the tab. Tick “Remember on this computer” to keep it in the browser, and clear it any time. It never goes into the address bar or through any third-party server.',
             )}
           </p>
         </section>

@@ -3,7 +3,7 @@ import { networkHint } from './providers';
 
 /**
  * 模型调用适配层（R3 的最小切片，SYNC_AND_API.md §4）：浏览器直连用户自己的模型服务，
- * key 只在内存里经过这一次请求，不写日志、不落盘、不进 URL（AGENTS.md §1 第 7 条）。
+ * key 不写日志、不进 URL、不进工作区；它存在哪里由设置决定（ui/prefs.tsx，AGENTS.md §1 第 7 条）。
  * 一个 OpenAI 兼容实现覆盖 DeepSeek / 通义千问兼容模式 / Kimi / OpenAI；Anthropic 单独一支。
  */
 
@@ -31,7 +31,10 @@ function wire(c: ChatMessage['content'], anthropic: boolean): unknown {
 
 export class ModelError extends Error {}
 
-function explain(status: number, body: string): string {
+function explain(status: number, body: string, model = ''): string {
+  // 模型名不对时各家回 400 或 404，正文里都会提到 model：直接说「换模型名」，不让人去查 key 和地址
+  if ((status === 400 || status === 404) && /model/i.test(body) && /not[\s_-]*(exist|found|support)|does not exist|invalid|不存在|不支持/i.test(body))
+    return `这家服务没有「${model}」这个模型（HTTP ${status}）。请在设置里点「测试连接」，从列出的模型里选一个。`;
   if (status === 401 || status === 403) return `模型服务拒绝了这个 key（HTTP ${status}）。请在设置里检查 key。`;
   if (status === 404) return `地址或模型名不对（HTTP 404）。请在设置里核对 Base URL 与模型名。`;
   if (status === 429) return `模型服务说太忙或额度用完了（HTTP 429），稍后再试。`;
@@ -40,12 +43,29 @@ function explain(status: number, body: string): string {
   return `模型服务出错（HTTP ${status}）${body ? `：${body.slice(0, 160)}` : ''}`;
 }
 
-export async function chat(m: ModelConfig, messages: ChatMessage[], signal?: AbortSignal, maxTokens = 8192): Promise<string> {
+/** 流式进度：到目前为止写出的正文（含续写前的部分），以及模型「思考」了多少字（思考型模型先想后写） */
+export interface StreamProgress {
+  text: string;
+  thinking: number;
+}
+
+/**
+ * 传了 onDelta 就流式请求：模型每写出一段就回调一次，界面能显示进度（长输出要几分钟，不流式时这段时间什么都看不到）。
+ * 不传时与原来一样一次拿全。
+ */
+export async function chat(
+  m: ModelConfig,
+  messages: ChatMessage[],
+  signal?: AbortSignal,
+  maxTokens = 8192,
+  onDelta?: (p: StreamProgress) => void,
+): Promise<string> {
   // 回答被输出上限截断时接着写：把已写的部分作为 assistant 消息带回去，让模型从断点续上。
-  // 很多服务单次最多输出 8K token（如 deepseek-chat），而一篇关联探索的完整回答可以超过它。
+  // 很多服务单次输出有上限（常见 8K token），而一篇关联探索的完整回答可以超过它。
   let text = '';
   for (let round = 0; round <= MAX_CONTINUE; round += 1) {
-    const part = await once(m, messages, text, signal, maxTokens);
+    const before = text;
+    const part = await once(m, messages, text, signal, maxTokens, onDelta && ((p) => onDelta({ text: before + p.text, thinking: p.thinking })));
     text += part.text;
     if (!part.cut) {
       if (!text.trim()) throw new ModelError('模型返回了空回答。');
@@ -59,7 +79,14 @@ export async function chat(m: ModelConfig, messages: ChatMessage[], signal?: Abo
 const MAX_CONTINUE = 3;
 const CONTINUE = '继续。从上一条回答停下的地方接着写，第一个字紧接断点，不重复已经写过的内容，不加任何说明。';
 
-async function once(m: ModelConfig, messages: ChatMessage[], soFar: string, signal: AbortSignal | undefined, maxTokens: number): Promise<{ text: string; cut: boolean }> {
+async function once(
+  m: ModelConfig,
+  messages: ChatMessage[],
+  soFar: string,
+  signal: AbortSignal | undefined,
+  maxTokens: number,
+  onPart?: (p: StreamProgress) => void,
+): Promise<{ text: string; cut: boolean }> {
   const base = m.baseUrl.replace(/\/+$/, '');
   const anthropic = m.provider === 'anthropic';
   const system = messages.filter((x) => x.role === 'system').map((x) => asText(x.content)).join('\n\n');
@@ -76,10 +103,13 @@ async function once(m: ModelConfig, messages: ChatMessage[], soFar: string, sign
         'anthropic-dangerous-direct-browser-access': 'true',
       }
     : { 'content-type': 'application/json', authorization: `Bearer ${m.apiKey}` };
-  const body = anthropic
-    ? // Anthropic 接口的新模型思考常开且计入 max_tokens：上限太低时回答会被思考挤掉，不流式请求取 16000 作底
-      { model: m.model, max_tokens: Math.max(maxTokens, 16000), system, messages: user }
-    : { model: m.model, temperature: 0.2, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, ...user] };
+  const body = {
+    ...(anthropic
+      ? // Anthropic 接口的新模型思考常开且计入 max_tokens：上限太低时回答会被思考挤掉，取 16000 作底
+        { model: m.model, max_tokens: Math.max(maxTokens, 16000), system, messages: user }
+      : { model: m.model, temperature: 0.2, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, ...user] }),
+    ...(onPart ? { stream: true } : {}),
+  };
 
   let res: Response;
   try {
@@ -88,7 +118,9 @@ async function once(m: ModelConfig, messages: ChatMessage[], soFar: string, sign
     if ((e as Error).name === 'AbortError') throw e;
     throw new ModelError('浏览器连不上这个模型服务。' + networkHint(m.baseUrl));
   }
-  if (!res.ok) throw new ModelError(explain(res.status, await res.text().catch(() => '')));
+  if (!res.ok) throw new ModelError(explain(res.status, await res.text().catch(() => ''), m.model));
+  // 有的服务不理会 stream 参数、照样一次返回 JSON：按响应类型分流，而不是按请求时的意图
+  if (onPart && res.body && (res.headers.get('content-type') ?? '').includes('event-stream')) return readStream(res.body, anthropic, onPart);
   const data = (await res.json()) as {
     choices?: { message?: { content?: string }; finish_reason?: string }[];
     content?: { type: string; text?: string }[];
@@ -99,6 +131,66 @@ async function once(m: ModelConfig, messages: ChatMessage[], soFar: string, sign
     : data.choices?.[0]?.message?.content ?? '';
   if (anthropic && data.stop_reason === 'refusal') throw new ModelError('模型出于安全策略拒绝回答这次请求。换个问法，或换一个模型再试。');
   const cut = anthropic ? data.stop_reason === 'max_tokens' : data.choices?.[0]?.finish_reason === 'length';
+  return { text, cut };
+}
+
+/**
+ * 读 SSE 流。两家格式：
+ * - OpenAI 兼容：`data: {choices:[{delta:{content, reasoning_content}, finish_reason}]}`，以 `data: [DONE]` 结束；
+ *   思考型模型（DeepSeek、通义的思考模式等）先在 reasoning_content 里想，再在 content 里写。
+ * - Anthropic：`content_block_delta` 带 text_delta / thinking_delta；`message_delta` 带 stop_reason。
+ */
+export async function readStream(
+  stream: ReadableStream<Uint8Array>,
+  anthropic: boolean,
+  onPart: (p: StreamProgress) => void,
+): Promise<{ text: string; cut: boolean }> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let text = '';
+  let thinking = 0;
+  let cut = false;
+  let refusal = false;
+  const take = (data: string) => {
+    if (!data || data === '[DONE]') return;
+    let j: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+    try {
+      j = JSON.parse(data);
+    } catch {
+      return;
+    }
+    if (j.error) throw new ModelError(`模型服务出错：${String(j.error.message ?? j.error).slice(0, 160)}`);
+    if (anthropic) {
+      if (j.type === 'content_block_delta') {
+        if (j.delta?.type === 'text_delta') text += j.delta.text ?? '';
+        else if (j.delta?.type === 'thinking_delta') thinking += String(j.delta.thinking ?? '').length;
+      } else if (j.type === 'message_delta') {
+        if (j.delta?.stop_reason === 'max_tokens') cut = true;
+        if (j.delta?.stop_reason === 'refusal') refusal = true;
+      }
+    } else {
+      const c = j.choices?.[0];
+      if (typeof c?.delta?.content === 'string') text += c.delta.content;
+      const r = c?.delta?.reasoning_content ?? c?.delta?.reasoning;
+      if (typeof r === 'string') thinking += r.length;
+      if (c?.finish_reason === 'length') cut = true;
+    }
+    onPart({ text, thinking });
+  };
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let i: number;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (line.startsWith('data:')) take(line.slice(5).trim());
+    }
+  }
+  if (buf.trim().startsWith('data:')) take(buf.trim().slice(5).trim());
+  if (refusal) throw new ModelError('模型出于安全策略拒绝回答这次请求。换个问法，或换一个模型再试。');
   return { text, cut };
 }
 

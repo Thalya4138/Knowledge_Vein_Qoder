@@ -246,6 +246,8 @@
 .settings[open] {
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
+  /* 行高锁在对话框高度内：否则网格子项被内容撑高，.settings-body 的滚动永不出现，按钮与结果被裁到框外 */
+  grid-template-rows: minmax(0, 1fr);
   animation: rise var(--d-short) var(--ease) both;
 }
 
@@ -308,6 +310,7 @@
 
 .settings-body {
   position: relative;
+  min-height: 0;
   overflow-y: auto;
   padding: var(--s-24) var(--s-24) var(--s-24) var(--s-24);
 }
@@ -354,14 +357,14 @@
   font-size: 12px;
 }
 
-.settings-form label:not(.radio-row label) {
+.settings-form label:not(.radio-row label, .settings-check) {
   display: grid;
   gap: var(--s-4);
   font-size: var(--t-13);
   color: var(--ink-2);
 }
 
-.settings-form input:not([type='radio']),
+.settings-form input:not([type='radio'], [type='checkbox']),
 .settings-form select {
   height: 40px;
   padding: 0 var(--s-12);
@@ -511,4 +514,37 @@
     width: 36px;
     padding: 0;
   }
+}
+
+/* 设置 · 「在这台电脑上记住」 */
+.settings-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-8);
+  font-size: var(--t-15);
+  cursor: pointer;
+}
+
+.settings-check input {
+  margin-top: 0.3em;
+}
+
+.settings-check small {
+  display: block;
+  font-size: var(--t-13);
+  color: var(--ink-3);
+}
+
+.settings-forget {
+  margin-right: auto;
+}
+
+/* 设置的内容区会滚动：关闭按钮钉在右上角，不随内容滚出视野 */
+.settings-body > .settings-close {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  float: right;
+  margin: calc(var(--s-12) - var(--s-24)) calc(var(--s-12) - var(--s-24)) 0 0;
+  background: var(--surface);
 }

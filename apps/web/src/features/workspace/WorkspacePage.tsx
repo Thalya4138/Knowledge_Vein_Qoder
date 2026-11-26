@@ -55,6 +55,7 @@ export function WorkspacePage() {
   const importInput = useRef<HTMLInputElement>(null);
   const [alignOpen, setAlignOpen] = useState(false);
   const [ghOpen, setGhOpen] = useState(false);
+  const [ghImportOpen, setGhImportOpen] = useState(false);
 
   useEffect(() => setEditing(false), [file?.id, view]);
   useEffect(() => {
@@ -132,7 +133,7 @@ export function WorkspacePage() {
   };
 
   const onLocate = (hit: Hit) => {
-    if (ws.id !== DEMO_WORKSPACE.id) {
+    if (hit.demo && ws.id !== DEMO_WORKSPACE.id) {
       const next = new URLSearchParams(params);
       next.set('ws', DEMO_WORKSPACE.id);
       next.set('file', hit.fileId);
@@ -314,6 +315,17 @@ export function WorkspacePage() {
               </span>
               <span className="rail-name">{tr('导入文件夹', 'Import folder')}</span>
             </button>
+            <button
+              type="button"
+              className="rail-item new"
+              onClick={() => setGhImportOpen(true)}
+              title={tr('把一个 GitHub 仓库复制成工作区，长期保存在这台电脑的浏览器里，之后可随时同步', 'Copy a GitHub repository into a workspace kept in this browser; sync any time later')}
+            >
+              <span className="rail-glyph" aria-hidden="true">
+                <Icon name="github" />
+              </span>
+              <span className="rail-name">{tr('从 GitHub 导入', 'Import from GitHub')}</span>
+            </button>
             <input
               ref={importInput}
               type="file"
@@ -461,7 +473,18 @@ export function WorkspacePage() {
         {ws.origin === 'browser' && (
           <GithubSync workspace={ws} open={ghOpen} onClose={() => setGhOpen(false)} onWorkspace={replace} onStatus={setStatus} />
         )}
-        <AiDock onLocate={onLocate} noteName={findFile(DEMO_WORKSPACE, DEFAULT_FILE)?.name ?? '讲义'} />
+        <GithubSync
+          open={ghImportOpen}
+          onClose={() => setGhImportOpen(false)}
+          onWorkspace={(w) => {
+            void reload().then(() => {
+              setParams({ ws: w.id }, { replace: true });
+              setTreeOpen(true);
+            });
+          }}
+          onStatus={setStatus}
+        />
+        <AiDock onLocate={onLocate} noteName={findFile(DEMO_WORKSPACE, DEFAULT_FILE)?.name ?? '讲义'} ws={ws} files={allFiles} onWorkspace={replace} onStatus={setStatus} />
       </section>
     </div>
   );

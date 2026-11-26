@@ -110,7 +110,7 @@ interface AiProvider {
 
 ### 密钥处理
 
-- 默认**只存在内存**，刷新即失。
+- 默认存在**当前标签页**（sessionStorage）：刷新不丢，关掉即清；勾选「在这台电脑上记住」才写 localStorage，可一键清除（2026-11-26 用户裁决）。
 - 用户显式勾选"记住"才写 `sessionStorage`（**不写** `localStorage`、不进日志、不进 URL）。
 - UI 必须说明：前端直连提供商会让 key 出现在浏览器 devtools 里。
 

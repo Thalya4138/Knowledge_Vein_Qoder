@@ -7,6 +7,11 @@ import fragments from '../../../../prompts/EXPLORE_FRAGMENTS.md?raw';
 import meta from '../../../../prompts/EXPLORE_META.md?raw';
 import cross from '../../../../prompts/EXPLORE_CROSS.md?raw';
 import visualize from '../../../../prompts/VISUALIZE.md?raw';
+import workspaceAsk from '../../../../prompts/WORKSPACE_ASK.md?raw';
+import workspaceOrganize from '../../../../prompts/WORKSPACE_ORGANIZE.md?raw';
+import workspaceRewrite from '../../../../prompts/WORKSPACE_REWRITE.md?raw';
+import noteGeneration from '../../../../prompts/NOTE_GENERATION.md?raw';
+import resourceDiscovery from '../../../../prompts/RESOURCE_DISCOVERY.md?raw';
 
 /**
  * 每个 AI 位置的内置提示词（登记表 prompts/registry.json）。提示词随网站发布；
@@ -21,6 +26,11 @@ const BUILT_IN = {
   'connection.meta': meta,
   'connection.cross': cross,
   'lab.visualize': visualize,
+  'workspace.ask': workspaceAsk,
+  'workspace.organize': workspaceOrganize,
+  'workspace.rewrite': workspaceRewrite,
+  'note.generate': noteGeneration,
+  'workspace.resources': resourceDiscovery,
 } as const;
 
 const SHARED: Partial<Record<keyof typeof BUILT_IN, string>> = {

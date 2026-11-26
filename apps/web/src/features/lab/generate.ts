@@ -6,11 +6,13 @@ import type { ModelConfig } from '../../ui/prefs';
 import type { GraphLike } from '../atlas/mindDoc';
 import { gatherContext } from '../connection/exploreAi';
 import { ALLOWED_ORIGINS, AUTO_CHOICES, capOf, PHET_SIMS, resolveTool, SHARED_LIBS, type ToolCap } from './toolCaps';
+import { assemblePage, checkCore } from './shell';
 
 /**
  * 可视化实验室的生成（位置 lab.visualize，提示词 prompts/VISUALIZE.md）。三步，每步一次模型调用：
- *   ① 计划：选工具、要让人看见什么、控件、步骤、事实与出处、阐释（JSON，确定性核对）
- *   ② 写代码：浏览器工具写一张单文件 HTML；本地工具写可运行脚本；PhET 不写代码，由程序嵌入官方模拟
+ *   ① 计划：选工具、要让人看见什么、控件（滑块规格）、步骤、事实与出处、阐释（JSON，确定性核对）
+ *   ② 写核心：浏览器工具只写一段画图 JS，整页 HTML 由确定性模板壳组装（shell.ts，接龙 #77）；
+ *      本地工具写可运行脚本；PhET 不写代码，由程序嵌入官方模拟
  *   ③ 修复：页面在沙箱里报错或白屏时，把错误原文交回模型修一次（由界面在运行后触发）
  * 结果存进工作区 `.vein/lab/runs/<id>.json`，会话历史指向它，刷新、换电脑（文件夹工作区）都还在。
  */
@@ -21,7 +23,7 @@ export interface GenPlan {
   whyTool: string;
   phet?: string;
   see: string;
-  controls: { name: string; effect: string }[];
+  controls: { name: string; effect: string; key?: string; min?: number; max?: number; step?: number; value?: number; unit?: string }[];
   steps: { title: string; what: string }[];
   facts: { claim: string; source: string }[];
   caveat: string;
@@ -41,8 +43,10 @@ export interface GenRun {
   /** 用户点名的工具用不了、换成了别的：写明原因 */
   substitutedWhy?: string;
   plan: GenPlan;
-  /** browser：完整 HTML（未包沙箱外壳）；local：脚本；embed：空 */
+  /** browser：完整 HTML（模板壳组装，未包沙箱外壳）；local：脚本；embed：空 */
   code: string;
+  /** browser：模型写的画图核心 JS（修复时只交回这一段）。旧记录没有此字段，修复走整页老路 */
+  core?: string;
   lang: string;
   status: GenStatus;
   errors: string[];
@@ -109,21 +113,32 @@ const PLAN_FORMAT = `## 这一次要做的：计划（还不写代码）
 {"title":"≤16 字，说出读者会看见什么","tool":"工具名，原样照抄","whyTool":"一句：为什么这个工具最能让这件事看得见",
  "phet":"只有选 PhET 时写：清单里的 id",
  "see":"一句：读者动手之后会看见的那件事（就是问题的答案）",
- "controls":[{"name":"控件，写清范围与单位","effect":"改它会看见什么变化"}],
+ "controls":[{"key":"a","name":"控件名，写清含义与单位","min":0,"max":10,"step":0.1,"value":5,"unit":"","effect":"改它会看见什么变化"}],
  "steps":[{"title":"步骤名","what":"这一步画面上变了什么、为什么"}],
  "facts":[{"claim":"页面上要用到的一条事实或数据","source":"工作区片段的 anchor，或《书名》第N章，或「无来源，待核对」"}],
  "caveat":"一行：哪里是示意或简化（没有就写空字符串）",
  "explain":["给读者的阐释，2–4 段教材书面语：看到的是什么、为什么是这样、试着做一件事会看见什么"]}
-controls 至少一个、最多四个；steps 没有过程就写空数组。`;
+controls 至少一个、最多四个，都是数值滑块：key 用短英文名（代码里按它取值），min/max/step/value 给合理的数值范围与初值，unit 是单位（没有就空字符串）。步骤没有过程就写空数组。`;
 
 const CODE_FORMAT = (local: ToolCap | null) =>
   local?.file
     ? `## 这一次要做的：写代码（本地运行）
 按上面的计划写一个完整、能直接运行的 ${local.name} 脚本，放在一个 \`\`\`${local.file.lang} 代码块里；文件开头用注释写依赖与运行命令（${local.file.run}）。代码块之前用两三段话说明运行后会看到什么、改哪个参数会看到什么变化。`
-    : `## 这一次要做的：写页面
-按上面的计划写一张完整的单文件 HTML 页面，放在一个 \`\`\`html 代码块里。遵守提示词第 3、4 节：只加载「可用的库」里的地址；打开就有初始画面；画完调用 window.veinReady()；左画布右阐释栏（阐释栏用计划里的 explain，步骤或参数变化时高亮对应段落）；画布角落一行写 caveat。`;
+    : `## 这一次要做的：写画图核心
+页面由程序组装：布局、明暗主题、滑块控件、阐释栏、标题、caveat、公式库都已就绪，你不用写。只写一段 JavaScript，放在一个 \`\`\`js 代码块里，代码块外不写任何话。契约见提示词第 4 节：可用的库已加载；调 vein.onDraw((params, step) => {...}) 注册重画函数，把图画进 vein.stage；params 的键就是计划里控件的 key；加载久的先 vein.loading(true, '正在加载……')。不写 HTML、不写 CSS、不自建控件。`;
 
 /* ---------- 三步 ---------- */
+
+/** 生成过程中的进度：哪一步、计划（一出来就给界面先展示）、模型已写/已想的字数、代码末尾 */
+export interface GenProgress {
+  step: 'read' | 'plan' | 'code' | 'repair';
+  label: string;
+  plan?: GenPlan;
+  tool?: string;
+  chars: number;
+  thinking: number;
+  tail: string;
+}
 
 export interface GenInput {
   model: ModelConfig;
@@ -133,19 +148,24 @@ export interface GenInput {
   requested: string | null;
   lang: 'zh' | 'en';
   signal?: AbortSignal;
-  onStage?: (label: string) => void;
+  onProgress?: (p: GenProgress) => void;
 }
 
 export async function generateViz(input: GenInput): Promise<GenRun> {
-  const { model, store, graph, q, requested, signal, onStage } = input;
+  const { model, store, graph, q, requested, lang, signal, onProgress } = input;
+  const report = (p: Partial<GenProgress> & Pick<GenProgress, 'step' | 'label'>) => onProgress?.({ chars: 0, thinking: 0, tail: '', ...p });
+  report({ step: 'read', label: '读工作区里相关的讲义' });
   const prompt = await promptFor('lab.visualize', store ?? undefined);
   const system = { role: 'system' as const, content: prompt.text };
   const menu = toolMenu(requested);
   const ctx = await contextText(store, graph, q);
   const head = `## 读者想看懂的\n${q}\n\n${menu.text}\n${phetList()}\n${ctx}`;
 
-  onStage?.('拟计划：选工具、定要让人看见什么');
-  const planRaw = await chat(model, [system, { role: 'user', content: `${head}\n${PLAN_FORMAT}` }], signal, 4096);
+  const planLabel = '拟计划：选工具、定要让人看见什么';
+  report({ step: 'plan', label: planLabel });
+  const planRaw = await chat(model, [system, { role: 'user', content: `${head}\n${PLAN_FORMAT}` }], signal, 4096, (d) =>
+    report({ step: 'plan', label: planLabel, chars: d.text.length, thinking: d.thinking }),
+  );
   const plan = checkPlan(extractJson(planRaw), menu.cap?.name ?? null);
   const cap = capOf(plan.tool)!;
 
@@ -164,26 +184,49 @@ export async function generateViz(input: GenInput): Promise<GenRun> {
   };
   if (cap.tier === 'embed') return { ...base, code: '', lang: 'phet', status: 'running' };
 
-  onStage?.(cap.tier === 'local' ? `写 ${cap.name} 代码` : `用 ${cap.name} 写页面`);
+  const codeLabel = cap.tier === 'local' ? `写 ${cap.name} 代码` : `用 ${cap.name} 写画图代码`;
+  report({ step: 'code', label: codeLabel, plan, tool: cap.name });
   const codeMsg = `${head}\n## 计划（上一步定的）\n${JSON.stringify(plan, null, 1)}\n\n${cap.tier === 'browser' ? libsFor(cap) : ''}\n${CODE_FORMAT(cap.tier === 'local' ? cap : null)}`;
-  const out = await chat(model, [system, { role: 'user', content: codeMsg }], signal, 16000);
+  const out = await chat(model, [system, { role: 'user', content: codeMsg }], signal, 16000, (d) =>
+    report({ step: 'code', label: codeLabel, plan, tool: cap.name, chars: d.text.length, thinking: d.thinking, tail: d.text.slice(-700) }),
+  );
   if (cap.tier === 'local') {
     const code = fenced(out, cap.file!.lang) ?? fenced(out, '');
     if (!code) throw new ModelError('模型没有给出代码块。');
     return { ...base, code, lang: cap.file!.lang, status: 'local' };
   }
-  const html = fenced(out, 'html');
-  if (!html) throw new ModelError('模型没有给出 HTML 页面。');
-  const issues = checkHtml(html, cap);
-  return { ...base, code: html, lang: 'html', status: 'running', errors: issues };
+  const core = fenced(out, 'js') ?? fenced(out, 'javascript') ?? fenced(out, '');
+  if (!core) throw new ModelError('模型没有给出画图代码块。');
+  const issues = checkCore(core, cap);
+  return { ...base, code: assemblePage(plan, cap, core, lang), core, lang: 'html', status: 'running', errors: issues };
 }
 
-/** 页面跑不起来：把错误原文与上一版代码交回模型，要一张完整的修好的页面 */
+/** 页面跑不起来：把错误原文与上一版代码交回模型修。新记录只修核心，旧记录（无 core）修整页 */
 export async function repairViz(input: GenInput, run: GenRun, errors: string[]): Promise<GenRun> {
-  const { model, store, signal, onStage } = input;
+  const { model, store, lang, signal, onProgress } = input;
   const cap = capOf(run.tool)!;
   const prompt = await promptFor('lab.visualize', store ?? undefined);
-  onStage?.(`修复页面（第 ${run.repairs + 1} 次）`);
+  const label = `页面没跑起来，修复中（第 ${run.repairs + 1} 次）`;
+  onProgress?.({ step: 'repair', label, plan: run.plan, tool: run.tool, chars: 0, thinking: 0, tail: '' });
+  if (run.core != null) {
+    const msg = `## 读者想看懂的\n${run.q}\n\n## 计划\n${JSON.stringify(run.plan, null, 1)}\n\n${libsFor(cap)}
+## 上一版画图核心在沙箱里没有跑起来
+${errors.map((e) => `- ${e}`).join('\n')}
+
+## 上一版核心代码
+\`\`\`js
+${run.core}
+\`\`\`
+
+## 这一次要做的：修复
+找出原因，输出修好的完整画图核心，放在一个 \`\`\`js 代码块里，代码块外只用一句话说原因。仍然遵守提示词第 4 节的契约。`;
+    const out = await chat(model, [{ role: 'system', content: prompt.text }, { role: 'user', content: msg }], signal, 16000, (d) =>
+      onProgress?.({ step: 'repair', label, plan: run.plan, tool: run.tool, chars: d.text.length, thinking: d.thinking, tail: d.text.slice(-700) }),
+    );
+    const core = fenced(out, 'js') ?? fenced(out, 'javascript') ?? fenced(out, '');
+    if (!core) throw new ModelError('模型修复时没有给出画图代码块。');
+    return { ...run, code: assemblePage(run.plan, cap, core, lang), core, repairs: run.repairs + 1, errors: checkCore(core, cap), status: 'running' };
+  }
   const msg = `## 读者想看懂的\n${run.q}\n\n## 计划\n${JSON.stringify(run.plan, null, 1)}\n\n${libsFor(cap)}
 ## 上一版页面在沙箱里没有跑起来
 ${errors.map((e) => `- ${e}`).join('\n')}
@@ -195,7 +238,9 @@ ${run.code}
 
 ## 这一次要做的：修复
 找出原因，输出一张完整的修好的页面，放在一个 \`\`\`html 代码块里。代码块外只用一句话说原因。仍然遵守提示词第 3、4 节。`;
-  const out = await chat(model, [{ role: 'system', content: prompt.text }, { role: 'user', content: msg }], signal, 16000);
+  const out = await chat(model, [{ role: 'system', content: prompt.text }, { role: 'user', content: msg }], signal, 16000, (d) =>
+    onProgress?.({ step: 'repair', label, plan: run.plan, tool: run.tool, chars: d.text.length, thinking: d.thinking, tail: d.text.slice(-700) }),
+  );
   const html = fenced(out, 'html');
   if (!html) throw new ModelError('模型修复时没有给出 HTML 页面。');
   return { ...run, code: html, repairs: run.repairs + 1, errors: checkHtml(html, cap), status: 'running' };
@@ -204,6 +249,10 @@ ${run.code}
 /* ---------- 确定性核对 ---------- */
 
 const str = (v: unknown, max = 600) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+const num = (v: unknown): number | undefined => {
+  const n = typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : undefined;
+};
 
 export function checkPlan(raw: unknown, forced: string | null): GenPlan {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
@@ -223,7 +272,14 @@ export function checkPlan(raw: unknown, forced: string | null): GenPlan {
     whyTool: str(o.whyTool, 200),
     phet: tool === 'PhET' ? phet : undefined,
     see: str(o.see, 200),
-    controls: arr(o.controls, (x) => (str(x.name) ? { name: str(x.name, 80), effect: str(x.effect, 200) } : null), 4),
+    controls: arr(
+      o.controls,
+      (x) =>
+        str(x.name)
+          ? { name: str(x.name, 80), effect: str(x.effect, 200), key: str(x.key, 24), min: num(x.min), max: num(x.max), step: num(x.step), value: num(x.value), unit: str(x.unit, 16) }
+          : null,
+      4,
+    ),
     steps: arr(o.steps, (x) => (str(x.title) ? { title: str(x.title, 40), what: str(x.what, 300) } : null), 12),
     facts: arr(o.facts, (x) => (str(x.claim) ? { claim: str(x.claim, 300), source: str(x.source, 200) || '无来源，待核对' } : null), 12),
     caveat: str(o.caveat, 160),

@@ -240,11 +240,11 @@ export const TOUR: TourStop[] = [
     sel: ['.cx-composer'],
     zh: {
       title: '放进你自己的材料',
-      body: '输入框可以直接粘贴截图、拖入 PDF、添加网页。用的是你自己的模型，key 只存在本页内存里。',
+      body: '输入框可以直接粘贴截图、拖入 PDF、添加网页。用的是你自己的模型，key 默认只存在当前标签页。',
     },
     en: {
       title: 'Bring your own material',
-      body: 'Paste screenshots, drag in PDFs or add web pages right in the input. It runs on your own model; the key stays in this page’s memory only.',
+      body: 'Paste screenshots, drag in PDFs or add web pages right in the input. It runs on your own model; by default the key stays in this tab only.',
     },
   },
   {

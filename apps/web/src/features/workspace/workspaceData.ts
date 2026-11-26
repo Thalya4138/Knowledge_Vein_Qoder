@@ -94,3 +94,18 @@ export function findFile(ws: Workspace, id: string | null): WsFile | undefined {
 export function folderOf(ws: Workspace, id: string): WsFolder | undefined {
   return ws.folders.find((f) => f.files.some((x) => x.id === id));
 }
+
+/** 文件在存储里的路径：本地/浏览器文件自带 path；示例原件没有，从原文地址 `/demo/<ws>/…` 推出。 */
+export function filePath(f: WsFile): string | null {
+  if (f.path) return f.path;
+  const src = f.sourceUrl ?? f.url;
+  if (!src) return null;
+  let decoded = src;
+  try {
+    decoded = decodeURI(src);
+  } catch {
+    /* 非法编码就按原文比 */
+  }
+  const m = decoded.match(/\/demo\/[^/]+\/(.+)$/);
+  return m ? m[1]! : null;
+}
