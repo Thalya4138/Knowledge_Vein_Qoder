@@ -34,12 +34,16 @@ export interface MindInput {
 
 export interface Collected {
   input: MindInput;
-  /** 读了几份笔记、送出多少字、因为太长没送的片段数 */
-  stats: { files: number; chars: number; dropped: number };
+  /** 读了几份笔记、送出多少字、因为太长没送的片段数、被截断的片段数 */
+  stats: { files: number; chars: number; dropped: number; truncated: number };
 }
 
-/** 单次请求里笔记原文的总字数上限：常见模型 64k 上下文里留出提示词与输出的空间 */
-export const NOTE_BUDGET = 48_000;
+/** 单次请求里笔记原文的总字数上限：常见模型 64k 上下文里留出提示词、图谱与输出的空间 */
+export const NOTE_BUDGET = 32_000;
+/** 更新已有导图时笔记原文的上限：旧图本身已带着全部主题，笔记只补相关出处 */
+export const UPDATE_BUDGET = 12_000;
+/** 单段上限：一段太长时只取前一部分，别让一段吃掉整个预算 */
+export const SPAN_CAP = 2_400;
 
 const NOTE_FILE = /\.(md|markdown|txt)$/i;
 const SKIP = /^(maps|\.vein)\//;
@@ -68,30 +72,62 @@ export function splitNote(path: string, text: string): NoteSpan[] {
   return out;
 }
 
-export async function collectInput(store: WorkspaceStore, title: string, graph: GraphLike | null): Promise<Collected> {
+/** 与 connection/exploreAi.terms 同样的二元组切词；exploreAi 已从本文件引 splitNote，反向引会成循环，故本地写一份 */
+function queryTerms(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const w of text.toLowerCase().match(/[a-z][a-z0-9]{2,}/g) ?? []) out.add(w);
+  for (const run of text.match(/[一-鿿]+/g) ?? []) for (let i = 0; i + 1 < run.length; i += 1) out.add(run.slice(i, i + 2));
+  return out;
+}
+
+export interface CollectOpts {
+  /** 额外的检索词（如用户这次的改图要求） */
+  query?: string;
+  /** 笔记原文预算，默认 NOTE_BUDGET */
+  budget?: number;
+  /** false 时按文件原序收取（「按资料更新」要覆盖新材料，不能只挑与旧图相关的） */
+  ranked?: boolean;
+}
+
+export async function collectInput(store: WorkspaceStore, title: string, graph: GraphLike | null, opts: CollectOpts = {}): Promise<Collected> {
   const entries = (await store.list('')).filter((e) => NOTE_FILE.test(e.path) && !SKIP.test(e.path));
   entries.sort((a, b) => a.path.localeCompare(b.path, 'zh'));
-  const notes: NoteSpan[] = [];
-  let chars = 0;
-  let dropped = 0;
-  for (const e of entries) {
-    const text = await readText(store, e.path);
-    if (!text) continue;
-    for (const span of splitNote(e.path, text)) {
-      if (chars + span.text.length > NOTE_BUDGET) {
-        dropped += 1;
-        continue;
-      }
-      chars += span.text.length;
-      notes.push(span);
-    }
-  }
   let kb: MindInput['kb'] = null;
   try {
     kb = await readJson<{ title?: string; subtitle?: string }>(store, 'kb.json');
   } catch {
     kb = null;
   }
+  const all: NoteSpan[] = [];
+  for (const e of entries) {
+    const text = await readText(store, e.path);
+    if (text) all.push(...splitNote(e.path, text));
+  }
+  // 相关度＝命中的检索词数 / 段长惩罚：图谱节点标题、kb 标题与本次请求里的词优先，
+  // 同分时保持文件原序；一个词都没命中时退回原序，不丢材料
+  const q = [...queryTerms([opts.query ?? '', kb?.title ?? title, kb?.subtitle ?? '', ...(graph?.nodes ?? []).flatMap((n) => [n.title, ...(n.aliases ?? [])])].join(' '))].slice(0, 160);
+  const scored = all.map((s, i) => {
+    const low = s.text.toLowerCase();
+    const hit = q.filter((t) => low.includes(t)).length;
+    return { s, i, score: hit / Math.sqrt(Math.max(200, s.text.length) / 200) };
+  });
+  if (opts.ranked !== false && scored.some((x) => x.score > 0)) scored.sort((a, b) => b.score - a.score || a.i - b.i);
+  const budget = opts.budget ?? NOTE_BUDGET;
+  const picked: { span: NoteSpan; i: number }[] = [];
+  let chars = 0;
+  let dropped = 0;
+  let truncated = 0;
+  for (const x of scored) {
+    const text = x.s.text.length > SPAN_CAP ? x.s.text.slice(0, SPAN_CAP) + '…' : x.s.text;
+    if (x.s.text.length > SPAN_CAP) truncated += 1;
+    if (chars + text.length > budget) {
+      dropped += 1;
+      continue;
+    }
+    chars += text.length;
+    picked.push({ span: { anchor: x.s.anchor, text }, i: x.i });
+  }
+  picked.sort((a, b) => a.i - b.i);
   return {
     input: {
       kb: kb ? { title: kb.title, subtitle: kb.subtitle } : { title },
@@ -99,11 +135,11 @@ export async function collectInput(store: WorkspaceStore, title: string, graph: 
       relations: (graph?.relations ?? [])
         .filter((r) => r.status === 'accepted')
         .map(({ id, from, to, type, explanation, assumptions, epistemic }) => ({ id, from, to, type, explanation, assumptions, epistemic })),
-      notes,
+      notes: picked.map((x) => x.span),
       existingMap: null,
       userRequest: '生成一张思维导图',
     },
-    stats: { files: entries.length, chars, dropped },
+    stats: { files: entries.length, chars, dropped, truncated },
   };
 }
 

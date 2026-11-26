@@ -1,4 +1,4 @@
-import { browserStore } from './browser';
+import { browserStore, createBrowserWorkspace, keepStorage } from './browser';
 import { planAlign, type Change } from './link';
 import { registerWorkspace } from './registry';
 import { classify, placeBrowserFile, SKIP_DIR } from './tree';
@@ -15,10 +15,60 @@ export type { GithubLink };
  * 推送是一次提交（Git Data API：blob → tree → commit → 移动分支）。比较之后、提交之前再核对一次分支的提交号，
  * 中间有人推过就停下，要求重新比较——不会盖掉别人的提交。不删除任何一边的文件。
  *
- * 令牌只存在本页内存（`memoryToken`），不写进工作区、浏览器存储或地址（AGENTS.md §1 第 7 条）。
+ * 令牌与模型 key 同一种存法（AGENTS.md §1 第 7 条）：默认存在当前标签页，勾选「在这台电脑上记住」才写 localStorage；
+ * 不写进工作区、不进地址。公开仓库不需要令牌：读文件走 raw.githubusercontent.com（允许跨域、不占 API 限额）。
  */
 
-export const memoryToken = { value: '' };
+const TOKEN_KEY = 'vein.github-token';
+let tokenInMemory = '';
+
+/** 读写 GitHub 令牌；`value` 的写入只更新当前标签页（以及已勾选「记住」时的本机副本） */
+export const memoryToken = {
+  get value(): string {
+    try {
+      return localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY) ?? tokenInMemory;
+    } catch {
+      return tokenInMemory;
+    }
+  },
+  set value(v: string) {
+    tokenInMemory = v;
+    try {
+      sessionStorage.setItem(TOKEN_KEY, v);
+      if (localStorage.getItem(TOKEN_KEY) !== null) localStorage.setItem(TOKEN_KEY, v);
+    } catch {
+      /* 存储不可用：只在内存 */
+    }
+  },
+};
+
+export function tokenRemembered(): boolean {
+  try {
+    return localStorage.getItem(TOKEN_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** 勾选 / 取消「在这台电脑上记住」 */
+export function rememberToken(on: boolean): void {
+  try {
+    if (on && memoryToken.value) localStorage.setItem(TOKEN_KEY, memoryToken.value);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* 无存储 */
+  }
+}
+
+export function forgetToken(): void {
+  tokenInMemory = '';
+  try {
+    sessionStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* 无存储 */
+  }
+}
 
 const API = 'https://api.github.com';
 /** 单个文件上限：Git Data API 的 blob 最大 100 MB，base64 之后还要再大三分之一；学习资料用不到这么大 */
@@ -40,7 +90,8 @@ async function gh<T>(token: string, method: string, path: string, body?: unknown
     res = await fetch(`${API}${path}`, {
       method,
       headers: {
-        authorization: `Bearer ${token}`,
+        // 公开仓库可以不带令牌（每小时 60 次请求，比较一次只用 3 次）
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
         accept: 'application/vnd.github+json',
         'x-github-api-version': '2022-11-28',
         ...(body ? { 'content-type': 'application/json' } : {}),
@@ -60,7 +111,9 @@ async function gh<T>(token: string, method: string, path: string, body?: unknown
     }
   })();
   if (res.status === 401) throw new GithubError('GitHub 不认这个令牌（401）：令牌写错了、过期了，或已被撤销。');
+  if (res.status === 403 && !token && /rate limit/i.test(msg)) throw new GithubError('不带令牌时 GitHub 每小时只允许 60 次请求，已经用完了。填一个令牌，或一小时后再试。');
   if (res.status === 403) throw new GithubError(`GitHub 拒绝了（403）：令牌没有这个仓库的 Contents 读写权限，或请求太频繁。${msg ? `（${msg}）` : ''}`);
+  if (res.status === 404 && !token) throw new GithubError('找不到（404）：仓库名写错了，或者这是私有仓库——私有仓库要填令牌。');
   if (res.status === 404) throw new GithubError('找不到（404）：仓库名写错了，或者令牌没有授权这个仓库。');
   if (res.status === 409 && /empty/i.test(msg)) throw new EmptyRepo();
   if (res.status === 422) throw new GithubError(`GitHub 不接受这次请求（422）：${msg}`);
@@ -185,8 +238,7 @@ export async function applyGithub(
     }
     if (side === 'here') toPush.push(c.path);
     else {
-      const blob = await gh<{ content: string }>(token, 'GET', `/repos/${link.repo}/git/blobs/${cmp.remote.files.get(c.path)}`);
-      await store.write(c.path, new Blob([unb64(blob.content)]));
+      await store.write(c.path, await pullFile(token, link.repo, cmp.remote.head, full(c.path), cmp.remote.files.get(c.path)!));
       ws = placeBrowserFile(ws, c.path).workspace;
       pulled += 1;
     }
@@ -242,6 +294,47 @@ export async function applyGithub(
   ws = { ...ws, github: { repo: link.repo, branch: link.branch, dir, head, base, at: Date.now() } };
   await persist(ws);
   return { workspace: ws, pushed: toPush.length, pulled, skipped, commit };
+}
+
+/** 取仓库里的一个文件：有令牌走 API（私有仓库也行）；没有令牌走 raw 地址（公开仓库，不占 API 限额） */
+async function pullFile(token: string, repo: string, head: string | null, path: string, sha: string): Promise<Blob> {
+  if (token || !head) {
+    const blob = await gh<{ content: string }>(token, 'GET', `/repos/${repo}/git/blobs/${sha}`);
+    return new Blob([unb64(blob.content)]);
+  }
+  let res: Response;
+  try {
+    res = await fetch(`https://raw.githubusercontent.com/${repo}/${head}/${path.split('/').map(encodeURIComponent).join('/')}`);
+  } catch {
+    throw new GithubError('连不上 raw.githubusercontent.com。检查网络或代理后再试。');
+  }
+  if (!res.ok) throw new GithubError(`下载 ${path} 失败（HTTP ${res.status}）。`);
+  return await res.blob();
+}
+
+/**
+ * 从 GitHub 导入：把仓库（或其中一个子目录）复制成一个新的浏览器工作区，并记住这个仓库。
+ * 先读仓库再建工作区——仓库名写错时不留下空工作区。导入后文件长期存在这台电脑的浏览器里，
+ * 之后在文件栏点「同步 GitHub」随时拉取更新或推回去。
+ */
+export async function importGithub(
+  token: string,
+  target: Pick<GithubLink, 'repo' | 'branch' | 'dir'>,
+): Promise<{ workspace: Workspace; pulled: number }> {
+  const remote = await remoteState(token, target);
+  if (!remote.files.size) throw new GithubError('这个仓库（或子目录）里没有能打开的文件（Markdown、PDF、图片、HTML、JSON）。');
+  const dir = cleanDir(target.dir);
+  const name = dir ? dir.split('/').pop()! : target.repo.split('/')[1]!;
+  const ws = await createBrowserWorkspace(name);
+  const cmp: Comparison = { remote, ...planAlign(new Map(), remote.files, {}) };
+  try {
+    const r = await applyGithub(token, ws, { ...target, dir, base: {} }, cmp, {}, '');
+    await keepStorage();
+    return { workspace: r.workspace, pulled: r.pulled };
+  } catch (e) {
+    // 中途失败：已经下载的保留在工作区里，下次「同步 GitHub」会补齐
+    throw new GithubError(`导入到一半停了：${(e as Error).message} 已下载的文件留在工作区「${name}」里，可以在文件栏点「同步 GitHub」补齐。`);
+  }
 }
 
 export async function unlinkGithub(workspace: Workspace): Promise<Workspace> {

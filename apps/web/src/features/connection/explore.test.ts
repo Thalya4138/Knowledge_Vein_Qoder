@@ -7,7 +7,7 @@ import { graphHast, texToText } from '../../content/veinGraph';
 import { blankDoc, indexDoc } from '../atlas/mindDoc';
 import { toMindBranch } from './bridge';
 import { checkGraph, checkResult, layoutGraph, lectureMarkdown, lintProse, parseOutput, plainMarkdown, repairTex, toOutline, type CheckContext, type Issue } from './explore';
-import { STAGE_CLOSING_CROSS, STAGE_OUTLINE, STAGE_OUTLINE_META, STAGE_SINGLE, buildUserContent, parseToc, rankSpans, stageSection, terms } from './exploreAi';
+import { STAGE_CLOSING_CROSS, STAGE_OUTLINE, STAGE_OUTLINE_META, STAGE_SINGLE, buildUserContent, digestSections, parseToc, rankSpans, stageSection, terms } from './exploreAi';
 import { blocksOf } from './exporting';
 import { renderMd } from './md';
 import { PRESETS, presetResult } from './presets';
@@ -421,5 +421,35 @@ describe('喂给模型的材料', () => {
     expect(text).toContain('[anchor: 讲义.pdf#page=2]');
     expect(text).toContain('此前对话');
     expect(text).toContain('我觉得不是推广');
+  });
+
+  it('已写小节回传只留最近一节全文，更早的留开头摘要', () => {
+    const long = '## 节名\n' + '正文'.repeat(400);
+    const got = digestSections([long, long]);
+    expect(got[0]!.length).toBeLessThan(320);
+    expect(got[0]).toContain('本节其余正文略');
+    expect(got[1]).toBe(long);
+    expect(digestSections(['## 短节\n短正文'])).toEqual(['## 短节\n短正文']);
+    expect(digestSections([])).toEqual([]);
+  });
+
+  it('附件正文总量有上限：超出的截断并标注，再后面的只留名字', () => {
+    const big = 'x'.repeat(16_000);
+    const parts = buildUserContent(
+      'fragments',
+      '问',
+      [
+        { kind: 'text', name: 'a.txt', text: big, cut: false },
+        { kind: 'text', name: 'b.txt', text: big, cut: false },
+        { kind: 'text', name: 'c.txt', text: big, cut: false },
+      ],
+      { nodes: [], relations: [], spans: [], files: 0, pdfs: 0 },
+      [],
+      '## 这一次要写的',
+    );
+    const text = (parts[0] as { text: string }).text;
+    expect(text).toContain('附件总量超出上限');
+    expect(text).toContain('c.txt（附件总量已到上限，这份没有送出正文）');
+    expect(text.length).toBeLessThan(34_000);
   });
 });

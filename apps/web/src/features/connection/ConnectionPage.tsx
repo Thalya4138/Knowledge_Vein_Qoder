@@ -612,7 +612,7 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
           {phase.kind === 'nokey' && (
             <div className="answer notice" role="status">
               <p>
-                {demo ? tr('示例只能回答上面准备好的三个问题。', 'Without a model, the sample answers only the three prepared questions above. ') : ''}{tr('接入你自己的模型后，文字、网页、PDF、截图都可以一起放进来。API key 只留在这个页面的内存里。', 'Connect your own model to mix text, web pages, PDFs and screenshots. The API key stays in this page’s memory only.')}
+                {demo ? tr('示例只能回答上面准备好的三个问题。', 'Without a model, the sample answers only the three prepared questions above. ') : ''}{tr('接入你自己的模型后，文字、网页、PDF、截图都可以一起放进来。API key 默认只存在当前标签页。', 'Connect your own model to mix text, web pages, PDFs and screenshots. By default the API key stays in this tab only.')}
               </p>
               <button type="button" className="key small" onClick={() => openSettings('model')}>
                 {tr('接入模型', 'Connect a model')}

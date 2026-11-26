@@ -5,6 +5,51 @@
 
 ---
 
+## 2026-11-26（夜五）· QoderWang2 · 长上下文瘦身：图谱 / 关联探索 / 工作台讲义（进行中）
+
+**用户指令**：「其他几个板块好像有同样的毛病。API-AI后上下文太长模型生成不出来太慢。」——实验室（#77）之外，其余接模型的板块也要瘦身。
+
+**实测根因**（字数为去掉维护者段落后实际发给模型的量）：
+
+- **图谱**（`features/atlas/mindGen.ts`）：笔记按文件名序收满 48,000 字为止，相关的段落可能被不相关的挤掉；`MindAssist` 每次改图／「按资料更新」都重发全部笔记＋整张旧导图。
+- **关联探索**（`features/connection/exploreAi.ts`）：学科元思考／跨学科并联逐节写作时，每节把此前全部小节全文作为「已经写好的部分」重发，第 n 节带 n-1 节全文，总量随节数平方增长；附件（文本 16k/份、PDF 24k/份）没有总量上限。
+- **工作台讲义**（`prompts/NOTE_GENERATION.md`）：提示词 16,900 字全文发出（变更记录、用户原话、待确认的示例目录都没包 `<!-- author -->`）。`existing_note` 虽无上限，但**不截断**——修订走全文重写（`lessonChanges` 把模型返回的 markdown 整文件落盘），截断旧讲义会让模型看不到尾部、写回时丢内容。
+
+**范围**：图谱笔记按相关度（图谱节点标题/别名、kb 标题、本次请求）排序选取，预算 32k、单段截断 2400，更新路径只送相关 12k（「按资料更新」例外：按原序收满预算，否则新材料会被旧图主题挤掉）；关联探索旧小节改「标题＋开头」摘要回传（最近一节保留全文），附件文本加 32k 总量上限；NOTE_GENERATION 维护者段落包 author 标记（16,908 → 15,960 字）。补测试。
+
+**不做**：不动 #77 实验室重构、不重写 #76 的 R4 文件（只定点小改）、不 push main、不部署、不覆盖并行会话未提交在制品。提示词的质量规则正文（rubric、版式、文风）不删——瘦身只去重复与无关材料，不降质量底线。
+
+（验证与交付证据完成后回填本条。）
+
+---
+
+## 2026-11-26（夜四）· QoderWang2 · R4：工作台 AI 生成与维护（进行中）
+
+**用户指令**：对照愿景列出工作台 AI 欠账（一键补进笔记、对话历史持久化、联网找资源、生成教材体讲义、AI 维护笔记均未做），定「先生成讲义，后编辑」，四步：①对话框收资料（文本/PDF/网页/截图）→AI 整理方案+讲义目录→确认落盘；②逐节联网搜资源做旁栏资源卡→逐节写教材体讲义存 notes/；③问答一键补进笔记+对话历史存 .vein/；④AI 改写选中段落先看差异、确认后写入、能一步撤回。「快，现在开始完成」「说中文。开始干」。
+
+**范围**：续用 `task/R3-QoderWang2`（起点 `bb8cb94`）。新增 `features/workspace/` 的 changes（ProposedChange 写入闸门+before 快照撤销）、ChangePreview（差异预览）、deskHistory（.vein/desk/threads.json）、deskOrganize（步骤1）、deskLesson（步骤2）、deskPatch（步骤3）、deskRewrite（步骤4）；提示词登记 workspace.organize / note.generate / workspace.resources / workspace.rewrite。复用 `connection/exploreAi` 的 readAttachment/readUrl/gatherContext、`connection/pdf` 的 pdfText、`atlas/maps` 的 mapWriter、`connection/bridge` 的 before 快照撤销范式、NoteView 既有块级 undo。
+
+**不做**：不 push main、不部署公网、不装付费 API、不改 `content/demo` 第三方来源声明、不覆盖并行会话未提交的 deskAsk 在制品（只追加）。
+
+**搜索口径**：按 `SYNC_AND_API.md` §6 路线1——浏览器不能直连搜索引擎，资源由模型按 `RESOURCE_DISCOVERY.md` 提候选（带 uri/许可/局限，status=candidate），用户采纳后写 `resources/manifest.json`，讲义只引用不搬运；真实联网搜索（路线2 用户搜索 key / 路线3 本机伴随程序）仍待实测，不伪造搜索结果。
+
+**硬约束**：AI 一切写入走提案→差异预览→确认/拒绝→可撤销；无 key 时生成降级为标注「示例」的真实样例，定位/补入/撤销等确定性能力完整可用；私人教材/PDF/截图/个人笔记只落用户自己的工作区存储，不进 Git、不上公网。
+
+**验证（2026-11-26 回填）**：
+
+- **四道门**：`verify:content` ✓ ／ `typecheck` ✓ ／ `test` 328 passed（35 files，含本轮新增 changes 10 / deskHistory 4 / deskOrganize 6 / deskLesson 6（含 ajv 校验 manifest.schema）/ deskPatch 7 / deskRewrite 5）✓ ／ `build` ✓（1.00s）。
+- **浏览器端到端实测**（in-app Browser，`localhost:5173/workspace`，无 key 默认态，结构检查＋脚本驱动交互）：
+  - 步骤1 整理：放资料面板（文件/网页/要求）→「给出整理方案」得标注「示例」的方案＋讲义目录＋「还缺」→「预览并落盘」开差异（新建 `notes/正交投影与最小二乘法.md`）→确认「已写入 1 处」→「撤销」回退、提示「已撤销刚才的写入」。
+  - 步骤2 生成：选一节→「找资源」得 2 张资源卡（许可／可信理由／局限＋采纳勾选）→采纳后「生成讲义」开差异（新建讲义＋修改 `resources/manifest.json`）→「已写入 2 处」→撤销回退。
+  - 步骤3 补进笔记：预置问答→「补进笔记」开差异（修改 `notes/2.1-列空间中的最近点.md`，插入带日期与「出处：[1]…[2]…」的讲解）→「已写入 1 处」→撤销；对话历史「记录」列表刷新后仍在（落 `.vein/desk/threads.json` 覆盖层）。
+  - 步骤4 改写：选中正文浮出「AI 改写」浮标→无 key 点击诚实提示「改写需要接入你自己的模型……定位、补入与撤销不需要 key」（不伪造生成）；带 key 的差异/确认/一步撤销由 `deskRewrite.test.ts` 与 ChangePreview controller 覆盖。
+- **实测中发现并修复两处缺陷**：① 在「整理/生成讲义」模式收起对话框后，唯一的重新入口（问答输入栏）只在该模式渲染，导致 dock 整个消失无法重开——收起时重置回问答模式（`AiDock.tsx`）。② 示例工作区文件不带 `path`，「补进笔记」按 `f.path` 定位失败——新增 `filePath()` 从原文地址 `/demo/<ws>/…` 推出存储路径（`AiDock.tsx`）。
+- **截图**：in-app Browser 面板当前隐藏（`NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`），桌面＋窄屏两张交互截图待用户打开本会话 Browser 面板后补；以上为结构＋脚本实测证据。
+
+**已知缺陷 / 下一步**：真实模型生成质量与真实联网搜索（路线2/3）未实测；带 key 的改写差异/撤销仅单测覆盖，未做真实模型端到端；工作区导出（#68）仍欠。提交/推送/部署待用户授权。
+
+---
+
 ## 2026-11-26（夜三）· QoderWang2 · R3f：删除无预置结果的单摆示例入口
 
 **用户指令**：截图指实验室「单摆从小角度到大角度，周期怎么变」这条没做，删掉，提交、更新、部署，快一点。

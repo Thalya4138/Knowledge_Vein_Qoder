@@ -3,7 +3,8 @@ import { ModelError } from '../../ai/chat';
 import type { WorkspaceStore } from '../../store/types';
 import { usePrefs, useT } from '../../ui/prefs';
 import type { GraphLike } from '../atlas/mindDoc';
-import { generateViz, loadRun, repairViz, saveRun, wrapHtml, type GenInput, type GenRun } from './generate';
+import { Md } from '../connection/md';
+import { generateViz, loadRun, repairViz, saveRun, wrapHtml, type GenInput, type GenProgress, type GenRun } from './generate';
 import { capOf, phetUrl } from './toolCaps';
 
 /**
@@ -38,13 +39,15 @@ export function GenPanel({
   const { model, lang } = usePrefs();
   const t = useT();
   const [run, setRun] = useState<GenRun | null>(null);
-  const [stage, setStage] = useState<string | null>(null);
+  const [progress, setProgress] = useState<GenProgress | null>(null);
+  const stage = progress?.label ?? null;
+  const startedAt = useRef(Date.now());
   const [failure, setFailure] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const current = useRef<GenRun | null>(null);
   current.current = run;
 
-  const input = (): GenInput => ({ model, store, graph, q, requested, lang, signal: abort.current?.signal, onStage: setStage });
+  const input = (): GenInput => ({ model, store, graph, q, requested, lang, signal: abort.current?.signal, onProgress: setProgress });
 
   const persist = async (r: GenRun) => {
     setRun(r);
@@ -63,7 +66,8 @@ export function GenPanel({
     abort.current = ctrl;
     setFailure(null);
     setRun(null);
-    setStage(null);
+    setProgress(null);
+    startedAt.current = Date.now();
     void (async () => {
       if (runId && store) {
         const saved = await loadRun(store, runId);
@@ -79,11 +83,11 @@ export function GenPanel({
       try {
         const r = await generateViz(input());
         if (ctrl.signal.aborted) return;
-        setStage(null);
+        setProgress(null);
         await persist(r.tier === 'embed' ? { ...r, status: 'ok' } : r);
       } catch (e) {
         if (ctrl.signal.aborted || (e as Error).name === 'AbortError') return;
-        setStage(null);
+        setProgress(null);
         setFailure(e instanceof ModelError ? e.message : `生成失败：${(e as Error).message}`);
       }
     })();
@@ -102,12 +106,13 @@ export function GenPanel({
   const repair = async (errors: string[]) => {
     if (!run) return;
     abort.current = new AbortController();
+    startedAt.current = Date.now();
     try {
       const fixed = await repairViz(input(), run, [...run.errors, ...errors]);
-      setStage(null);
+      setProgress(null);
       await persist(fixed);
     } catch (e) {
-      setStage(null);
+      setProgress(null);
       await persist({ ...run, status: 'failed', errors: [...errors, e instanceof Error ? e.message : String(e)] });
     }
   };
@@ -121,13 +126,17 @@ export function GenPanel({
       </section>
     );
   }
+  const stop = () => {
+    abort.current?.abort();
+    setProgress(null);
+    setFailure(t('已停止生成。可以改一下问题再试，或换一个更快的模型。', 'Generation stopped. Rephrase and try again, or switch to a faster model.'));
+  };
+
   if (!run) {
+    if (!model.apiKey) return null;
     return (
-      <section className="lab-results" aria-busy="true">
-        <p className="lab-gen-stage" role="status">
-          <span className="lab-gen-dot" aria-hidden="true" />
-          {stage ?? t('读工作区里相关的讲义', 'Reading related notes in the workspace')}
-        </p>
+      <section className="lab-results lab-gen-wait" aria-busy="true">
+        <Waiting p={progress ?? { step: 'read', label: t('读工作区里相关的讲义', 'Reading related notes in the workspace'), chars: 0, thinking: 0, tail: '' }} startedAt={startedAt.current} onStop={stop} />
       </section>
     );
   }
@@ -137,6 +146,13 @@ export function GenPanel({
     <section className="lab-results" aria-label={t('可视化结果', 'Visualization')}>
       <article className="lab-window wide lab-gen">
         {run.substitutedWhy && <p className="lab-gen-sub">{run.substitutedWhy}</p>}
+        {run.tier === 'browser' && run.status === 'running' && !progress && (
+          // 第 4 步：页面要先从 CDN 加载库（GeoGebra、浏览器里的 Python 首次要十几秒），没画出来之前画面是空的
+          <p className="lab-gen-running" role="status">
+            <span className="lab-gen-dot" aria-hidden="true" />
+            {t(`正在沙箱里加载 ${run.tool} 并运行页面…`, `Loading ${run.tool} and running the page in the sandbox…`)}
+          </p>
+        )}
         {run.tier === 'browser' && <SandboxFrame key={`${run.id}:${run.repairs}`} run={run} onOutcome={(o) => void onOutcome(o)} />}
         {run.tier === 'embed' && run.plan.phet && (
           <div className="lab-gen-embed">
@@ -145,12 +161,7 @@ export function GenPanel({
           </div>
         )}
         {run.tier === 'local' && <LocalCode run={run} onAuto={onAuto} />}
-        {stage && (
-          <p className="lab-gen-stage" role="status">
-            <span className="lab-gen-dot" aria-hidden="true" />
-            {stage}
-          </p>
-        )}
+        {progress && <Waiting p={progress} startedAt={startedAt.current} onStop={stop} compact />}
         {run.status === 'ok' && run.tier === 'browser' && run.errors.length > 0 && (
           <details className="lab-gen-failed warn">
             <summary>
@@ -356,6 +367,98 @@ function LocalCode({ run, onAuto }: { run: GenRun; onAuto: () => void }) {
         </pre>
       </div>
       <Explain run={run} />
+    </div>
+  );
+}
+
+/* ---------- 等待时的进度 ---------- */
+
+const STEPS: { id: GenProgress['step'] | 'run'; zh: string; en: string }[] = [
+  { id: 'read', zh: '读讲义', en: 'Read notes' },
+  { id: 'plan', zh: '拟计划', en: 'Plan' },
+  { id: 'code', zh: '写页面', en: 'Write the page' },
+  { id: 'run', zh: '在沙箱里运行', en: 'Run in the sandbox' },
+];
+
+const clock = (ms: number) => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+
+/**
+ * 生成要连续调用两次模型（计划、代码），代码一步常要几分钟：
+ * 步骤条 + 已用时间 + 模型实时写出/想了多少字 + 代码末尾，计划一出来就先展示，等的时候有东西可读。
+ */
+function Waiting({ p, startedAt, onStop, compact = false }: { p: GenProgress; startedAt: number; onStop: () => void; compact?: boolean }) {
+  const t = useT();
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const at = p.step === 'repair' ? 2 : STEPS.findIndex((x) => x.id === p.step);
+  const live =
+    p.chars > 0
+      ? t(`已写 ${p.chars.toLocaleString()} 字`, `${p.chars.toLocaleString()} characters written`)
+      : p.thinking > 0
+        ? t(`模型在思考，已想 ${p.thinking.toLocaleString()} 字`, `The model is thinking (${p.thinking.toLocaleString()} characters so far)`)
+        : p.step === 'read'
+          ? ''
+          : t('等模型开始回应…', 'Waiting for the model to respond…');
+  return (
+    <div className={compact ? 'lab-gen-progress compact' : 'lab-gen-progress'}>
+      <div className="lab-gen-head" role="status" aria-live="polite">
+        <span className="lab-gen-dot" aria-hidden="true" />
+        <strong>{p.label}</strong>
+        <span className="lab-gen-meta">
+          {clock(now - startedAt)}
+          {live && <> · {live}</>}
+        </span>
+        <button type="button" className="btn quiet small" onClick={onStop}>
+          {t('停止', 'Stop')}
+        </button>
+      </div>
+      {!compact && (
+        <ol className="lab-gen-steps">
+          {STEPS.map((x, i) => (
+            <li key={x.id} className={i < at ? 'done' : i === at ? 'now' : ''}>
+              {t(x.zh, x.en)}
+            </li>
+          ))}
+        </ol>
+      )}
+      {!compact && p.step === 'code' && (
+        <p className="lab-gen-hint">
+          {t('页面代码较长，这一步最久。计划已经定了，可以先读下面的讲解。', 'The page code is long, so this step takes longest. The plan is ready — read the explanation below meanwhile.')}
+        </p>
+      )}
+      {!compact && p.plan && (
+        <article className="lab-gen-plan">
+          <h3>
+            {p.plan.title}
+            {p.tool && <span className="lab-gen-tool">{p.tool}</span>}
+          </h3>
+          {p.plan.see && <Md className="lab-gen-see" text={p.plan.see} />}
+          {p.plan.steps.length > 0 && (
+            <ol>
+              {p.plan.steps.map((s) => (
+                <li key={s.title}>
+                  <strong>{s.title}</strong>：<Md inline text={s.what} />
+                </li>
+              ))}
+            </ol>
+          )}
+          {p.plan.explain.map((e, i) => (
+            <Md key={i} text={e} />
+          ))}
+          {p.plan.caveat && <p className="lab-gen-caveat">{p.plan.caveat}</p>}
+        </article>
+      )}
+      {p.tail && (
+        <pre className="lab-gen-tail" aria-hidden="true">
+          {p.tail.split('\n').slice(-8).join('\n')}
+        </pre>
+      )}
     </div>
   );
 }

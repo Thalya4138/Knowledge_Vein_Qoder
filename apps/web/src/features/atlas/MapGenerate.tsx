@@ -4,7 +4,7 @@ import type { WorkspaceStore } from '../../store/types';
 import { modelReady, usePrefs } from '../../ui/prefs';
 import { rich } from './mindCanvas';
 import { blankDoc, type GraphLike, type MDoc, type MNode } from './mindDoc';
-import { collectInput, generateMind, NOTE_BUDGET, type Checked, type Collected } from './mindGen';
+import { collectInput, generateMind, NOTE_BUDGET, SPAN_CAP, type Checked, type Collected } from './mindGen';
 
 /**
  * 新工作区的第一张导图（用户 2026-11-20 裁决：按工作区资料、以示例的质量生成，存进文件夹）。
@@ -154,10 +154,11 @@ export function MapGenerate({
     <section className="gen" aria-label="生成第一张导图">
       {collected && (
         <p className="gen-quiet">
-          将交给模型的材料：{stats!.files} 份笔记切成 {collected.input.notes.length} 段（约 {stats!.chars.toLocaleString()} 字）
+          将交给模型的材料：{stats!.files} 份笔记切成 {collected.input.notes.length} 段（约 {stats!.chars.toLocaleString()} 字，与图谱越相关越优先）
           {collected.input.nodes.length > 0 ? `，图谱里 ${collected.input.nodes.length} 个知识点、${collected.input.relations.length} 条已接受的关系` : '，这个工作区没有 graph.json，导图里不会出现知识关系'}
           。
           {stats!.dropped > 0 && ` 另有 ${stats!.dropped} 段超出单次上限（${NOTE_BUDGET.toLocaleString()} 字）没有送出。`}
+          {stats!.truncated > 0 && ` ${stats!.truncated} 段过长，只送出每段前 ${SPAN_CAP.toLocaleString()} 字。`}
         </p>
       )}
       {empty ? (

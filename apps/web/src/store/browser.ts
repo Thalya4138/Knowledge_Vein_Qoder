@@ -45,9 +45,23 @@ export function makeBrowserWorkspace(name: string, id = `browser:${crypto.random
   return namedWorkspace({ id, name, glyph: '文', origin: 'browser', folders: [] }, name);
 }
 
+/**
+ * 请求浏览器把本站存储标为「持久」：默认是尽力保存，磁盘紧张时浏览器可能自行清掉 IndexedDB。
+ * 浏览器可以拒绝（Chrome 按站点使用情况自动决定），拒绝也不影响使用；返回是否已持久。
+ */
+export async function keepStorage(): Promise<boolean> {
+  try {
+    if (!navigator.storage?.persist) return false;
+    return (await navigator.storage.persisted()) || (await navigator.storage.persist());
+  } catch {
+    return false;
+  }
+}
+
 export async function createBrowserWorkspace(name: string): Promise<Workspace> {
   const workspace = makeBrowserWorkspace(name);
   await registerWorkspace(workspace);
+  void keepStorage();
   return workspace;
 }
 
@@ -112,6 +126,7 @@ export async function importBrowserFolder(name: string, files: readonly Imported
   const plan = planImport(name, files);
   for (const r of plan.records) await idbPut('files', r);
   await registerWorkspace(plan.workspace);
+  void keepStorage();
   return { workspace: plan.workspace, count: plan.records.length, skipped: plan.skipped };
 }
 

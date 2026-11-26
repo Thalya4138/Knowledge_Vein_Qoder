@@ -990,3 +990,152 @@
 
 .lab-gen-failed.warn { border-left-color: var(--c-lab); }
 .lab-gen-failed.warn summary { cursor: pointer; }
+
+/* ---------- 现场生成：等待时的进度 ---------- */
+.lab-gen-wait {
+  display: block;
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.lab-gen-progress {
+  display: grid;
+  gap: var(--s-16);
+  padding: var(--s-24);
+  border-radius: var(--r-outer);
+  background: var(--surface);
+  box-shadow: var(--lift);
+}
+
+.lab-gen-progress.compact {
+  padding: var(--s-12) var(--s-16);
+  box-shadow: none;
+  background: var(--fill);
+}
+
+.lab-gen-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-8) var(--s-12);
+  font-size: var(--t-15);
+}
+
+.lab-gen-meta {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.lab-gen-head .btn {
+  margin-left: auto;
+}
+
+.lab-gen-steps {
+  display: flex;
+  gap: var(--s-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: gen-step;
+  font-size: var(--t-13);
+  color: var(--ink-3);
+}
+
+.lab-gen-steps li {
+  flex: 1 1 0;
+  padding-top: var(--s-8);
+  border-top: 3px solid var(--hairline);
+  counter-increment: gen-step;
+}
+
+.lab-gen-steps li::before {
+  content: counter(gen-step) ' ';
+}
+
+.lab-gen-steps li.done {
+  border-color: var(--c-lab);
+  color: var(--ink-2);
+}
+
+.lab-gen-steps li.now {
+  border-color: var(--c-lab);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lab-gen-steps li.now {
+    animation: lab-gen-pulse 1.2s var(--ease) infinite alternate;
+  }
+}
+
+.lab-gen-hint {
+  margin: 0;
+  font-size: var(--t-13);
+  color: var(--ink-2);
+}
+
+.lab-gen-plan {
+  display: grid;
+  gap: var(--s-8);
+  padding-top: var(--s-16);
+  border-top: 1px solid var(--hairline);
+  font-family: var(--font-text);
+  font-size: var(--t-15);
+  line-height: 1.7;
+}
+
+.lab-gen-plan h3 {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-8);
+  margin: 0;
+  font-size: var(--t-17);
+}
+
+.lab-gen-tool {
+  font-family: var(--font-ui);
+  font-size: var(--t-13);
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.lab-gen-plan ol {
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+.lab-gen-plan p {
+  margin: 0;
+}
+
+.lab-gen-caveat {
+  font-size: var(--t-13);
+  color: var(--ink-2);
+}
+
+.lab-gen-tail {
+  max-height: 9.5em;
+  margin: 0;
+  overflow: hidden;
+  padding: var(--s-8) var(--s-12);
+  border-radius: var(--r-inner);
+  background: var(--fill);
+  color: var(--ink-3);
+  font: 12px/1.45 var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-all;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%);
+  mask-image: linear-gradient(to bottom, transparent, #000 40%);
+}
+
+.lab-gen-running {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-12);
+  margin: 0;
+  padding: var(--s-8) var(--s-16);
+  color: var(--ink-2);
+  font-size: var(--t-13);
+}

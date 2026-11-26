@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 /**
  * 全站偏好：主题（白天 / 夜间 / 跟随系统）与模型接入设置。
- * 主题存本机（不是隐私）；API key 只存在本页内存，刷新即清除（AGENTS.md §1 第 7 条）。
+ * 主题存本机（不是隐私）。模型设置（含 key）默认存在当前标签页（sessionStorage）：刷新不丢、关掉标签页即清；
+ * 用户勾选「在这台电脑上记住」才写 localStorage，可随时一键清除（AGENTS.md §1 第 7 条）。
  */
 
 export type ThemePref = 'light' | 'dark' | 'system';
@@ -47,6 +48,32 @@ export interface ModelConfig {
   apiKey: string;
 }
 
+const MODEL_KEY = 'vein.model';
+const EMPTY_MODEL: ModelConfig = { provider: 'openai-compatible', baseUrl: '', model: '', apiKey: '' };
+
+function parseModel(raw: string | null): ModelConfig | null {
+  if (!raw) return null;
+  try {
+    const m = JSON.parse(raw) as Partial<ModelConfig>;
+    return { ...EMPTY_MODEL, ...m };
+  } catch {
+    return null;
+  }
+}
+
+/** 先看「记住」的，再看当前标签页的 */
+function loadModel(): { model: ModelConfig; remembered: boolean } {
+  try {
+    const kept = parseModel(localStorage.getItem(MODEL_KEY));
+    if (kept) return { model: kept, remembered: true };
+    const tab = parseModel(sessionStorage.getItem(MODEL_KEY));
+    if (tab) return { model: tab, remembered: false };
+  } catch {
+    /* 存储被禁用（隐私模式等）：退回只在内存 */
+  }
+  return { model: EMPTY_MODEL, remembered: false };
+}
+
 interface Prefs {
   lang: Lang;
   setLang: (l: Lang) => void;
@@ -54,7 +81,12 @@ interface Prefs {
   setTheme: (t: ThemePref) => void;
   resolvedDark: boolean;
   model: ModelConfig;
-  setModel: (m: ModelConfig) => void;
+  /** remember = 在这台电脑上记住（localStorage）；否则只存在当前标签页 */
+  setModel: (m: ModelConfig, remember: boolean) => void;
+  /** 当前设置是否记在这台电脑上 */
+  modelRemembered: boolean;
+  /** 清除这台电脑与当前标签页里保存的模型设置 */
+  forgetModel: () => void;
   settingsOpen: boolean;
   openSettings: (tab?: SettingsTab) => void;
   closeSettings: () => void;
@@ -68,7 +100,30 @@ const Ctx = createContext<Prefs | null>(null);
 export function PrefsProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemePref>(() => (localStorage.getItem(THEME_KEY) as ThemePref | null) ?? 'system');
   const [resolvedDark, setResolvedDark] = useState(() => document.documentElement.dataset.theme === 'dark');
-  const [model, setModel] = useState<ModelConfig>({ provider: 'openai-compatible', baseUrl: '', model: '', apiKey: '' });
+  const [initial] = useState(loadModel);
+  const [model, setModelState] = useState<ModelConfig>(initial.model);
+  const [modelRemembered, setRemembered] = useState(initial.remembered);
+  const setModel = useCallback((m: ModelConfig, remember: boolean) => {
+    try {
+      sessionStorage.setItem(MODEL_KEY, JSON.stringify(m));
+      if (remember) localStorage.setItem(MODEL_KEY, JSON.stringify(m));
+      else localStorage.removeItem(MODEL_KEY);
+    } catch {
+      /* 存不进去就只在内存里 */
+    }
+    setModelState(m);
+    setRemembered(remember);
+  }, []);
+  const forgetModel = useCallback(() => {
+    try {
+      sessionStorage.removeItem(MODEL_KEY);
+      localStorage.removeItem(MODEL_KEY);
+    } catch {
+      /* 无存储可清 */
+    }
+    setModelState(EMPTY_MODEL);
+    setRemembered(false);
+  }, []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('model');
   const [lang, setLangState] = useState<Lang>(savedLang);
@@ -103,6 +158,8 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       resolvedDark,
       model,
       setModel,
+      modelRemembered,
+      forgetModel,
       settingsOpen,
       settingsTab,
       openSettings: (tab = 'model') => {
@@ -111,7 +168,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       },
       closeSettings: () => setSettingsOpen(false),
     }),
-    [lang, setLang, theme, setTheme, resolvedDark, model, settingsOpen, settingsTab],
+    [lang, setLang, theme, setTheme, resolvedDark, model, setModel, modelRemembered, forgetModel, settingsOpen, settingsTab],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

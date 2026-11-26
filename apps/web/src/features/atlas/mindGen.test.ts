@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { chat, extractJson } from '../../ai/chat';
 import { memoryStore } from '../../store/memoryStore';
 import type { ModelConfig } from '../../ui/prefs';
-import { checkOutput, collectInput, diffDocs, diffSize, generateMind, NOTE_BUDGET, splitNote, updateMind, type MindInput } from './mindGen';
+import { checkOutput, collectInput, diffDocs, diffSize, generateMind, NOTE_BUDGET, SPAN_CAP, splitNote, UPDATE_BUDGET, updateMind, type MindInput } from './mindGen';
 
 const NOTE = `# 应力
 
@@ -34,19 +34,58 @@ describe('笔记切片', () => {
     expect(spans[1]!.text).toContain('# 这不是标题');
   });
 
-  it('只收工作区里的笔记，不收 maps/ 与 .vein/，超出上限的段落计数', async () => {
-    const big = 'x'.repeat(NOTE_BUDGET);
+  it('只收工作区里的笔记，不收 maps/ 与 .vein/', async () => {
     const { store } = memoryStore({
       'notes/应力.md': NOTE,
-      'notes/z-大.md': `# 大\n${big}`,
       'maps/mind.json': '{}',
       '.vein/prompts/atlas.mindmap.md': '# 我的提示词',
       'kb.json': JSON.stringify({ title: '弹性力学', subtitle: '一条线' }),
     });
     const { input: got, stats } = await collectInput(store, '力学', null);
     expect(got.notes.map((n) => n.anchor)).toEqual(['notes/应力.md#应力', 'notes/应力.md#柯西应力']);
-    expect(stats).toMatchObject({ files: 2, dropped: 1 });
+    expect(stats).toMatchObject({ files: 1, dropped: 0, truncated: 0 });
     expect(got.kb).toEqual({ title: '弹性力学', subtitle: '一条线' });
+  });
+
+  it('超出预算的段落计数丢弃，总字数不超上限', async () => {
+    const files: Record<string, string> = {};
+    for (let i = 0; i < 40; i += 1) files[`notes/${String(i).padStart(2, '0')}.md`] = `# 节${i}\n${'x'.repeat(999)}`;
+    const { store } = memoryStore(files);
+    const { input: got, stats } = await collectInput(store, '力学', null);
+    expect(stats.dropped).toBeGreaterThan(0);
+    expect(stats.chars).toBeLessThanOrEqual(NOTE_BUDGET);
+    expect(got.notes.length + stats.dropped).toBe(40);
+  });
+
+  it('单段过长只取前 SPAN_CAP 字并计数', async () => {
+    const { store } = memoryStore({ 'notes/长.md': `# 长\n${'y'.repeat(5000)}` });
+    const { input: got, stats } = await collectInput(store, '力学', null);
+    expect(got.notes[0]!.text.length).toBe(SPAN_CAP + 1);
+    expect(got.notes[0]!.text.endsWith('…')).toBe(true);
+    expect(stats.truncated).toBe(1);
+  });
+
+  it('预算不够时先给与图谱相关的小节，送出顺序仍按文件原序', async () => {
+    const { store } = memoryStore({
+      'notes/a-无关.md': `# 无关\n${'z'.repeat(900)}`,
+      'notes/b-相关.md': '# 柯西应力\n应力张量是对称的。',
+    });
+    const graph = { nodes: [{ id: 'n.stress', title: '柯西应力', kind: 'concept', aliases: [] }], relations: [] };
+    const { input: got } = await collectInput(store, '力学', graph, { budget: 500 });
+    expect(got.notes.map((n) => n.anchor)).toEqual(['notes/b-相关.md#柯西应力']);
+    const both = await collectInput(store, '力学', graph);
+    expect(both.input.notes.map((n) => n.anchor)).toEqual(['notes/a-无关.md#无关', 'notes/b-相关.md#柯西应力']);
+  });
+
+  it('更新路径按请求挑相关段落；ranked:false 时按原序收满预算', async () => {
+    const { store } = memoryStore({
+      'notes/a.md': '# 甲\n unrelated filler '.repeat(60),
+      'notes/b.md': '# 乙\n法方程与解的唯一性。',
+    });
+    const { input: got } = await collectInput(store, '力学', null, { query: '法方程 唯一性', budget: UPDATE_BUDGET });
+    expect(got.notes.map((n) => n.anchor)).toContain('notes/b.md#乙');
+    const plain = await collectInput(store, '力学', null, { ranked: false });
+    expect(plain.input.notes.map((n) => n.anchor)).toEqual(['notes/a.md#甲', 'notes/b.md#乙']);
   });
 });
 

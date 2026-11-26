@@ -34,6 +34,22 @@ describe('计划核对', () => {
     expect(() => checkPlan(plan({ tool: 'D3.js', see: '' }), null)).toThrow();
     expect(checkPlan(plan({ tool: 'D3.js', facts: [{ claim: 'c' }] }), null).facts[0]!.source).toBe('无来源，待核对');
   });
+  it('控件的滑块规格留下来：数值、字符串数值都收，缺的留给壳补默认', () => {
+    const p = checkPlan(
+      plan({ tool: 'GeoGebra', controls: [{ key: 'a', name: 'a', effect: 'e', min: '0.5', max: 4, step: 0.1, value: 2, unit: 'cm' }, { name: 'n', effect: 'e' }] }),
+      null,
+    );
+    expect(p.controls[0]).toMatchObject({ key: 'a', min: 0.5, max: 4, step: 0.1, value: 2, unit: 'cm' });
+    expect(p.controls[1]!.min).toBeUndefined();
+  });
+});
+
+describe('核心代码提取', () => {
+  it('取 js / javascript 代码块；没标语言的取第一个块', () => {
+    expect(fenced('```js\nvein.onDraw(()=>{});\n```', 'js')).toBe('vein.onDraw(()=>{});');
+    expect(fenced('```javascript\nx\n```', 'javascript')).toBe('x');
+    expect(fenced('```\ny\n```', '')).toBe('y');
+  });
 });
 
 describe('代码与沙箱', () => {

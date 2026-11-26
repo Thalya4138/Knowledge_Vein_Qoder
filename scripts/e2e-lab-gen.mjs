@@ -142,25 +142,56 @@ try {
     for (const method of ['Runtime.enable', 'Log.enable']) ws.send(JSON.stringify({ id: ++childSeq, method, sessionId: p.sessionId }));
   });
   await send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: false, flatten: true });
-  // ---------- 现场生成验收：真实的库在沙箱里能不能跑起来（模型用假的，页面是手写的最小调用） ----------
-  const { CAPS, PHET_SIMS } = await import(pathToFileURL(resolve('apps/web/src/features/lab/toolCaps.ts')).href);
-  const lib = (name, i = 0) => CAPS.find((c) => c.name === name).libs[i];
-  const doc = (head, body) => `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">${head}</head><body style="margin:0;font:14px sans-serif">${body}</body></html>`;
-  const s = (src) => `<script src="${src}"></script>`;
-  const PAGES = {
-    GeoGebra: doc(s(lib('GeoGebra')), `<div id="g"></div><script>new GGBApplet({appName:'graphing',width:760,height:460,showToolBar:false,showAlgebraInput:false,appletOnLoad:function(api){api.evalCommand('a=Slider(-3,3)');api.evalCommand('f(x)=a*x^2');window.veinReady();}},true).inject('g');</script>`),
-    JSXGraph: doc(s(lib('JSXGraph')) + `<link rel="stylesheet" href="${lib('JSXGraph', 1)}">`, `<div id="b" style="width:600px;height:400px"></div><script>var b=JXG.JSXGraph.initBoard('b',{boundingbox:[-5,5,5,-5],axis:true});var p=b.create('point',[1,2]);b.create('functiongraph',[function(x){return p.Y()*Math.sin(x)}]);window.veinReady();</script>`),
-    Plotly: doc(s(lib('Plotly')), `<div id="p" style="width:700px;height:450px"></div><script>var z=[];for(var i=0;i<20;i++){z.push([]);for(var j=0;j<20;j++)z[i].push(Math.sin(i/3)*Math.cos(j/3))}Plotly.newPlot('p',[{type:'surface',z:z}]).then(function(){window.veinReady()});</script>`),
-    'D3.js': doc(s(lib('D3.js')), `<svg id="s" width="600" height="400"></svg><script>d3.select('#s').selectAll('circle').data([1,2,3]).join('circle').attr('cx',function(d){return d*120}).attr('cy',200).attr('r',40).attr('fill','#1f4e79');window.veinReady();</script>`),
-    'Matter.js': doc(s(lib('Matter.js')), `<script>var M=Matter,e=M.Engine.create(),r=M.Render.create({element:document.body,engine:e,options:{width:600,height:400,wireframes:false}});M.Composite.add(e.world,[M.Bodies.rectangle(300,380,600,40,{isStatic:true}),M.Bodies.circle(300,50,30)]);M.Render.run(r);M.Runner.run(M.Runner.create(),e);window.veinReady();</script>`),
-    '3Dmol.js': doc(s(lib('3Dmol.js')), `<div id="m" style="width:600px;height:400px;position:relative"></div><script>var v=$3Dmol.createViewer(document.getElementById('m'),{backgroundColor:'white'});v.addModel('3\\nwater\\nO 0 0 0\\nH 0.96 0 0\\nH -0.24 0.93 0\\n','xyz');v.setStyle({},{stick:{},sphere:{scale:0.3}});v.zoomTo();v.render();window.veinReady();</script>`),
-    'Three.js': doc(`<script type="importmap">{"imports":{"three":"${lib('Three.js')}","three/addons/":"${lib('Three.js', 1).replace('controls/OrbitControls.js', '')}"}}</script>`, `<script type="module">import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';var r=new THREE.WebGLRenderer();r.setSize(600,400);document.body.appendChild(r.domElement);var sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1.5,0.1,100);cam.position.z=4;new OrbitControls(cam,r.domElement);sc.add(new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshNormalMaterial()));r.render(sc,cam);window.veinReady();</script>`),
-    WebGL: doc('', `<canvas id="c" width="600" height="400"></canvas><script>var g=document.getElementById('c').getContext('webgl');if(!g)throw new Error('WebGL 不可用');g.clearColor(0.1,0.3,0.5,1);g.clear(g.COLOR_BUFFER_BIT);window.veinReady();</script>`),
-    Matplotlib: doc(s(lib('Matplotlib')), `<p id="t">正在加载 Python……</p><img id="o" width="600"><script>(async function(){var py=await loadPyodide();await py.loadPackage(['numpy','matplotlib']);var b=py.runPython(['import io, base64, numpy as np, matplotlib','matplotlib.use("Agg")','import matplotlib.pyplot as plt','x = np.linspace(0, 6, 100)','plt.plot(x, np.sin(x))','buf = io.BytesIO()','plt.savefig(buf, format="png")','base64.b64encode(buf.getvalue()).decode()'].join('\\n'));document.getElementById('o').src='data:image/png;base64,'+b;document.getElementById('t').remove();window.veinReady();})();</script>`),
+  // ---------- 现场生成验收：真实的库在沙箱里能不能跑起来（模型用假的，核心代码是手写的最小调用） ----------
+  // 契约 v2（接龙 #77）：模型只回 ```js 画图核心，整页由 shell.ts 组装；控件 key 缺省为 c0
+  const { PHET_SIMS } = await import(pathToFileURL(resolve('apps/web/src/features/lab/toolCaps.ts')).href);
+  const CORES = {
+    GeoGebra: `const api = await new Promise((res) => new GGBApplet({appName:'graphing',width:vein.stage.clientWidth,height:vein.stage.clientHeight,showToolBar:false,showAlgebraInput:false,appletOnLoad:res},true).inject('v-stage'));
+api.evalCommand('a=Slider(-3,3)');api.evalCommand('f(x)=a*x^2');
+vein.onDraw((p)=>{api.evalCommand('SetValue(a,'+p.c0+')')});`,
+    JSXGraph: `const b=JXG.JSXGraph.initBoard('v-stage',{boundingbox:[-5,5,5,-5],axis:true});
+const pt=b.create('point',[1,2]);b.create('functiongraph',[(x)=>pt.Y()*Math.sin(x)]);
+vein.onDraw((p)=>{pt.moveTo([1,p.c0/2.5])});`,
+    Plotly: `const z=[];for(let i=0;i<20;i++){z.push([]);for(let j=0;j<20;j++)z[i].push(Math.sin(i/3)*Math.cos(j/3))}
+await Plotly.newPlot(vein.stage,[{type:'surface',z}]);
+vein.onDraw((p)=>{const k=p.c0/5;Plotly.react(vein.stage,[{type:'surface',z:z.map(r=>r.map(v=>v*k))}])});`,
+    'D3.js': `const svg=d3.select(vein.stage).append('svg').attr('width','100%').attr('height','100%');
+vein.onDraw((p)=>{svg.selectAll('circle').data([1,2,3]).join('circle').attr('cx',(d)=>d*120).attr('cy',200).attr('r',20+p.c0*4).attr('fill','#1f4e79')});`,
+    'Matter.js': `const M=Matter,e=M.Engine.create(),r=M.Render.create({element:vein.stage,engine:e,options:{width:vein.stage.clientWidth,height:vein.stage.clientHeight,wireframes:false}});
+M.Composite.add(e.world,[M.Bodies.rectangle(300,380,600,40,{isStatic:true}),M.Bodies.circle(300,50,30)]);
+M.Render.run(r);M.Runner.run(M.Runner.create(),e);
+vein.onDraw(()=>{});`,
+    '3Dmol.js': `const v=$3Dmol.createViewer(vein.stage,{backgroundColor:'white'});
+v.addModel('3\\nwater\\nO 0 0 0\\nH 0.96 0 0\\nH -0.24 0.93 0\\n','xyz');
+v.setStyle({},{stick:{},sphere:{scale:0.3}});v.zoomTo();v.render();
+vein.onDraw(()=>{v.render()});`,
+    'Three.js': `import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const r=new THREE.WebGLRenderer();r.setSize(vein.stage.clientWidth,vein.stage.clientHeight);vein.stage.appendChild(r.domElement);
+const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1.5,0.1,100);cam.position.z=4;
+new OrbitControls(cam,r.domElement);
+const mesh=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshNormalMaterial());sc.add(mesh);
+vein.onDraw((p)=>{mesh.rotation.y=p.c0/3;r.render(sc,cam)});`,
+    WebGL: `const c=document.createElement('canvas');c.width=600;c.height=400;vein.stage.appendChild(c);
+const g=c.getContext('webgl');if(!g)throw new Error('WebGL 不可用');
+vein.onDraw((p)=>{g.clearColor(0.1,0.3,0.5,p.c0/10);g.clear(g.COLOR_BUFFER_BIT)});`,
+    Matplotlib: `vein.loading(true,'正在加载 Python……');
+const py=await loadPyodide();await py.loadPackage(['numpy','matplotlib']);
+const img=document.createElement('img');img.width=600;vein.stage.appendChild(img);
+vein.onDraw(async(p)=>{const b=py.runPython(['import io, base64, numpy as np, matplotlib','matplotlib.use("Agg")','import matplotlib.pyplot as plt','x = np.linspace(0, 6, 100)','plt.plot(x, np.sin(x)*'+(p.c0/5)+')','buf = io.BytesIO()','plt.savefig(buf, format="png")','base64.b64encode(buf.getvalue()).decode()'].join('\\n'));img.src='data:image/png;base64,'+b});`,
   };
-  // 攻击页：在沙箱里尝试越权，任何一项得手就抛错（于是这一项会失败）
-  const SECURITY = doc('', `<p>隔离测试</p><svg width="200" height="100"><rect width="200" height="100" fill="#ccc"/></svg><script>var leaks=[];try{leaks.push('读到父页面：'+parent.document.title)}catch(e){}try{leaks.push('读到顶层地址：'+top.location.href)}catch(e){}try{var real=Object.getOwnPropertyDescriptor(Window.prototype,'localStorage').get.call(window);real.setItem('vein-leak','1');leaks.push('真实 localStorage 可写')}catch(e){}try{indexedDB.open('vein-leak-test');leaks.push('indexedDB 可用')}catch(e){}try{var ck=Object.getOwnPropertyDescriptor(Document.prototype,'cookie');ck.set.call(document,'x=1');if(ck.get.call(document))leaks.push('真实 cookie 可写')}catch(e){}fetch('http://127.0.0.1:' + PORT_PLACEHOLDER + '/').then(function(){leaks.push('能向本站发请求')}).catch(function(){}).finally(function(){setTimeout(function(){if(leaks.length)throw new Error('LEAK '+leaks.join('；'));window.veinReady()},300)});</script>`.replace('PORT_PLACEHOLDER', String(PORT)));
-  const BROKEN = doc(s(lib('D3.js')), `<svg id="s" width="600" height="400"></svg><script>d3.selectt('#s');</script>`);
+  // 攻击核心：在沙箱里尝试越权，任何一项得手就抛错（于是这一项会失败）
+  const SECURITY = `const leaks=[];
+try{leaks.push('读到父页面：'+parent.document.title)}catch(e){}
+try{leaks.push('读到顶层地址：'+top.location.href)}catch(e){}
+try{const real=Object.getOwnPropertyDescriptor(Window.prototype,'localStorage').get.call(window);real.setItem('vein-leak','1');leaks.push('真实 localStorage 可写')}catch(e){}
+try{indexedDB.open('vein-leak-test');leaks.push('indexedDB 可用')}catch(e){}
+try{const ck=Object.getOwnPropertyDescriptor(Document.prototype,'cookie');ck.set.call(document,'x=1');if(ck.get.call(document))leaks.push('真实 cookie 可写')}catch(e){}
+await fetch('http://127.0.0.1:${PORT}/').then(()=>{leaks.push('能向本站发请求')}).catch(()=>{});
+await new Promise(r=>setTimeout(r,300));
+if(leaks.length)throw new Error('LEAK '+leaks.join('；'));
+vein.onDraw(()=>{});`;
+  const BROKEN = `d3.selectt('#v-stage');`;
   const PLAN = (tool, extra = {}) => JSON.stringify({ title: `${tool} 测试页`, tool, whyTool: '测试', see: '页面画出了内容', controls: [{ name: '参数', effect: '画面变化' }], steps: [], facts: [{ claim: '测试事实' }], caveat: '测试用页面', explain: ['这是验收用的手写页面。'], ...extra });
   const modelCalls = [];
   const repairErrors = [];
@@ -173,17 +204,15 @@ try {
     }
     if (user.includes('这一次要做的：修复')) {
       modelCalls.push('repair');
-      if (process.env.DEBUG_FETCH) console.log('REPAIR-MSG', JSON.stringify(user.slice(0, 200)), '...', JSON.stringify(user.slice(user.indexOf('没有跑起来'), user.indexOf('没有跑起来') + 600)));
-      repairErrors.push(user.slice(user.indexOf('## 上一版页面在沙箱里没有跑起来'), user.indexOf('## 上一版代码')).replace(/s+/g, ' '));
-      return '原因：函数名写错了。\n```html\n' + PAGES['D3.js'] + '\n```';
+      repairErrors.push(user.slice(user.indexOf('## 上一版画图核心在沙箱里没有跑起来'), user.indexOf('## 上一版核心代码')).replace(/\s+/g, ' '));
+      return '原因：函数名写错了。\n```js\n' + CORES['D3.js'] + '\n```';
     }
     if (user.includes('写代码（本地运行）')) {
       modelCalls.push('local');
       return '运行后会看到一条正弦曲线。\n```python\n# pip install manim\nfrom manim import *\nclass S(Scene):\n    def construct(self):\n        self.play(Create(Circle()))\n```';
     }
     modelCalls.push('code');
-    if (process.env.DEBUG_FETCH) console.log('code for', JSON.stringify(forced), 'has?', !!PAGES[forced], JSON.stringify(user.slice(user.indexOf('## 工具'), user.indexOf('## 工具') + 60)));
-    return '一张页面。\n```html\n' + (q.includes('SECURITY') ? SECURITY : q.includes('BROKEN') ? BROKEN : PAGES[forced] ?? PAGES['D3.js']) + '\n```';
+    return '```js\n' + (q.includes('SECURITY') ? SECURITY : q.includes('BROKEN') ? BROKEN : CORES[forced] ?? CORES['D3.js']) + '\n```';
   };
   const pendingQ = { value: '' };
   onEvent('Fetch.requestPaused', async (p) => {

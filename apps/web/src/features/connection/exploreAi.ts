@@ -29,6 +29,8 @@ export type Attachment =
 const TEXT_EXT = /\.(md|markdown|txt|tex|csv|tsv|json|ya?ml|py|m|c|h|cpp|hpp|js|ts|java|rs|go|html?)$/i;
 const FILE_BUDGET = 16_000;
 const PDF_BUDGET = 24_000;
+/** 全部附件正文的总量上限：单份各有上限，但多份加起来仍可能撑爆上下文 */
+const ATTACH_BUDGET = 32_000;
 const IMAGE_MAX = 5 * 1024 * 1024;
 
 function base64(buf: ArrayBuffer): string {
@@ -189,23 +191,34 @@ function priorText(prior: PriorTurn[]): string {
 export function buildUserContent(mode: ModeId, ask: string, files: Attachment[], ctx: ExploreContext, prior: PriorTurn[], stage: string): ContentPart[] {
   const parts: string[] = [`## 模式\n${MODES.find((m) => m.id === mode)!.label}`, `## 问题\n${ask || '（读者没有写文字，只给了附件）'}`];
   const att: string[] = [];
+  let used = 0;
+  const addAtt = (a: string, name: string) => {
+    const room = ATTACH_BUDGET - used;
+    if (room <= 200) {
+      att.push(`### ${name}（附件总量已到上限，这份没有送出正文）`);
+      return;
+    }
+    const t = a.length > room ? a.slice(0, room) + '\n…（附件总量超出上限，这份只附了前面一部分）' : a;
+    used += t.length;
+    att.push(t);
+  };
   for (const f of files) {
-    if (f.kind === 'text') att.push(`### 文件：${f.name}${f.cut ? '（太长，只附前一部分）' : ''}\n\`\`\`\n${f.text}\n\`\`\``);
+    if (f.kind === 'text') addAtt(`### 文件：${f.name}${f.cut ? '（太长，只附前一部分）' : ''}\n\`\`\`\n${f.text}\n\`\`\``, f.name);
     if (f.kind === 'pdf') {
-      let used = 0;
+      let pdfUsed = 0;
       const pages = f.pages
         .map((t, i) => ({ t, i }))
         .filter(({ t }) => {
-          if (!t.trim() || used > PDF_BUDGET) return false;
-          used += t.length;
+          if (!t.trim() || pdfUsed > PDF_BUDGET) return false;
+          pdfUsed += t.length;
           return true;
         })
         .map(({ t, i }) => `[anchor: ${f.name}#page=${i + 1}]\n${t}`);
-      att.push(`### PDF：${f.name}（共 ${f.total} 页${pages.length < f.pages.length ? `，附前 ${pages.length} 页正文` : ''}）\n${pages.join('\n\n')}`);
+      addAtt(`### PDF：${f.name}（共 ${f.total} 页${pages.length < f.pages.length ? `，附前 ${pages.length} 页正文` : ''}）\n${pages.join('\n\n')}`, f.name);
     }
-    if (f.kind === 'url') att.push(f.text ? `### 网页：${f.name}\n${f.text}` : `### 网页：${f.name}\n（没有读到正文，只有地址）`);
-    if (f.kind === 'image') att.push(`### 截图：${f.name}（见随附图片）`);
-    if (f.kind === 'binary') att.push(`### 文件：${f.name}（读不了正文）`);
+    if (f.kind === 'url') addAtt(f.text ? `### 网页：${f.name}\n${f.text}` : `### 网页：${f.name}\n（没有读到正文，只有地址）`, f.name);
+    if (f.kind === 'image') addAtt(`### 截图：${f.name}（见随附图片）`, f.name);
+    if (f.kind === 'binary') addAtt(`### 文件：${f.name}（读不了正文）`, f.name);
   }
   if (att.length) parts.push(`## 附件\n${att.join('\n\n')}`);
   if (ctx.nodes.length) parts.push(`## 工作区节点\n${JSON.stringify(ctx.nodes)}`);
@@ -252,7 +265,7 @@ const SECTION_LEAD = {
 };
 
 export const stageSection = (k: number, total: number, item: string, tableNo: number, lead: keyof typeof SECTION_LEAD = 'chain') => `## 这一次要写的：第二步，第 ${k}/${total} 节
-上面「已经写好的部分」是这篇的开头、目录和已写的小节。现在只写目录中的这一项：
+上面「已经写好的部分」是这篇的开头、目录和已写的小节（除最近一节外只保留开头摘要）。现在只写目录中的这一项：
 ${sectionBrief(item)}
 - 以二级标题开头，标题只写节名，不加编号，不抄「这一节要做的」；
 - ${SECTION_LEAD[lead]}
@@ -279,14 +292,19 @@ export function nodeTable(graphs: unknown[]): string {
   return ['### 已有节点（关联图里已经画出的，id → 名称）', ...[...rows].map(([id, label]) => `- ${id} → ${label}`)].join('\n');
 }
 
+/** 回传的已写小节：最近一节留全文（衔接要用），更早的只留标题与开头。全文回传会让上下文随节数平方增长 */
+export function digestSections(sections: string[]): string[] {
+  return sections.map((s, i) => (i === sections.length - 1 || s.length <= 300 ? s : s.slice(0, 300) + '…（本节其余正文略）'));
+}
+
 export const STAGE_CLOSING = `## 这一次要写的：第三步，收尾
-上面「已经写好的部分」是整篇正文。现在只写收尾，不复述、不总结全文。从下面挑这篇内容真正需要的一两样来写，以一个二级标题开头（节名用内容来起）：
+上面「已经写好的部分」是开头与各节的开头摘要（正文全文略）。现在只写收尾，不复述、不总结全文。从下面挑这篇内容真正需要的一两样来写，以一个二级标题开头（节名用内容来起）：
 - 拿正文没讲过的两三样东西来试这个框架：它们该放在哪里，为什么；
 - 这个框架管不到的地方，或两边的联系在哪里失效；
 - 一个留给读者自己推的问题：顺着正文再走一步就能得到答案，并给出线索，不给答案。`;
 
 export const STAGE_CLOSING_CROSS = `## 这一次要写的：第三步，收尾（跨学科并联）
-上面「已经写好的部分」是整篇正文。现在只写收尾，不复述、不总结全文。从下面挑这篇真正需要的一两样来写，以一个二级标题开头（节名用内容来起）：
+上面「已经写好的部分」是开头与各节的开头摘要（正文全文略）。现在只写收尾，不复述、不总结全文。从下面挑这篇真正需要的一两样来写，以一个二级标题开头（节名用内容来起）：
 - 找一个会让联系失效的条件或反例，说清理想模型、实验事实与推断分别到哪一步；
 - 把联系变成最小验证：假设、模型、对照、观察指标与可能的失败结果；
 - 开放一个正文尚未解决的新分支，或与工作区已有讲义、节点、已接受关系接上，并说明数学或事实依据。`;
@@ -366,7 +384,7 @@ export async function explore(
   for (let k = 0; k < items.length; k += 1) {
     onProgress?.({ step: k + 2, total, label: `写第 ${k + 1}/${items.length} 节：${items[k]!.split(/[｜|]/)[0]}` });
     const tableNo = 1 + (sections.join('\n').match(/\[!table\]/g)?.length ?? 0);
-    const written = [opening, toc, ...sections, nodeTable(graphs)].filter(Boolean).join('\n\n');
+    const written = [opening, toc, ...digestSections(sections), nodeTable(graphs)].filter(Boolean).join('\n\n');
     const out = parseOutput(await call(stageSection(k + 1, items.length, items[k]!, tableNo, meta ? 'web' : 'cross'), written));
     // 模型偶尔会重复一级标题：只要从二级标题开始的部分
     const body = out.note.replace(/^#\s+.+\n/, '').trim();
@@ -374,7 +392,7 @@ export async function explore(
     if (out.graph) graphs.push(out.graph);
   }
   onProgress?.({ step: total, total, label: '写收尾' });
-  const closing = parseOutput(await call(meta ? STAGE_CLOSING : STAGE_CLOSING_CROSS, [opening, ...sections].join('\n\n')));
+  const closing = parseOutput(await call(meta ? STAGE_CLOSING : STAGE_CLOSING_CROSS, [opening, ...digestSections(sections)].join('\n\n')));
   if (closing.graph) graphs.push(closing.graph);
   const merged = { nodes: graphs.flatMap((g) => ((g as { nodes?: unknown[] })?.nodes ?? [])), edges: graphs.flatMap((g) => ((g as { edges?: unknown[] })?.edges ?? [])) };
   const note = [opening, ...sections, closing.note.replace(/^#\s+.+\n/, '').trim()].join('\n\n') + '\n';
