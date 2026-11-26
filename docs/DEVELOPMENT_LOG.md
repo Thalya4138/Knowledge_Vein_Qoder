@@ -25,6 +25,8 @@
 
 **已知缺陷 / 下一步**：博查真实 key 的检索质量待用户实测；真实模型生成质量沿用 #82 待用户 key；#6/#7 未做。**提交/推送已获用户授权（2026-11-26，全提交）**：`deskLesson.ts`/`LessonPanel.tsx` 里 #81 已完成的逐节生成连同其测试与提示词随本笔落盘；他 session 的日志条与 `slim-atlas-*.png` 证据、用户自修的 `shell.css` 一并提交（日志条引用了这两张截图，拆开会造成证据断链）；push 仅 `task/R3-QoderWang2`，不碰 main、不部署。
 
+**部署（2026-11-26，用户授权「部署」，接龙 #85）**：以 `2e2fc65` 重建（入口 `index-DW4ZIHX9.js`）发布到**团队版** `vein-t0-probe-4588bqc00js.qoder.zone`（organization 需登录，内部预览），published 已验证。**公网个人版 `vein-probe-personal-dx7phlm8g8e.qoder.zone` 未更新**（仍 R3f 期 `index-BLJdGgeH.js`）：当前会话登录的是团队版账号，个人版发布须用户切换个人账号重新登录后再部署（ADR-0002：团队版不提供 public，比赛链接必须出自个人版）。匿名 curl 团队版 401 属预期；运行时证据沿用本地 e2e-fix83 13/13。
+
 ---
 
 ## 2026-11-26（夜六）· QoderWang2 · 工作台讲义生成改「逐节有界请求＋程序组装」（#81）
