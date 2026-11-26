@@ -84,16 +84,45 @@ function VizWindow({
   attachDisabled: boolean;
 }) {
   const t = useT();
+  const [fallback, setFallback] = useState(false);
+  const [nonce, setNonce] = useState(0);
+  const localRef = useRef<HTMLIFrameElement | null>(null);
+  const handleLoad = () => {
+    // 托管站对不存在的路径回 200 + 首页：若 iframe 装进来的是站点本身（有 #root），
+    // 显示重试而不是让它继续嵌套（导览进度同源共享，会把它导航成无限递归）。
+    setFallback(Boolean(localRef.current?.contentDocument?.querySelector('#root')));
+    onFrameLoad();
+  };
   return (
     <section className="lab-results" aria-label={t('可视化结果', 'Visualization')}>
       <article className="lab-window wide">
-        <iframe
-          className="lab-frame"
-          src={`${tool.src}?embed=lab`}
-          title={`${tool.name}（交互可视化）`}
-          ref={frameRef}
-          onLoad={onFrameLoad}
-        />
+        {fallback ? (
+          <div className="lab-frame lab-frame-fallback" role="alert">
+            <p>{t('实验页没有正确加载（地址被解析成了站点本身）。', 'The lab page did not load (the address resolved to the site itself).')}</p>
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => {
+                setFallback(false);
+                setNonce((n) => n + 1);
+              }}
+            >
+              {t('重新加载', 'Reload')}
+            </button>
+          </div>
+        ) : (
+          <iframe
+            key={nonce}
+            className="lab-frame"
+            src={`${tool.src}?embed=lab${nonce ? `&r=${nonce}` : ''}`}
+            title={`${tool.name}（交互可视化）`}
+            ref={(el) => {
+              localRef.current = el;
+              frameRef(el);
+            }}
+            onLoad={handleLoad}
+          />
+        )}
         <footer className="lab-foot">
           <p className="lab-caption">
             {tool.summary}

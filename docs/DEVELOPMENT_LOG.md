@@ -5,6 +5,35 @@
 
 ---
 
+## 2026-11-26（晚）· QoderWang2 · R3c：导览递归修复、力学样例下沉、封面导览入口与入门文档视觉重做
+
+**用户指令**：五张截图反馈——①导览第 10/22、11/22 两站把整站递归套进实验室 iframe；②力学思维导图应作为记忆图谱「选一个工作区」层的样例、右上角标 demo，而不是现在的地图类型签形式；③封面导览入口不显眼，做成好看按钮，随后追加「能不能更醒目？比如放在页面中心」；④入门文档太单调，参考整站风格重做美工（装饰、板块、按钮）；⑤问最新是否合并 main（答：没有）。**本轮未获 commit / push / 部署授权，均未做。**
+
+**范围**：同一本地分支 `task/R3-QoderWang2`（HEAD `ef66d2e`）。**不做**：合并 main、改力学导图数据与挂载规则、动 `content/demo` 来源声明。
+
+**改动**
+
+- **导览递归修复**（`app/tour/Tour.tsx`、`features/lab/LabPage.tsx`、`styles/lab.css`）：根因链＝托管 SPA 回退把静态实验页地址解析成站点本身 → 同源 iframe 共享 sessionStorage 的导览进度 → iframe 内导览把 iframe 导航到站点路由 → 无限嵌套。两层防御：导览只在顶层窗口渲染（`IN_FRAME`，node 环境安全写法）；lab iframe onLoad 检测 `contentDocument` 里出现 `#root` 即判回退，显示说明与「重新加载」（换 nonce 重挂 iframe）。
+- **力学样例下沉**（`features/atlas/AtlasPage.tsx`、`styles/atlas.css`）：地图类型签只留思维导图 / 个人记忆图谱；力学导图改为工作区选择层的示例卡（仅示例工作区在列时显示），右上角金色 DEMO 签（`.pick-card.art > span.pick-badge`，优先级压过 art 卡的 span 定位），深链 `?ws=&map=mechanics` 不变；力学页内不再渲染类型签与「更新」按钮，面包屑用正式题名。
+- **封面导览入口**（`app/CoverPage.tsx`、`styles/cover.css`）：文字链接改实色胶囊（locate 图标 + 问句 + 箭头）。宽且够高（≥1200px 且 ≥801px，封面恰好一屏不滚动）用 fixed 吊在页面底部正中，纸环光晕托离地形图；其余档位回落为左栏通栏按钮、位置提到四张标本签之前。DOM 里按钮移到 entries 之前，窄屏第一屏可见。
+- **入门文档视觉重做**（`app/GuidePage.tsx`、`styles/guide.css`）：hero 点阵底 + 朱砂 overline「知脉 · 入门文档」；目录与九节标题编号（decimal-leading-zero / 朱砂节号 + 发丝线）；四个工作空间各带矿物颜料菱形点与「打开……→」动作链接；FAQ 朱砂问号圆签；快捷键表头填底。hero 是 header 不是 section，九节结构不变（e2e 校验沿用）。
+
+**验证**
+
+- 四道门：`verify:content` ✓、`typecheck` ✓、26 文件 / 256 tests ✓、`build` ✓。
+- `e2e-tour.mjs` 16 项全过（含入门九节、英文汉字 5、窄屏 overflowX 0、控制台无错误）。
+- 无头 Chrome 截图八张目检：`docs/evidence/polish-{cover,atlas-pick,mechanics,guide}-1440.png`、`polish-guide-{spaces,faq}-1440.png`、`polish-{atlas-pick,cover}-414.png`。结构检查：1440×900 胶囊中心 x≈720（页面正中）、与记录卡 / 索引 / 页脚零重叠；选择层三卡含「力学思维导图 [demo]」；力学页类型签 0、思维导图页 2；窄屏 overflowX 0。
+- 公网复核：`/visualizations/photosynthesis.html?embed=lab` 返回真实静态页（curl 带 `Accept: text/html`），iframe 内无 `#root`、导览卡仅 1 张——用户截图的递归态在当前线上复现不出，修复属防御性（回退是真实边界故障）。
+
+**已知缺陷 / 未验证**
+
+- 递归根因是托管回退的瞬态；防御修复未能在公网复现原故障态下回归（只能构造回退条件单测式验证）。
+- 封面胶囊 fixed 档依赖「封面恰好一屏」；矮屏 / 窄屏回落通栏按钮，位置与宽屏不同（有意）。
+- 力学导图仍是整图示例、不参与挂载（沿用 #58 口径）；真实模型 / 真实仓库未实测（沿用 #69）。
+- 本轮改动与 `docs/evidence/polish-*.png` 均在工作区，**未提交**；`ef66d2e` 已部署公网但**未 push**（远端无 `task/R3-QoderWang2`）。
+
+---
+
 ## 2026-11-26（下午）· QoderWang2 · R3b：实验室现场生成、提示词审查与修正、GitHub 同步
 
 **用户指令**：「可视化的其他工具能否正常和高质量调用以及呈现？各个板块的内置 prompt 是否写得好、高质量？API 的 AI 读的是内置 prompt 还是去 GitHub 读？工作区 GitHub 的功能也需要实现」。用户同意提供测试用的模型 key 与测试仓库（经环境变量），**截至本条写完仍未设置，真实模型与真实仓库均未实测**。仍不得 commit / push。

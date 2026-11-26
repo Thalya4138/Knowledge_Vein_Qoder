@@ -430,6 +430,17 @@
   background: var(--bg);
 }
 
+.lab-frame-fallback {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--s-16);
+  padding: var(--s-24);
+  text-align: center;
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
 .lab-foot {
   display: flex;
   flex-wrap: wrap;

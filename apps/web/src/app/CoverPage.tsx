@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Wordmark } from '../ui/brand/Wordmark';
+import { Icon } from '../ui/Icon';
 import { Terrain } from '../ui/cover/Terrain';
 import { usePrefs } from '../ui/prefs';
 import { useTour } from './tour/Tour';
@@ -40,6 +41,11 @@ export function CoverPage() {
             隔山的洞见与跨海的思维在知脉里相拥。
           </p>
         )}
+        <button type="button" className="cover-tour" onClick={() => tour.start(0)}>
+          <Icon name="locate" />
+          <span>{en ? 'New here? Take the guided tour' : '第一次来？跟着导览走一遍'}</span>
+          <span className="cover-tour-arrow" aria-hidden="true">→</span>
+        </button>
         <nav className="entries" aria-label={en ? 'The four spaces' : '四个工作空间'}>
           {SPACES.map((s) => (
             <Link key={s.key} to={s.path} className="key entry-key" data-space={s.key} viewTransition>
@@ -50,9 +56,6 @@ export function CoverPage() {
             </Link>
           ))}
         </nav>
-        <button type="button" className="cover-tour" onClick={() => tour.start(0)}>
-          {en ? 'New here? Take the guided tour →' : '第一次来？跟着导览走一遍 →'}
-        </button>
       </section>
       <footer className="cover-foot">
         <span>{en ? 'Entry for the 2026 Qoder Campus Creativity Contest, StudyHack track' : '2026 Qoder 高校创造力大赛 StudyHack 赛道作品'}</span>

@@ -24,16 +24,20 @@ import '../../styles/atlas.css';
  * 每个工作区的导图与练习存在它自己的 maps/ 里（R2-L L3）；还没有导图的工作区先生成或从空白开始。
  */
 
-const MAPS: { id: string; name: string; line: string; en: [string, string]; demoOnly?: boolean }[] = [
+const MAPS: { id: string; name: string; line: string; en: [string, string] }[] = [
   { id: 'mind', name: '思维导图', line: '像 WPS 一样用 Tab、Enter 编辑，公式用 LaTeX，改完自动保存。', en: ['Mind map', 'Edit with Tab and Enter like an office mind-map tool; formulas in LaTeX; saved as you go.'] },
   { id: 'memory', name: '个人记忆图谱', line: '从思维导图出发：收起、遮盖、挖空，考考自己。', en: ['Memory map', 'Start from the mind map: fold, cover and blank out topics to test yourself.'] },
-  { id: 'mechanics', name: '力学思维导图', line: '整张预置的力学概念网络：逐层展开，可缩放、可检索。', en: ['Mechanics map', 'A complete prebuilt concept network for mechanics: expand level by level, zoom and search.'], demoOnly: true },
 ];
 const mapName = (m: (typeof MAPS)[number], en: boolean) => (en ? m.en[0] : m.name);
 const mapLine = (m: (typeof MAPS)[number], en: boolean) => (en ? m.en[1] : m.line);
 
-/** 力学导图是随站发布的静态页，不属于任何工作区的 maps/；只有示例工作区展示它。 */
+/** 力学导图是随站发布的静态页，不属于任何工作区的 maps/：作为样例放在「选一个工作区」层，右上角标 demo。 */
 const MECHANICS_SRC = '/visualizations/mechanics-mindmap.html';
+const MECHANICS = {
+  name: '力学思维导图',
+  line: '整张预置的力学概念网络：逐层展开，可缩放、可检索。',
+  en: ['Mechanics map', 'A complete prebuilt concept network for mechanics: expand level by level, zoom and search.'] as [string, string],
+};
 
 /** 选图谱卡片上的小图：一棵横向分层的树；记忆图谱的几个叶子是挖空的框。 */
 function MapSketch({ blank }: { blank: boolean }) {
@@ -61,6 +65,7 @@ export function AtlasPage() {
   const [params] = useSearchParams();
   const { spaces, ready, error, workspace, replace } = useWorkspace();
   const t = useT();
+  const en = usePrefs().lang === 'en';
 
   if (!ready) return <div className="atlas-pick" role="status">{t('正在读取工作区…', 'Loading workspaces…')}</div>;
 
@@ -86,6 +91,17 @@ export function AtlasPage() {
               </Link>
             </li>
           ))}
+          {spaces.some((w) => w.origin === 'demo') && (
+            <li>
+              <Link className="pick-card art" to={`?ws=${encodeURIComponent(spaces.find((w) => w.origin === 'demo')!.id)}&map=mechanics`} viewTransition>
+                <span className="pick-badge">demo</span>
+                <MapSketch blank={false} />
+                <span className="pick-name">{en ? MECHANICS.en[0] : MECHANICS.name}</span>
+                <span className="pick-meta">{en ? MECHANICS.en[1] : MECHANICS.line}</span>
+                <span className="pick-meta">{t('预置示例 · 整图可交互', 'Prebuilt sample · fully interactive')}</span>
+              </Link>
+            </li>
+          )}
           <li>
             <Link className="pick-card disabled" to="/workspace" viewTransition>
               <span className="pick-glyph" aria-hidden="true">
@@ -138,8 +154,8 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
   const [notice, setNotice] = useState<string | null>(null);
   const t = useT();
   const en = usePrefs().lang === 'en';
-  const mapCards = MAPS.filter((m) => !m.demoOnly || workspace.origin === 'demo');
-  const map = mapCards.find((m) => m.id === mapId);
+  const mechanics = mapId === 'mechanics' && workspace.origin === 'demo';
+  const map = MAPS.find((m) => m.id === mapId);
   const wsQuery = `?ws=${encodeURIComponent(workspace.id)}`;
   const [params] = useSearchParams();
   const focus = params.get('focus');
@@ -254,7 +270,6 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
 
   const { maps } = load;
   const mind = mindRef.current;
-  const mechanics = map?.id === 'mechanics';
 
   if (!mechanics && (!mind || !writers)) {
     return (
@@ -279,22 +294,20 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
 
   const count = mind ? indexDoc(mind).byId.size : 0;
 
-  if (!map) {
+  if (!map && !mechanics) {
     return (
       <div className="atlas-pick">
         <Crumbs workspace={workspace} />
         <h1 className="display">{t('选一张图', 'Choose a map')}</h1>
         <ul className="pick-grid">
-          {mapCards.map((m) => (
+          {MAPS.map((m) => (
             <li key={m.id}>
               <Link className="pick-card art" to={`${wsQuery}&map=${m.id}`} viewTransition>
                 <MapSketch blank={m.id === 'memory'} />
                 <span className="pick-name">{mapName(m, en)}</span>
                 <span className="pick-meta">{mapLine(m, en)}</span>
                 <span className="pick-meta">
-                  {m.id === 'mechanics'
-                    ? t('预置示例 · 整图可交互', 'Prebuilt sample · fully interactive')
-                    : t(`${count} 个主题 · 存在 ${m.id === 'mind' ? MIND_PATH : MEMORY_PATH}`, `${count} topics · saved in ${m.id === 'mind' ? MIND_PATH : MEMORY_PATH}`)}
+                  {t(`${count} 个主题 · 存在 ${m.id === 'mind' ? MIND_PATH : MEMORY_PATH}`, `${count} topics · saved in ${m.id === 'mind' ? MIND_PATH : MEMORY_PATH}`)}
                 </span>
               </Link>
             </li>
@@ -308,9 +321,9 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
   return (
     <div className={full ? 'atlas-canvas full' : 'atlas-canvas'} ref={frameRef}>
       <header className="atlas-head">
-        <Crumbs workspace={workspace} map={mapName(map, en)} />
+        <Crumbs workspace={workspace} map={mechanics ? (en ? MECHANICS.en[0] : MECHANICS.name) : mapName(map!, en)} />
         <div className="atlas-tools">
-          {map.id === 'mind' && (
+          {!mechanics && map!.id === 'mind' && (
             <button
               type="button"
               className="btn quiet"
@@ -325,13 +338,15 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
             <Icon name={full ? 'shrink' : 'expand'} />
             {full ? t('退出全屏', 'Exit full screen') : t('全屏', 'Full screen')}
           </button>
-          <div className="segmented" role="group" aria-label={t('切换图谱', 'Switch map')}>
-            {mapCards.map((m) => (
-              <Link key={m.id} to={`${wsQuery}&map=${m.id}`} aria-current={m.id === map.id ? 'page' : undefined} replace>
-                {mapName(m, en)}
-              </Link>
-            ))}
-          </div>
+          {!mechanics && (
+            <div className="segmented" role="group" aria-label={t('切换图谱', 'Switch map')}>
+              {MAPS.map((m) => (
+                <Link key={m.id} to={`${wsQuery}&map=${m.id}`} aria-current={m.id === map!.id ? 'page' : undefined} replace>
+                  {mapName(m, en)}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </header>
       {mechanics ? (
@@ -344,7 +359,7 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
             </a>
           </p>
         </div>
-      ) : map.id === 'mind' ? (
+      ) : map!.id === 'mind' ? (
         <MindEditor
           key={workspace.id}
           doc={mind!}
@@ -387,7 +402,7 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
           {notice}
         </p>
       )}
-      {mechanics ? null : map.id === 'mind' ? (
+      {mechanics ? null : map!.id === 'mind' ? (
         <MindAssist canvas={() => canvasRef.current} store={load.store} graph={maps.graph} name={workspace.name} syncTick={syncTick} />
       ) : (
         <AskBar placeholder={t('让它帮你出题，或照你的想法新建一张图', 'Ask it to quiz you, or to draft a new map your way')} />

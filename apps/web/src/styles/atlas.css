@@ -98,6 +98,22 @@ a.pick-card:active {
   color: var(--ink-3);
 }
 
+/* 样例卡右上角的 demo 标：藤黄小签，和「示例」一类标记同族 */
+.pick-card.art > span.pick-badge {
+  position: absolute;
+  top: var(--s-12);
+  right: var(--s-12);
+  z-index: 1;
+  padding: 2px var(--s-8);
+  border-radius: var(--r-pill);
+  background: var(--c-lab);
+  color: var(--c-lab-ink);
+  font-size: var(--t-13);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 /* ---------- 画布页 ---------- */
 .atlas-canvas {
   position: relative;

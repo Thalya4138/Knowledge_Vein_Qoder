@@ -14,6 +14,9 @@ import '../../styles/tour.css';
  */
 
 const STEP_KEY = 'vein.tour.step';
+// 实验页 iframe 与主页面同源、共享 sessionStorage：静态实验页地址若被托管回退成站点本身，
+// iframe 里的导览会读到同一份进度并把 iframe 导航到站点路由，造成无限嵌套。导览只在顶层渲染。
+const IN_FRAME = typeof window !== 'undefined' && window.self !== window.top;
 const PAD = 8;
 const GAP = 14;
 const WAIT_MS = 5000;
@@ -56,7 +59,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={api}>
       {children}
-      {step !== null && <TourOverlay step={step} setStep={setStep} />}
+      {step !== null && !IN_FRAME && <TourOverlay step={step} setStep={setStep} />}
     </Ctx.Provider>
   );
 }

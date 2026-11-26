@@ -44,24 +44,27 @@ export function GuidePage() {
       </nav>
 
       <article className="guide-body">
-        <h1 className="display">{t('从一节讲义开始', 'Start from one lesson')}</h1>
-        <p className="guide-lede">
-          {t(
-            '知脉把一门课的资料整理成能读的讲义，再把讲义里的知识连成一张每条线都有理由的网。下面用内置的示例课程「线性代数：从线性方程组到最小二乘」带你走一遍。',
-            'Vein turns a course’s materials into lecture notes you can read, then links the knowledge in them into a web where every line has a reason. The walkthrough below uses the built-in sample course, “Linear Algebra: from linear systems to least squares” (written in Chinese).',
-          )}
-        </p>
-        <p className="guide-tour">
-          <button type="button" className="btn primary" onClick={() => tour.start(0)}>
-            {t('跟着导览走一遍', 'Take the guided tour')}
-          </button>
-          <span>
+        <header className="guide-hero">
+          <p className="guide-overline">{t('知脉 · 入门文档', 'Vein · Field guide')}</p>
+          <h1 className="display">{t('从一节讲义开始', 'Start from one lesson')}</h1>
+          <p className="guide-lede">
             {t(
-              '约五分钟，按封面 → 学习工作台 → 可视化实验室 → 关联探索 → 认知记忆图谱的顺序，在真实页面上逐项指给你看。',
-              'About five minutes: cover → Study Desk → Visual Lab → Connection Explorer → Memory Atlas, pointing things out on the real pages.',
+              '知脉把一门课的资料整理成能读的讲义，再把讲义里的知识连成一张每条线都有理由的网。下面用内置的示例课程「线性代数：从线性方程组到最小二乘」带你走一遍。',
+              'Vein turns a course’s materials into lecture notes you can read, then links the knowledge in them into a web where every line has a reason. The walkthrough below uses the built-in sample course, “Linear Algebra: from linear systems to least squares” (written in Chinese).',
             )}
-          </span>
-        </p>
+          </p>
+          <p className="guide-tour">
+            <button type="button" className="btn primary" onClick={() => tour.start(0)}>
+              {t('跟着导览走一遍', 'Take the guided tour')}
+            </button>
+            <span>
+              {t(
+                '约五分钟，按封面 → 学习工作台 → 可视化实验室 → 关联探索 → 认知记忆图谱的顺序，在真实页面上逐项指给你看。',
+                'About five minutes: cover → Study Desk → Visual Lab → Connection Explorer → Memory Atlas, pointing things out on the real pages.',
+              )}
+            </span>
+          </p>
+        </header>
 
         <section id="start">
           <h2>{t('三分钟上手', 'Three-minute start')}</h2>
@@ -112,7 +115,7 @@ export function GuidePage() {
         <section id="spaces">
           <h2>{t('四个工作空间', 'The four spaces')}</h2>
           <dl className="guide-dl">
-            <div>
+            <div data-space="workspace">
               <dt>{t('学习工作台', 'Study Desk')}</dt>
               <dd>
                 {t(
@@ -120,8 +123,9 @@ export function GuidePage() {
                   'One workspace per course, and a workspace is just a folder. Read notes laid out like a textbook; press Edit to change one paragraph at a time; select text to highlight or annotate — annotations are stored separately and never alter the source. Notes accept Obsidian syntax (callouts, wiki links, highlights).',
                 )}
               </dd>
+              <Link className="guide-open" to={`/workspace${WS}`}>{t('打开学习工作台', 'Open Study Desk')} →</Link>
             </div>
-            <div>
+            <div data-space="lab">
               <dt>{t('可视化实验室', 'Visual Lab')}</dt>
               <dd>
                 {t(
@@ -129,8 +133,9 @@ export function GuidePage() {
                   'Say in one sentence what you want to understand; with a model connected, an interactive page is generated on the spot and runs in an isolated sandbox (it cannot read your key or workspace). If it fails to run it is repaired once automatically, otherwise the error is shown as is. Pick a tool: GeoGebra, JSXGraph, Plotly, D3, Three.js, Matter.js, 3Dmol and Matplotlib (real Python in the browser) run right in the page; PhET embeds one of the official simulations; Manim, MATLAB, PyTorch and other local-only tools get ready-to-run code; Desmos, BioDigital and others that need third-party access are swapped for a tool that works, with the reason stated. Without a model, the three sample pages still work. A lab page can be attached to a topic in the mind map.',
                 )}
               </dd>
+              <Link className="guide-open" to={`/lab${WS}`}>{t('打开可视化实验室', 'Open Visual Lab')} →</Link>
             </div>
-            <div>
+            <div data-space="connection">
               <dt>{t('知识关联探索', 'Connection Explorer')}</dt>
               <dd>
                 {t(
@@ -138,8 +143,9 @@ export function GuidePage() {
                   'Three tasks, each written its own way: linking fragments (bottom-up, finding the structure scattered pieces share), subject meta-thinking (reorganizing a whole course by its structure), and crossing disciplines (a two-way mapping between fields, with every link labelled for what it is). Each answer comes with an editable relation graph, and can be exported as Markdown, Word, PPT, PDF or an image, saved to the workspace, appended to a lesson, or added to the mind map.',
                 )}
               </dd>
+              <Link className="guide-open" to={`/connection${WS}`}>{t('打开关联探索', 'Open Connection Explorer')} →</Link>
             </div>
-            <div>
+            <div data-space="atlas">
               <dt>{t('认知记忆图谱', 'Memory Atlas')}</dt>
               <dd>
                 {t(
@@ -147,6 +153,7 @@ export function GuidePage() {
                   'Two maps. The mind map is edited with Tab and Enter, takes LaTeX formulas, saves to the workspace’s maps/mind.json and exports to Markdown; with a model connected it can be generated or updated from your notes, showing you the diff before applying. The memory map starts from the same mind map: fold, cover or blank it out to test yourself, or switch to free placement and arrange nodes the way you remember them — AI never rearranges this map.',
                 )}
               </dd>
+              <Link className="guide-open" to={`/atlas${WS}`}>{t('打开认知记忆图谱', 'Open Memory Atlas')} →</Link>
             </div>
           </dl>
         </section>
@@ -360,7 +367,7 @@ export function GuidePage() {
 
         <section id="faq">
           <h2>{t('常见问题', 'FAQ')}</h2>
-          <dl className="guide-dl">
+          <dl className="guide-dl faq">
             <div>
               <dt>{t('打开本地文件夹没有反应？', 'Nothing happens when I open a local folder?')}</dt>
               <dd>
