@@ -51,7 +51,7 @@ export async function chat(m: ModelConfig, messages: ChatMessage[], signal?: Abo
       if (!text.trim()) throw new ModelError('模型返回了空回答。');
       return text;
     }
-    if (m.provider === 'anthropic') break; // 新一代 Claude 思考常开，不接受预填续写；上限已取 16000
+    if (m.provider === 'anthropic') break; // Anthropic 接口的新模型思考常开，不接受预填续写；上限已取 16000
   }
   throw new ModelError('模型的回答太长，续写几次后仍未写完。可以换一个输出上限更高的模型，或把问题拆小一些再试。');
 }
@@ -77,7 +77,7 @@ async function once(m: ModelConfig, messages: ChatMessage[], soFar: string, sign
       }
     : { 'content-type': 'application/json', authorization: `Bearer ${m.apiKey}` };
   const body = anthropic
-    ? // 新一代 Claude 的思考常开且计入 max_tokens：上限太低时回答会被思考挤掉，不流式请求取 16000 作底
+    ? // Anthropic 接口的新模型思考常开且计入 max_tokens：上限太低时回答会被思考挤掉，不流式请求取 16000 作底
       { model: m.model, max_tokens: Math.max(maxTokens, 16000), system, messages: user }
     : { model: m.model, temperature: 0.2, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, ...user] };
 

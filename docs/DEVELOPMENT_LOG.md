@@ -111,7 +111,7 @@
 
 - **实验室现场生成**（`features/lab/generate.ts`、`GenPanel.tsx`、`toolCaps.ts`，提示词新建 `prompts/VISUALIZE.md`，从 `visualization-demo` 训练成果 v3.0 蒸馏）：计划 JSON → 单文件 HTML（或本地脚本）→ 沙箱运行 → 报错或白屏时自动修一次 → 仍不行如实显示错误原文与「再修一次」。工具分四类且只写实测事实：网页内运行（GeoGebra、JSXGraph、Plotly、D3、Matter.js、3Dmol、Three.js、Matplotlib/Pyodide、原生 WebGL）、嵌入 PhET（50 个模拟地址逐个核实 200，模型只能从清单挑）、本地代码（Manim、MATLAB、PyTorch、Mathematica、VPython、Blender）、要授权的换替代并写明原因（Desmos→JSXGraph、Falstad→D3、JSmol/ChemDoodle→3Dmol、BioDigital/Z-Anatomy→Three.js）。生成结果存工作区 `.vein/lab/runs/<id>.json`，地址 `?run=` 可读回，会话历史一问一条。
 - **沙箱隔离**：页面以 `data:` 地址放进 `sandbox="allow-scripts allow-same-origin allow-downloads"` 的 iframe——data: 文档来源匿名、与本站不同源。最初用 srcdoc + 无 allow-same-origin，实测 GeoGebra 访问不了自己建的内层框架（SecurityError），据此改。外壳注入内容安全策略（只放行实测过的 CDN）、内存版 localStorage / cookie 替身（GeoGebra 读 cookie，在 data: 页面会抛错导致白屏）、报错与「画完了」回报。
-- **提示词审查**（独立 agent 审读，我逐条核实后修）：分步写作时后续小节看不到已有节点 id（图块解析时已剥掉）→ 每步附「已有节点」表；节名与说明分开传；收尾一步的图块不再丢；`generalizes` 方向统一为特例 → 一般（示例 meta.md 的 g-op 翻向，rev 6→7）；动机不画线（原来画成 `applies-to`，读者看到「应用于」）；`assumptions` 必填、出处格式、`track` 规则写明；取消「每篇至少一张配图」（模型只能输出文字，会编造图片路径）；去掉三层重复的编号清单与模型读不到的文件引用；碎片串联模式文件里的线性代数例子与易错点改为只给维护者。打包新增 `forModel()`：`<!-- author -->` 段落不发给模型，`<!-- only:位置 -->` 只发给指定位置。`chat()` 加截断续写（最多三次）——碎片串联一次写完约 1.4 万字，常见服务单次只出 8K token。未接入的五份提示词审查结论为「不能直接接」，本轮不接。
+- **提示词审查**（单独做了一轮审读，逐条对照代码核实后修）：分步写作时后续小节看不到已有节点 id（图块解析时已剥掉）→ 每步附「已有节点」表；节名与说明分开传；收尾一步的图块不再丢；`generalizes` 方向统一为特例 → 一般（示例 meta.md 的 g-op 翻向，rev 6→7）；动机不画线（原来画成 `applies-to`，读者看到「应用于」）；`assumptions` 必填、出处格式、`track` 规则写明；取消「每篇至少一张配图」（模型只能输出文字，会编造图片路径）；去掉三层重复的编号清单与模型读不到的文件引用；碎片串联模式文件里的线性代数例子与易错点改为只给维护者。打包新增 `forModel()`：`<!-- author -->` 段落不发给模型，`<!-- only:位置 -->` 只发给指定位置。`chat()` 加截断续写（最多三次）——碎片串联一次写完约 1.4 万字，常见服务单次只出 8K token。未接入的五份提示词审查结论为「不能直接接」，本轮不接。
 - **GitHub 同步**（`store/github.ts`、`features/workspace/GithubSync.tsx`，文件栏「同步 GitHub」）：沿用对齐文件夹的三份指纹，指纹改用 git blob SHA-1（与 `git hash-object` 一致，有单测），不下载就能判断远端变没变；推送是一次 Git Data API 提交，比较之后再核对一次远端提交号、分支更新 `force:false`；冲突逐个选、不自动合并、不删文件；空仓库先用 Contents API 建第一个提交。令牌只在页面内存。
 - **验收脚本**：新增 `e2e-lab-gen.mjs`、`e2e-github.mjs`（设了环境变量就测真实仓库）、`e2e-real-model.mjs`（真实模型，待跑）。**更正上一条（R3）**：`e2e-tour.mjs` 与 `e2e-linkage.mjs` 当时没有开启 `Runtime.enable`，「控制台无错误」收不到任何事件，是空检查。本轮补上后重跑，两份均通过；另给几份脚本的 `evaluate` 加了页面跳转中的重试。
 
@@ -129,7 +129,7 @@
 - 生成页面的视觉质量取决于模型；提示词只有蒸馏版，训练成果里的 33 项自检没有全部搬进来。
 - `apps/web/dist` 已是本轮构建，含全部未提交改动。
 
-**下一步**：用户设好环境变量后跑 `e2e-real-model.mjs` 与真实模式的 `e2e-github.mjs`，我审读生成结果再调提示词。
+**下一步**：用户设好环境变量后跑 `e2e-real-model.mjs` 与真实模式的 `e2e-github.mjs`，审读生成结果后再调提示词。
 
 ---
 
@@ -1231,7 +1231,7 @@
 4. 零碎：工作区改名入口、「导入文件夹」入口（任何浏览器）、浏览器工作区相对图片。
 
 **明确不做**：L4 关联探索写导图、L5 实验室挂主题、L6 讲义 ↔ 导图深链、L7 GitHub；已有导图的「AI 更新」（要走 `ProposedChange` 差异预览，另排）；
-关联探索 / 实验室对非示例工作区仍是空态；不装新依赖；不提交、不 push、不部署（部署由用户交给 Qoder）。
+关联探索 / 实验室对非示例工作区仍是空态；不装新依赖；不提交、不 push、不部署（部署由用户在 Qoder 中执行）。
 
 **用户裁决（2026-11-20，原话）**：
 - R2-L §4 ①②：「导图是基于工作区的各种数据库，经由类似demo制作的时候的精确的呈现结果和令人满意的内容质量的（这是不是涉及后面API的实现，以及内置prompt）存进文件夹。」

@@ -5,7 +5,7 @@
 
 依据：`VISION.md` 第三部分 2026-11-15 用户原话（Apple 式的美感、封面式首页、页面格局重构），
 用户审美画像（蓝、银、清新、有构图、简洁但不无聊；拒绝土奢、廉价广告感、堆渐变、俗气字体），
-以及两套设计规范的原文：Anthropic `frontend-design` 与 Nutlope `Hallmark`（本机已安装，不进仓库）。
+以及两套公开的前端设计规范（frontend-design、Hallmark；原文不进仓库）。
 
 ---
 
