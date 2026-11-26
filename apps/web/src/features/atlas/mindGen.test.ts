@@ -123,7 +123,7 @@ describe('模型调用（浏览器直连）', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('no', { status: 401 })));
     await expect(chat(cfg, [])).rejects.toThrow('拒绝了这个 key');
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{' }, finish_reason: 'length' }] }))));
-    await expect(chat(cfg, [])).rejects.toThrow('截断');
+    await expect(chat(cfg, [])).rejects.toThrow('续写几次后仍未写完');
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
     await expect(chat(cfg, [])).rejects.toThrow('跨域');
   });

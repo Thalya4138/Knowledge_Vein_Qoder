@@ -68,10 +68,10 @@
     },
     "lab.visualize": {
       "where": "可视化实验室 · 对话气泡",
-      "prompt": null,
-      "input": "想看见的内容 + 指定工具（可选）",
-      "output": "若干可视化窗口：工具、参数、预期现象、与讲义的回链",
-      "status": "未写（下一版起草 prompts/VISUALIZE.md）"
+      "prompt": "VISUALIZE.md",
+      "input": "想看懂的内容 + 指定工具（可选）+ 工作区讲义片段",
+      "output": "三步：计划 JSON（工具、要让人看见什么、控件、步骤、事实与出处、阐释）→ 单文件 HTML（浏览器工具）/ 可运行脚本（本地工具）/ PhET 清单 id → 沙箱报错时修复一次",
+      "status": "已接入（BYOK；2026-11-26 v1.0）：从可视化训练成果 v3.0 蒸馏。工具按 features/lab/toolCaps.ts 分四类（网页内运行 / 嵌入 PhET / 本地代码 / 要授权的换替代）；页面以 data: 地址在沙箱 iframe 里运行，隔离已用攻击页验收；8 个浏览器库的真实加载已在沙箱实测（e2e-lab-gen.mjs）。真实模型的生成质量未实测"
     },
     "report.write": {
       "where": "关联探索与图谱 · 导出成文件",

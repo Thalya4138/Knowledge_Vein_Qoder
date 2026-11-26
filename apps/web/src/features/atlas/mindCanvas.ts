@@ -45,6 +45,8 @@ export interface CanvasIO {
   seed?: () => MDoc;
   /** 主题上挂着实验时给出「去可视化」：把 viz id 映射成实验室深链（TASK_R2_LINKAGE L5） */
   vizOf?: (vizId: string, nodeId: string) => { name: string; href: string } | null;
+  /** 主题去别的板块的入口（讲义对应处、拿去探索；TASK_R2_LINKAGE L4 / L6）。地址由外面拼，画布只负责摆 */
+  goOf?: (topic: { id: string; ref?: string; text: string; neighbors: string[] }) => { label: string; href: string; hint: string }[];
 }
 
 export interface CanvasEls {
@@ -613,6 +615,16 @@ export class MindCanvas {
     this.e.zoomVal.textContent = Math.round(this.cam.k * 100) + '%';
     if (this.editing) this.positionEditor();
   }
+  /** 选中一个主题：参数是主题 id（实验室传回），或知识点 id（讲义「在导图里看」）。找不到返回 false，不动画布。 */
+  focusRef(ref: string): boolean {
+    let id: string | undefined = this.ix.byId.has(ref) ? ref : undefined;
+    if (!id) for (const [k, n] of this.ix.byId) if (n.ref === ref) { id = k; break; }
+    if (!id) return false;
+    this.unfoldTo(id);
+    this.select(id);
+    this.reveal(id, true);
+    return true;
+  }
   fit() {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const g of this.geo.values()) {
@@ -929,6 +941,10 @@ export class MindCanvas {
     const meta = [info?.kind, n.src].filter(Boolean).map((x) => esc(String(x)));
     if (meta.length) h += '<p class="me-ref">' + meta.join('，') + '</p>';
     if (info && info.title !== plain(n.text)) h += '<p class="me-ref">知识库里叫「' + esc(info.title) + '」' + (info.aliases.length ? '，又叫' + esc(info.aliases.join('、')) : '') + '</p>';
+    const go = this.io.goOf?.({ id: n.id, ref: n.ref, text: plain(n.text), neighbors: n.ref ? this.relationsOf(n).map((r) => this.otherTitle(r, n.ref!)) : [] }) ?? [];
+    if (go.length) {
+      h += '<p class="me-go">' + go.map((g) => '<a class="me-go-link" data-nav href="' + esc(g.href) + '" title="' + esc(g.hint) + '">' + esc(g.label) + '</a>').join('') + '</p>';
+    }
     if (n.f?.length) h += '<div class="me-sec"><h3>公式</h3><div class="me-fx">' + n.f.map((k) => tex(k, true)).join('') + '</div></div>';
     if (n.tag) h += '<div class="me-sec"><h3>角标</h3><div class="me-callout tag"><b>' + esc(n.tag) + '</b>' + rich(n.tagNote) + '</div></div>';
     if (n.ref) {
@@ -945,7 +961,7 @@ export class MindCanvas {
       const v = this.io.vizOf?.(n.viz, n.id) ?? null;
       h += '<div class="me-sec"><h3>可视化</h3><p class="me-viz">' +
         (v
-          ? '<a class="me-viz-link" href="' + esc(v.href) + '">' + esc(v.name) + ' · 去可视化</a>'
+          ? '<a class="me-viz-link" data-nav href="' + esc(v.href) + '">' + esc(v.name) + ' · 去可视化</a>'
           : '挂载的实验 <code>' + esc(n.viz) + '</code> 不在实验室的注册表里。') +
         '</p><button class="key small" data-act="unviz">取消挂载</button></div>';
     }

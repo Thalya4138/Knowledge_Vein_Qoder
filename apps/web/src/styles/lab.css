@@ -862,3 +862,120 @@
   isolation: isolate;
 }
 
+
+/* ---------- 现场生成（GenPanel） ---------- */
+
+.lab-gen-stage {
+  display: flex;
+  align-items: center;
+  gap: var(--s-12);
+  margin: var(--s-24) auto;
+  color: var(--ink-2);
+  font-size: var(--t-15);
+}
+
+.lab-gen-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-lab);
+  animation: lab-gen-pulse 1.2s var(--ease) infinite alternate;
+}
+
+@keyframes lab-gen-pulse {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-gen-dot { animation: none; }
+}
+
+/* 用户点名的工具用不了、换了别的：说明放在最上面，一行 */
+.lab-gen-sub {
+  flex: none;
+  padding: var(--s-8) var(--s-12);
+  border-left: 3px solid var(--c-lab);
+  background: var(--fill);
+  font-size: var(--t-13);
+}
+
+/* PhET 嵌入与本地代码：左边主体，右边阐释 */
+.lab-gen-embed {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--s-16);
+}
+
+.lab-gen-explain {
+  overflow: auto;
+  padding: var(--s-16);
+  border-radius: var(--r-inner);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--hairline);
+  font-size: var(--t-15);
+  line-height: 1.7;
+}
+
+.lab-gen-explain h3 { font-size: var(--t-17); margin-bottom: var(--s-8); }
+.lab-gen-explain h4 { margin: var(--s-16) 0 var(--s-4); font-size: var(--t-15); }
+.lab-gen-explain p + p { margin-top: var(--s-8); }
+.lab-gen-explain ul,
+.lab-gen-explain ol { padding-left: 1.2em; }
+
+.lab-gen-code {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+}
+
+.lab-gen-local { font-size: var(--t-15); }
+
+.lab-gen-code-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+}
+
+.lab-gen-pre {
+  flex: 1 1 auto;
+  min-height: 240px;
+  max-height: 70vh;
+  overflow: auto;
+  margin: 0;
+  padding: var(--s-16);
+  border-radius: var(--r-inner);
+  background: var(--fill-strong);
+  font: 13px/1.6 var(--font-mono);
+  tab-size: 4;
+}
+
+.lab-gen-failed {
+  flex: none;
+  padding: var(--s-12) var(--s-16);
+  border-left: 3px solid var(--danger);
+  background: var(--fill);
+  font-size: var(--t-13);
+}
+
+.lab-gen-failed ul { margin: var(--s-8) 0; padding-left: 1.2em; }
+
+.lab-gen-facts {
+  flex: 1 1 100%;
+  font-size: var(--t-13);
+  color: var(--ink-2);
+}
+
+.lab-gen-facts summary { cursor: pointer; }
+.lab-gen-facts ul { margin: var(--s-8) 0; padding-left: 1.2em; }
+.lab-gen-src { color: var(--vein); }
+
+@media (max-width: 899px) {
+  .lab-gen-embed { grid-template-columns: 1fr; }
+}
+
+.lab-gen-failed.warn { border-left-color: var(--c-lab); }
+.lab-gen-failed.warn summary { cursor: pointer; }

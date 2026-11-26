@@ -896,3 +896,37 @@
   width: 15px;
   height: 15px;
 }
+
+/* 同步 GitHub：四个输入框两列排，窄屏一列 */
+.gh-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-12) var(--s-16);
+  margin-bottom: var(--s-16);
+}
+
+.gh-form label {
+  display: grid;
+  gap: var(--s-4);
+  font-size: var(--t-13);
+  font-weight: 600;
+}
+
+.gh-form input {
+  min-height: 36px;
+  padding: 0 var(--s-12);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-small);
+  background: var(--surface);
+  color: var(--ink);
+  font: 400 var(--t-15) var(--font-ui);
+}
+
+.gh-form .align-quiet,
+.gh-form .align-actions {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 599px) {
+  .gh-form { grid-template-columns: 1fr; }
+}

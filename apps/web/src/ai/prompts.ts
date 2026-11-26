@@ -6,6 +6,7 @@ import explorer from '../../../../prompts/CONNECTION_EXPLORER.md?raw';
 import fragments from '../../../../prompts/EXPLORE_FRAGMENTS.md?raw';
 import meta from '../../../../prompts/EXPLORE_META.md?raw';
 import cross from '../../../../prompts/EXPLORE_CROSS.md?raw';
+import visualize from '../../../../prompts/VISUALIZE.md?raw';
 
 /**
  * 每个 AI 位置的内置提示词（登记表 prompts/registry.json）。提示词随网站发布；
@@ -19,6 +20,7 @@ const BUILT_IN = {
   'connection.fragments': fragments,
   'connection.meta': meta,
   'connection.cross': cross,
+  'lab.visualize': visualize,
 } as const;
 
 const SHARED: Partial<Record<keyof typeof BUILT_IN, string>> = {
@@ -29,8 +31,26 @@ const SHARED: Partial<Record<keyof typeof BUILT_IN, string>> = {
 
 export type PromptSlot = keyof typeof BUILT_IN;
 
+/**
+ * 发给模型前的整理。提示词文件同时写给维护者看，两种标记把不该给模型的部分去掉：
+ * - `<!-- author --> … <!-- /author -->`：版本头、变更记录、用户原话、写给作者的交付清单。
+ *   模型看到旧版本的做法会照着做（变更记录里写着已撤掉的骨架），看到它读不到的文件路径会凭空补。
+ * - `<!-- only:atlas.mindmap,… --> … <!-- /only -->`：只对这些位置有用的段落（共用底线里导图的呈现规则）。
+ */
+export function forModel(text: string, slot: string): string {
+  return text
+    .replace(/<!--\s*author\s*-->[\s\S]*?<!--\s*\/author\s*-->/g, '')
+    .replace(/<!--\s*only:([^>]*?)\s*-->([\s\S]*?)<!--\s*\/only\s*-->/g, (_m, slots: string, body: string) =>
+      slots.split(',').map((x) => x.trim()).includes(slot) ? body : '',
+    )
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export async function promptFor(slot: PromptSlot, store?: WorkspaceStore): Promise<{ text: string; overridden: boolean }> {
   const own = store ? await readText(store, `.vein/prompts/${slot}.md`) : null;
   const body = own?.trim() ? own : BUILT_IN[slot];
-  return { text: [qualityBar, SHARED[slot], body].filter(Boolean).join('\n\n---\n\n'), overridden: Boolean(own?.trim()) };
+  const parts = [qualityBar, SHARED[slot], body].filter((p): p is string => Boolean(p)).map((p) => forModel(p, slot));
+  return { text: parts.join('\n\n---\n\n'), overridden: Boolean(own?.trim()) };
 }

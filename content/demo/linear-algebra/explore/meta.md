@@ -1,7 +1,7 @@
 ---
 mode: meta
 ask: 从更高的层次看，线性代数这门课到底在研究什么？
-rev: 6
+rev: 7
 running: 关联探索　学科元思考
 ---
 
@@ -229,7 +229,7 @@ $J=\begin{bmatrix}1&1\\0&1\end{bmatrix}$ 的特征值都是实数，特征方向
 {"id":"d-space","from":"space","to":"lin","type":"defined-by","label":"能做线性组合的集合","explanation":"向量空间的定义就是一个集合连同加法与数乘，并满足八条运算律；这是依赖关系，后面每个对象都建立在它上面。","assumptions":["取定一个数域"],"epistemic":"logically-derived"},
 {"id":"d-map","from":"map","to":"lin","type":"defined-by","label":"保持线性组合","explanation":"线性映射的定义是 f(au+bv)=af(u)+bf(v)，即先组合再映射与先映射再组合结果相同。","assumptions":["两个空间在同一个数域上"],"epistemic":"logically-derived"},
 {"id":"d-form","from":"form","to":"lin","type":"defined-by","label":"对两个位置都线性","explanation":"双线性型吃两个向量、给出一个数，固定任何一个位置后对另一个位置保持线性组合。","assumptions":["同一个数域"],"epistemic":"logically-derived"},
-{"id":"g-op","from":"map","to":"op","type":"generalizes","label":"输入输出是同一空间","explanation":"算子是 V=W 的映射。多出来的限制是两边只能用同一组基，所以换基规则从 Q⁻¹AP 收紧成 P⁻¹AP。这是推广关系：算子是映射的特例。","assumptions":["V=W，两边用同一组基"],"epistemic":"logically-derived"},
+{"id":"g-op","from":"op","to":"map","type":"generalizes","label":"输入输出是同一空间","explanation":"算子是 V=W 的映射。多出来的限制是两边只能用同一组基，所以换基规则从 Q⁻¹AP 收紧成 P⁻¹AP。这是推广关系：算子是映射的特例。","assumptions":["V=W，两边用同一组基"],"epistemic":"logically-derived"},
 {"id":"g-ip","from":"form","to":"ip","type":"generalizes","label":"对称且恒正的那一种","explanation":"内积是对称、且 ⟨x,x⟩>0（x≠0）的双线性型，在实对称型的分类里是正惯性指数取满的成员。","assumptions":["实数域"],"epistemic":"logically-derived"},
 {"id":"a-gen","from":"gen","to":"lin","type":"derives-from","label":"只有这两件事可问","explanation":"对一组向量只能做线性组合，于是只能问组合到得了哪里（张成）、到达的办法是否唯一（线性相关性）。","assumptions":["只使用线性结构，不使用长度"],"epistemic":"pedagogical-inference"},
 {"id":"a-basis","from":"basis","to":"gen","type":"defined-by","label":"能生成且无冗余","explanation":"基是既张成全空间、又线性无关的一组向量；无关组的个数不超过生成组，所以各组基个数相同，这个数是维数。","assumptions":["有限维"],"epistemic":"logically-derived"},
@@ -247,7 +247,6 @@ $J=\begin{bmatrix}1&1\\0&1\end{bmatrix}$ 的特征值都是实数，特征方向
 {"id":"u-four2","from":"four","to":"dual","type":"derives-from","label":"转置对调行与列","explanation":"零空间是各行测得零的输入；左零空间是输出一侧的测量，yᵀA=0 推出 yᵀb=0 是有解的必要条件，也是充分条件。","assumptions":["有限维"],"epistemic":"logically-derived"},
 {"id":"u-rank","from":"rank","to":"four","type":"derives-from","label":"行秩等于列秩","explanation":"取 r 个无关的列写成 A=CR，按行读得每一行是 R 的 r 行的组合，行秩不超过列秩；对 Aᵀ 再做一遍得到等号。","assumptions":["有限维"],"epistemic":"logically-derived"},
 {"id":"u-cert","from":"solve","to":"four","type":"derives-from","label":"左零空间检验可解性","explanation":"对 A=[1 2;3 6]，左零空间由 (3,−1) 张成，所以 Ax=b 有解当且仅当 3b₁−b₂=0。","assumptions":["有限维"],"epistemic":"logically-derived"},
-{"id":"r-ls-solve","from":"ls","to":"solve","type":"applies-to","label":"无解时改问最近","explanation":"这是动机，不是推出：方程无解让人去问最近的点，但“最近”由内积定义，不由消元得到。","assumptions":["b 不在列空间里","已选定内积"],"epistemic":"pedagogical-inference"},
 {"id":"r-ls-ip","from":"ls","to":"ip","type":"derives-from","label":"最近要先有长度","explanation":"最近点以误差垂直于列空间为特征，长度与垂直都由内积给出；换成不来自内积的长度，垂直条件不成立。","assumptions":["长度由内积给出"],"epistemic":"logically-derived"},
 {"id":"r-ls-four","from":"ls","to":"four","type":"derives-from","label":"误差落在左零空间","explanation":"由 ⟨Ax,y⟩=⟨x,Aᵀy⟩，与列空间垂直等价于 Aᵀy=0；误差 b−Ax̂ 满足它，这就是法方程 AᵀAx̂=Aᵀb。","assumptions":["标准内积"],"epistemic":"source-backed","sources":["notes/2.1-列空间中的最近点.md#法方程"]},
 {"id":"r-pinv","from":"pinv","to":"ls","type":"derives-from","label":"最短的最小二乘解","explanation":"各列相关时最小二乘解是一族，其中长度最小的落在行空间里，存在且唯一；伪逆把 b 送到它。","assumptions":["标准内积"],"epistemic":"logically-derived"},

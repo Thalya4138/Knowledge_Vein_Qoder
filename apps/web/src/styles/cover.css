@@ -656,3 +656,20 @@
     font-size: 24px;
   }
 }
+
+/* 导览入口：一行文字链接，不和四个板块抢视线 */
+.cover-tour {
+  padding: var(--s-4) 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--t-15);
+  font-weight: 600;
+  cursor: pointer;
+  text-underline-offset: 4px;
+}
+
+.cover-tour:hover {
+  text-decoration: underline;
+}

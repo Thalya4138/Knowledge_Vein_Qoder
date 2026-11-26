@@ -130,6 +130,13 @@
   color-scheme: light;
 }
 
+/* 英文模式：拉丁字母先走西文字体（中文正文字体自带的拉丁字形偏宽），中文字符仍回落到原字体。
+   标题字体 Vein Title 的拉丁字形是设计过的（字标 Vein），不换。 */
+:root:lang(en) {
+  --font-ui: system-ui, 'Segoe UI', -apple-system, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei UI', 'Noto Sans SC', sans-serif;
+  --font-text: var(--font-ui);
+}
+
 /* 夜间模式：同一组变量换一组值。深蓝黑底，不用纯黑；强调色提亮。 */
 :root[data-theme='dark'] {
   --bg: #11181c;

@@ -1,5 +1,6 @@
 import { useId, useMemo } from 'react';
 import { RubFilter } from './rub';
+import { usePrefs } from '../prefs';
 import { FeatherArt, LeafArt, NautilusArt, WebArt } from './Specimen';
 import { growVeins, leafOutline, makeLeaf, veinPaths } from './venation';
 import { poly } from './rub';
@@ -17,13 +18,14 @@ import '../../styles/plate.css';
 const W = 1440;
 const H = 836;
 
-function Frame({ caption }: { caption: string }) {
+function Frame({ caption, en }: { caption: string; en: string }) {
+  const english = usePrefs().lang === 'en';
   return (
     <g className="plate-frame">
       <rect x="26" y="22" width={W - 52} height={H - 44} />
       <rect x="32" y="28" width={W - 64} height={H - 56} strokeWidth="0.6" />
       <text className="plate-caption" x="48" y={H - 42}>
-        {caption}
+        {english ? en : caption}
       </text>
     </g>
   );
@@ -111,7 +113,7 @@ export function LabPlate() {
             <text className="plate-math" x={pv.x + 14} y={pv.y + 60}>θ₀</text>
           </g>
 
-          <Frame caption="图版 Ⅱ　可视化实验室　鹦鹉螺剖面；最近点与正交投影；单摆" />
+          <Frame caption="图版 Ⅱ　可视化实验室　鹦鹉螺剖面；最近点与正交投影；单摆" en="Plate Ⅱ   Visual Lab   nautilus section; closest point and projection; pendulum" />
         </>
       )}
     </Plate>
@@ -173,7 +175,7 @@ export function HerbariumPlate() {
             </g>
           ))}
 
-          <Frame caption="图版 Ⅲ　知识关联探索　三件标本，一个问题" />
+          <Frame caption="图版 Ⅲ　知识关联探索　三件标本，一个问题" en="Plate Ⅲ   Connection Explorer   three specimens, one question" />
         </>
       )}
     </Plate>
@@ -199,7 +201,7 @@ export function VenationPlate() {
               <path key={i} className="pg-line" d={d} strokeWidth={widths[i]} />
             ))}
           </g>
-          <Frame caption="图版 Ⅳ　认知记忆图谱　叶脉：记忆长出骨架" />
+          <Frame caption="图版 Ⅳ　认知记忆图谱　叶脉：记忆长出骨架" en="Plate Ⅳ   Memory Atlas   leaf veins: memory grows a skeleton" />
         </>
       )}
     </Plate>

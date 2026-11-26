@@ -8,6 +8,7 @@ import { localFileUrl, saveLocalText } from './localFolder';
 import { browserFileUrl, saveBrowserText } from '../../store/browser';
 import { DEMO_WORKSPACE, type WsFile } from './workspaceData';
 import { useWorkspace } from '../../app/WorkspaceProvider';
+import { useHeadingLinks } from './headingLinks';
 import { loadAnnotations, saveAnnotations } from '../../reader/annotationStore';
 import type { Annotation } from '../../reader/annotations';
 
@@ -91,6 +92,7 @@ function NoteView({
 }) {
   const { workspace } = useWorkspace();
   const ws = workspace ?? DEMO_WORKSPACE;
+  const headingLinks = useHeadingLinks(ws, file);
   const [text, setText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState(false);
@@ -282,6 +284,7 @@ function NoteView({
         onSourceChange={change}
         annotations={anns}
         onAnnotationsChange={changeAnns}
+        headingLinks={headingLinks}
       />
     </>
   );

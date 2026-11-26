@@ -5,7 +5,7 @@ import { useWorkspace } from '../../app/WorkspaceProvider';
 import { openStore } from '../../store/open';
 import type { Workspace, WorkspaceStore } from '../../store/types';
 import { Icon } from '../../ui/Icon';
-import { modelReady, usePrefs } from '../../ui/prefs';
+import { modelReady, usePrefs, useT } from '../../ui/prefs';
 import { ModelError } from '../../ai/chat';
 import type { GraphLike } from '../atlas/mindDoc';
 import { DEMO_WORKSPACE } from '../workspace/workspaceData';
@@ -47,14 +47,18 @@ interface Toast {
 
 export function ConnectionPage() {
   const { ready, workspace, replace } = useWorkspace();
-  if (!ready) return <div className="cx"><p className="cx-empty" role="status">正在读取工作区…</p></div>;
+  const tr = useT();
+  if (!ready) return <div className="cx"><p className="cx-empty" role="status">{tr('正在读取工作区…', 'Loading workspaces…')}</p></div>;
   const current = workspace ?? DEMO_WORKSPACE;
   return <Explorer key={current.id} workspace={current} onWorkspace={replace} />;
 }
 
 function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspace: (w: Workspace) => void }) {
   const [params, setParams] = useSearchParams();
-  const { model, openSettings } = usePrefs();
+  const { model, openSettings, lang } = usePrefs();
+  const tr = useT();
+  const en = lang === 'en';
+  const modeName = (m: (typeof MODES)[number]) => (en ? m.en[0] : m.label);
   const demo = workspace.origin === 'demo';
   const mode: ModeId = (MODES.find((m) => m.id === params.get('mode'))?.id ?? 'fragments') as ModeId;
   const modeInfo = MODES.find((m) => m.id === mode)!;
@@ -287,6 +291,15 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
 
   const runPreset = (i: number) => {
     const p = PRESETS[i]!;
+    // 同一示例已经打开过、还没续问：直接回到那条对话，不在历史里堆重复（导览每走一遍也会点它）
+    const seen = threads.find((t) => t.turns.length === 1 && t.turns[0]!.presetId === p.id && t.turns[0]!.presetRev === p.rev);
+    if (seen) {
+      setParam({ t: seen.id, mode: p.mode === 'fragments' ? null : p.mode });
+      setFocusId(seen.turns[0]!.id);
+      setSel(null);
+      setPhase({ kind: 'idle' });
+      return;
+    }
     const { result, issues } = presetResult(p);
     const turn: Turn = { id: uid('u'), ask: p.ask, files: [], result, issues, at: Date.now(), origin: 'preset', presetId: p.id, presetRev: p.rev };
     if (thread && thread.mode !== p.mode) setParam({ t: null });
@@ -425,13 +438,13 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
 
   /* ---------- 画面 ---------- */
 
-  if (load.kind === 'loading') return <div className="cx"><p className="cx-empty" role="status">正在读取工作区…</p></div>;
+  if (load.kind === 'loading') return <div className="cx"><p className="cx-empty" role="status">{tr('正在读取工作区…', 'Loading workspace…')}</p></div>;
   if (load.kind === 'auth' || load.kind === 'error') {
     return (
       <div className="cx">
         <div className="cx-empty">
-          <h1 className="display">{load.kind === 'auth' ? '需要你点一下授权' : '这个工作区打不开'}</h1>
-          <p className="cx-quiet">{load.kind === 'auth' ? `浏览器要求每次重新允许读写「${workspace.name}」这个文件夹。` : load.message}</p>
+          <h1 className="display">{load.kind === 'auth' ? tr('需要你点一下授权', 'One click to allow access') : tr('这个工作区打不开', 'This workspace cannot be opened')}</h1>
+          <p className="cx-quiet">{load.kind === 'auth' ? tr(`浏览器要求每次重新允许读写「${workspace.name}」这个文件夹。`, `The browser asks again each session before reading and writing “${workspace.name}”.`) : load.message}</p>
           {load.kind === 'auth' && (
             <button type="button" className="key" onClick={() => void start(true)}>
               允许读写
@@ -492,36 +505,36 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
   return (
     <div className={`cx${active ? ' busy' : ''}`} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
       <header className="cx-head">
-        <div className="segmented big" role="group" aria-label="探索模式">
+        <div className="segmented big" role="group" aria-label={tr('探索模式', 'Exploration mode')}>
           {MODES.map((m) => (
             <button key={m.id} type="button" aria-pressed={m.id === (thread?.mode ?? mode)} onClick={() => setMode(m.id)}>
-              {m.label}
+              {modeName(m)}
             </button>
           ))}
         </div>
         <div className="cx-head-end">
           {active && (
             <button type="button" className="key small" onClick={() => openThread(null)}>
-              新对话
+              {tr('新对话', 'New conversation')}
             </button>
           )}
           <button type="button" className="key small" aria-expanded={history} onClick={() => setHistory(!history)}>
-            历史{threads.length ? ` ${threads.length}` : ''}
+            {tr('历史', 'History')}{threads.length ? ` ${threads.length}` : ''}
           </button>
         </div>
       </header>
 
       {history && (
-        <aside className="cx-history" aria-label="对话历史">
-          <p className="cx-history-head">对话历史 <span>存在这个工作区的 .vein/explore/</span></p>
-          {threads.length === 0 && <p className="cx-quiet">还没有对话。</p>}
+        <aside className="cx-history" aria-label={tr('对话历史', 'Conversation history')}>
+          <p className="cx-history-head">{tr('对话历史', 'History')} <span>{tr('存在这个工作区的 .vein/explore/', 'saved in this workspace’s .vein/explore/')}</span></p>
+          {threads.length === 0 && <p className="cx-quiet">{tr('还没有对话。', 'No conversations yet.')}</p>}
           <ul>
             {threads.map((t) => (
               <li key={t.id} className={t.id === thread?.id ? 'on' : ''}>
                 <button type="button" onClick={() => openThread(t)}>
                   <strong>{t.title}</strong>
                   <span>
-                    {MODES.find((m) => m.id === t.mode)!.label}，{t.turns.length} 轮，{new Date(t.at).toLocaleDateString('zh-CN')}
+                    {modeName(MODES.find((m) => m.id === t.mode)!)}{tr('，', ', ')}{t.turns.length} {tr('轮', t.turns.length === 1 ? 'turn' : 'turns')}{tr('，', ', ')}{new Date(t.at).toLocaleDateString(en ? 'en' : 'zh-CN')}
                   </span>
                 </button>
                 <button
@@ -545,30 +558,30 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
         <section className="cx-thread" aria-label="对话" aria-live="polite">
           {!active && (
             <div className="cx-empty">
-              <h1 className="display">{modeInfo.label}</h1>
-              <p className="cx-quiet">{modeInfo.hint}</p>
+              <h1 className="display">{modeName(modeInfo)}</h1>
+              <p className="cx-quiet">{en ? modeInfo.en[1] : modeInfo.hint}</p>
               {presets.length > 0 && (
                 <div className="cx-tries">
                   {presets.map(({ p, i }) => (
                     <button key={i} type="button" className="cx-try" onClick={() => runPreset(i)}>
                       {p.ask}
-                      <span>示例</span>
+                      <span>{tr('示例', 'Sample')}</span>
                     </button>
                   ))}
                 </div>
               )}
               {!demo && !modelReady(model) && (
                 <p className="cx-quiet">
-                  这个工作区的探索要用你自己的模型。
+                  {tr('这个工作区的探索要用你自己的模型。', 'Exploring this workspace needs your own model. ')}
                   <button type="button" className="linkish" onClick={() => openSettings('model')}>
-                    接入模型
+                    {tr('接入模型', 'Connect a model')}
                   </button>
-                  ，或先去
-                  <Link to={`/connection?ws=${encodeURIComponent(DEMO_WORKSPACE.id)}`}>示例工作区</Link>
-                  看三个示例。
+                  {tr('，或先去', ', or see the three samples in the ')}
+                  <Link to={`/connection?ws=${encodeURIComponent(DEMO_WORKSPACE.id)}`}>{tr('示例工作区', 'sample workspace')}</Link>
+                  {tr('看三个示例。', '.')}
                 </p>
               )}
-              {!demo && graph && <p className="cx-quiet">会参考「{workspace.name}」里的笔记与 {graph.nodes.length} 个知识点。</p>}
+              {!demo && graph && <p className="cx-quiet">{tr(`会参考「${workspace.name}」里的笔记与 ${graph.nodes.length} 个知识点。`, `Answers draw on the notes in “${workspace.name}” and its ${graph.nodes.length} concepts.`)}</p>}
             </div>
           )}
 
@@ -579,19 +592,19 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
           {phase.kind === 'running' && (
             <div className="turn">
               <div className="turn-ask">
-                <span className="turn-q" aria-hidden="true">问</span>
+                <span className="turn-q" aria-hidden="true">{tr('问', 'Q')}</span>
                 <p>{phase.ask || phase.files.map((f) => f.name).join('、')}</p>
               </div>
               <div className="answer pending" role="status">
                 <div>
-                  <p>{phase.progress?.label ?? '准备中'}{phase.progress && phase.progress.total > 1 ? `（${phase.progress.step}/${phase.progress.total}）` : ''}</p>
+                  <p>{phase.progress?.label ?? tr('准备中', 'Preparing')}{phase.progress && phase.progress.total > 1 ? `（${phase.progress.step}/${phase.progress.total}）` : ''}</p>
                   {phase.progress && phase.progress.total > 1 && (
-                    <progress max={phase.progress.total} value={phase.progress.step} aria-label="写作进度" />
+                    <progress max={phase.progress.total} value={phase.progress.step} aria-label={tr('写作进度', 'Writing progress')} />
                   )}
-                  <p className="cx-quiet small">{(thread?.mode ?? mode) === 'fragments' || thread ? '一般要半分钟到一分钟。' : '先拟目录，再一节一节写，整篇要几分钟。'}</p>
+                  <p className="cx-quiet small">{(thread?.mode ?? mode) === 'fragments' || thread ? tr('一般要半分钟到一分钟。', 'Usually 30–60 seconds.') : tr('先拟目录，再一节一节写，整篇要几分钟。', 'An outline first, then one section at a time — a few minutes in all.')}</p>
                 </div>
                 <button type="button" className="btn quiet" onClick={() => abort.current?.abort()}>
-                  停止
+                  {tr('停止', 'Stop')}
                 </button>
               </div>
             </div>
@@ -599,10 +612,10 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
           {phase.kind === 'nokey' && (
             <div className="answer notice" role="status">
               <p>
-                {demo ? '示例只能回答上面准备好的三个问题。' : ''}接入你自己的模型后，文字、网页、PDF、截图都可以一起放进来。API key 只留在这个页面的内存里。
+                {demo ? tr('示例只能回答上面准备好的三个问题。', 'Without a model, the sample answers only the three prepared questions above. ') : ''}{tr('接入你自己的模型后，文字、网页、PDF、截图都可以一起放进来。API key 只留在这个页面的内存里。', 'Connect your own model to mix text, web pages, PDFs and screenshots. The API key stays in this page’s memory only.')}
               </p>
               <button type="button" className="key small" onClick={() => openSettings('model')}>
-                接入模型
+                {tr('接入模型', 'Connect a model')}
               </button>
             </div>
           )}
@@ -610,7 +623,7 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
             <div className="answer notice error" role="alert">
               <p>{phase.message}</p>
               <button type="button" className="key small" onClick={() => void ask(draft, files)}>
-                再试一次
+                {tr('再试一次', 'Try again')}
               </button>
             </div>
           )}
@@ -663,13 +676,13 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
                 }
                 if (e.key === 'Escape') setUrlOpen(false);
               }}
-              placeholder="粘贴网页地址，回车添加"
-              aria-label="网页地址"
+              placeholder={tr('粘贴网页地址，回车添加', 'Paste a URL, press Enter')}
+              aria-label={tr('网页地址', 'Web address')}
             />
           </div>
         )}
         <label htmlFor="cx-input" className="sr-only">
-          输入
+          {tr('输入', 'Input')}
         </label>
         <textarea
           id="cx-input"
@@ -684,22 +697,22 @@ function Explorer({ workspace, onWorkspace }: { workspace: Workspace; onWorkspac
               (e.currentTarget.form as HTMLFormElement).requestSubmit();
             }
           }}
-          placeholder={thread ? '接着追问，或换个角度' : mode === 'fragments' ? '把零散的知识、题目、方法放进来；截图可以直接粘贴，PDF 可以拖进来' : mode === 'meta' ? '说一门课或一个专题，例如「线性代数」「理论力学」' : '说两个领域，例如「线性代数 × 机器人运动学」'}
+          placeholder={thread ? tr('接着追问，或换个角度', 'Follow up, or try another angle') : mode === 'fragments' ? tr('把零散的知识、题目、方法放进来；截图可以直接粘贴，PDF 可以拖进来', 'Drop in scattered concepts, problems, methods; paste screenshots, drag in PDFs') : mode === 'meta' ? tr('说一门课或一个专题，例如「线性代数」「理论力学」', 'Name a course or topic, e.g. “linear algebra”, “analytical mechanics”') : tr('说两个领域，例如「线性代数 × 机器人运动学」', 'Name two fields, e.g. “linear algebra × robot kinematics”')}
         />
         <div className="cx-tools">
-          <button type="button" className="btn quiet" onClick={() => fileRef.current?.click()} title="文本、Markdown、PDF">
-            文件
+          <button type="button" className="btn quiet" onClick={() => fileRef.current?.click()} title={tr('文本、Markdown、PDF', 'Text, Markdown, PDF')}>
+            {tr('文件', 'File')}
           </button>
           <button type="button" className="btn quiet" onClick={() => setUrlOpen(!urlOpen)}>
-            网页
+            {tr('网页', 'Web page')}
           </button>
           <button type="button" className="btn quiet" onClick={() => shotRef.current?.click()}>
-            截图
+            {tr('截图', 'Screenshot')}
           </button>
           <input ref={fileRef} type="file" multiple hidden onChange={(e) => void addFiles(e.target.files)} />
           <input ref={shotRef} type="file" accept="image/*" multiple hidden onChange={(e) => void addFiles(e.target.files)} />
-          {thread && <span className="cx-follow">追问「{thread.title}」</span>}
-          <button type="submit" className="cx-send" aria-label="发送" disabled={phase.kind === 'running' || (!draft.trim() && !files.length)}>
+          {thread && <span className="cx-follow">{tr(`追问「${thread.title}」`, `Following up on “${thread.title}”`)}</span>}
+          <button type="submit" className="cx-send" aria-label={tr('发送', 'Send')} disabled={phase.kind === 'running' || (!draft.trim() && !files.length)}>
             <Icon name="send" />
           </button>
         </div>

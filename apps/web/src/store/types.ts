@@ -32,6 +32,21 @@ export interface Workspace {
    * base = 上次对齐时每个文件的内容指纹：两边不一样时，靠它判断是哪一边改的。
    */
   link?: { folder: string; base: Record<string, string>; at: number };
+  /** 与一个 GitHub 仓库同步的记录（只有浏览器工作区有；store/github.ts） */
+  github?: GithubLink;
+}
+
+export interface GithubLink {
+  /** owner/name */
+  repo: string;
+  branch: string;
+  /** 工作区在仓库里的子目录；空字符串 = 仓库根目录 */
+  dir: string;
+  /** 上次同步后分支所在的提交 */
+  head: string | null;
+  /** 上次同步后两边一致的文件：路径 → git blob SHA-1 */
+  base: Record<string, string>;
+  at: number;
 }
 
 export interface FileEntry {

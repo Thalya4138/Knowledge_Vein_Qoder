@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { demoGraph } from '../../app/demo';
 import { Icon } from '../../ui/Icon';
+import { useT } from '../../ui/prefs';
 
 /**
  * 悬浮在工作台底部的 AI 对话框。
@@ -43,6 +44,7 @@ interface Turn {
 
 export function AiDock({ onLocate, noteName }: { onLocate: (hit: Hit) => void; noteName: string }) {
   const [open, setOpen] = useState(false);
+  const tr = useT();
   const [showHistory, setShowHistory] = useState(false);
   const [draft, setDraft] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -142,12 +144,12 @@ export function AiDock({ onLocate, noteName }: { onLocate: (hit: Hit) => void; n
                   </li>
                 ))}
               </ul>
-              <p className="answer-foot">示例结果：离线整理，人工核对过。</p>
+              <p className="answer-foot">{tr('示例结果：离线整理，人工核对过。', 'Sample result: prepared offline and checked by hand.')}</p>
             </div>
           ) : (
             <div className="dock-answer">
               <p className="answer-body">
-                示例模式只能回答预置的问题。接入你自己的 API key 后，可以问这个工作区里的任何内容，也可以让它整理资料、补写笔记。
+                {tr('示例模式只能回答预置的问题。接入你自己的 API key 后，可以问这个工作区里的任何内容，也可以让它整理资料、补写笔记。', 'Sample mode answers only the prepared questions. With your own API key you can ask anything about this workspace, or have it organize materials and draft notes.')}
               </p>
               <ul className="dock-presets">
                 {PRESETS.map((p) => (
@@ -165,17 +167,17 @@ export function AiDock({ onLocate, noteName }: { onLocate: (hit: Hit) => void; n
 
       <form className="dock-bar" onSubmit={submit}>
         <label className="sr-only" htmlFor="dock-input">
-          问这个工作区
+          {tr('问这个工作区', 'Ask this workspace')}
         </label>
         <input
           id="dock-input"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onFocus={() => setOpen(true)}
-          placeholder="问这个工作区，或让它整理、补写笔记"
+          placeholder={tr('问这个工作区，或让它整理、补写笔记', 'Ask this workspace, or have it organize and draft notes')}
           autoComplete="off"
         />
-        <button type="submit" className="dock-send" aria-label="发送" disabled={!draft.trim()}>
+        <button type="submit" className="dock-send" aria-label={tr('发送', 'Send')} disabled={!draft.trim()}>
           <Icon name="send" />
         </button>
       </form>

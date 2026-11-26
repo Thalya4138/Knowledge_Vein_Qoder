@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { demoGraph, demoKb } from '../../app/demo';
+import { exploreHref, exploreQuestion, lectureHref, type AnchoredNode } from '../../app/links';
 import { useWorkspace } from '../../app/WorkspaceProvider';
 import { openStore } from '../../store/open';
 import type { Workspace, WorkspaceStore } from '../../store/types';
 import { AskBar } from '../../ui/AskBar';
+import { usePrefs, useT } from '../../ui/prefs';
 import { MiniTerrain } from '../../ui/cover/Terrain';
 import { Icon } from '../../ui/Icon';
 import { loadMaps, mapWriter, MEMORY_PATH, MIND_PATH, savedLabel, type MemoryState, type WorkspaceMaps } from './maps';
@@ -22,11 +24,13 @@ import '../../styles/atlas.css';
  * 每个工作区的导图与练习存在它自己的 maps/ 里（R2-L L3）；还没有导图的工作区先生成或从空白开始。
  */
 
-const MAPS: { id: string; name: string; line: string; demoOnly?: boolean }[] = [
-  { id: 'mind', name: '思维导图', line: '像 WPS 一样用 Tab、Enter 编辑，公式用 LaTeX，改完自动保存。' },
-  { id: 'memory', name: '个人记忆图谱', line: '从思维导图出发：收起、遮盖、挖空，考考自己。' },
-  { id: 'mechanics', name: '力学思维导图', line: '整张预置的力学概念网络：逐层展开，可缩放、可检索。', demoOnly: true },
+const MAPS: { id: string; name: string; line: string; en: [string, string]; demoOnly?: boolean }[] = [
+  { id: 'mind', name: '思维导图', line: '像 WPS 一样用 Tab、Enter 编辑，公式用 LaTeX，改完自动保存。', en: ['Mind map', 'Edit with Tab and Enter like an office mind-map tool; formulas in LaTeX; saved as you go.'] },
+  { id: 'memory', name: '个人记忆图谱', line: '从思维导图出发：收起、遮盖、挖空，考考自己。', en: ['Memory map', 'Start from the mind map: fold, cover and blank out topics to test yourself.'] },
+  { id: 'mechanics', name: '力学思维导图', line: '整张预置的力学概念网络：逐层展开，可缩放、可检索。', en: ['Mechanics map', 'A complete prebuilt concept network for mechanics: expand level by level, zoom and search.'], demoOnly: true },
 ];
+const mapName = (m: (typeof MAPS)[number], en: boolean) => (en ? m.en[0] : m.name);
+const mapLine = (m: (typeof MAPS)[number], en: boolean) => (en ? m.en[1] : m.line);
 
 /** 力学导图是随站发布的静态页，不属于任何工作区的 maps/；只有示例工作区展示它。 */
 const MECHANICS_SRC = '/visualizations/mechanics-mindmap.html';
@@ -56,14 +60,15 @@ function MapSketch({ blank }: { blank: boolean }) {
 export function AtlasPage() {
   const [params] = useSearchParams();
   const { spaces, ready, error, workspace, replace } = useWorkspace();
+  const t = useT();
 
-  if (!ready) return <div className="atlas-pick" role="status">正在读取工作区…</div>;
+  if (!ready) return <div className="atlas-pick" role="status">{t('正在读取工作区…', 'Loading workspaces…')}</div>;
 
   if (!workspace) {
     return (
       <div className="atlas-pick">
-        <h1 className="display">选一个工作区</h1>
-        {error && <p role="alert">工作区存储异常：{error}</p>}
+        <h1 className="display">{t('选一个工作区', 'Choose a workspace')}</h1>
+        {error && <p role="alert">{t('工作区存储异常：', 'Workspace storage error: ')}{error}</p>}
         <ul className="pick-grid">
           {spaces.map((w) => (
             <li key={w.id}>
@@ -75,8 +80,8 @@ export function AtlasPage() {
                 <span className="pick-name">{w.origin === 'demo' ? demoKb.title : w.name}</span>
                 <span className="pick-meta">
                   {w.origin === 'demo'
-                    ? `${demoGraph.nodes.length} 个知识点，${demoGraph.relations.length} 条带理由的关系`
-                    : `${w.folders.reduce((n, f) => n + f.files.length, 0)} 个文件 · ${w.origin === 'folder' ? '本地文件夹' : '浏览器工作区'}`}
+                    ? t(`${demoGraph.nodes.length} 个知识点，${demoGraph.relations.length} 条带理由的关系`, `${demoGraph.nodes.length} concepts, ${demoGraph.relations.length} relations with reasons`)
+                    : `${w.folders.reduce((n, f) => n + f.files.length, 0)} ${t('个文件', 'files')} · ${w.origin === 'folder' ? t('本地文件夹', 'local folder') : t('浏览器工作区', 'browser workspace')}`}
                 </span>
               </Link>
             </li>
@@ -86,8 +91,8 @@ export function AtlasPage() {
               <span className="pick-glyph" aria-hidden="true">
                 <Icon name="plus" />
               </span>
-              <span className="pick-name">新建或打开工作区</span>
-              <span className="pick-meta">去工作台新建空白工作区，或连接本地文件夹</span>
+              <span className="pick-name">{t('新建或打开工作区', 'New or open a workspace')}</span>
+              <span className="pick-meta">{t('去工作台新建空白工作区，或连接本地文件夹', 'Create a blank workspace in Study Desk, or connect a local folder')}</span>
             </Link>
           </li>
         </ul>
@@ -99,10 +104,11 @@ export function AtlasPage() {
 }
 
 function Crumbs({ workspace, map }: { workspace: Workspace; map?: string }) {
+  const t = useT();
   return (
     <p className="crumb-back">
       <Link to="/atlas" viewTransition>
-        工作区
+        {t('工作区', 'Workspaces')}
       </Link>
       <Icon name="chevron" className="icon crumb-sep" />
       {map ? (
@@ -130,9 +136,13 @@ type Load =
 function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspace; mapId: string | null; onWorkspace: (w: Workspace) => void }) {
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const [notice, setNotice] = useState<string | null>(null);
+  const t = useT();
+  const en = usePrefs().lang === 'en';
   const mapCards = MAPS.filter((m) => !m.demoOnly || workspace.origin === 'demo');
   const map = mapCards.find((m) => m.id === mapId);
   const wsQuery = `?ws=${encodeURIComponent(workspace.id)}`;
+  const [params] = useSearchParams();
+  const focus = params.get('focus');
   // 画布就地修改导图；切到记忆图谱时要拿最新的那一份，所以记下「最近写出的」
   const mindRef = useRef<MDoc | null>(null);
   const memRef = useRef<MemoryState | null>(null);
@@ -214,27 +224,27 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
   }, [store, onWorkspace]);
   const onError = useCallback((msg: string) => setNotice(msg), []);
 
-  if (load.kind === 'loading') return <div className="atlas-pick" role="status">正在读取「{workspace.name}」的图谱…</div>;
+  if (load.kind === 'loading') return <div className="atlas-pick" role="status">{t(`正在读取「${workspace.name}」的图谱…`, `Loading maps for “${workspace.name}”…`)}</div>;
 
   if (load.kind === 'auth' || load.kind === 'error') {
     return (
       <div className="atlas-pick">
         <Crumbs workspace={workspace} />
         {/* 这两句里有标题字体子集之外的字，用正文字体，免得一半标题体一半回落 */}
-        <h1 className="gen-title">{load.kind === 'auth' ? '需要重新授权这个文件夹' : '没有读到这个工作区'}</h1>
+        <h1 className="gen-title">{load.kind === 'auth' ? t('需要重新授权这个文件夹', 'This folder needs permission again') : t('没有读到这个工作区', 'Could not read this workspace')}</h1>
         <p>
           {load.kind === 'auth'
-            ? `导图存在你的文件夹里（${MIND_PATH}）。浏览器每次新开都要你点一次允许，才能读写这个文件夹。`
+            ? t(`导图存在你的文件夹里（${MIND_PATH}）。浏览器每次新开都要你点一次允许，才能读写这个文件夹。`, `Maps live in your folder (${MIND_PATH}). Each new browser session needs one click to allow reading and writing it.`)
             : load.message}
         </p>
         <p>
           {load.kind === 'auth' ? (
             <button type="button" className="btn primary" onClick={() => void start(true)}>
-              允许读写「{workspace.name}」
+              {t(`允许读写「${workspace.name}」`, `Allow access to “${workspace.name}”`)}
             </button>
           ) : (
             <Link className="btn primary" to={`/workspace${wsQuery}`} viewTransition>
-              回工作台
+              {t('回工作台', 'Back to Study Desk')}
             </Link>
           )}
         </p>
@@ -251,7 +261,7 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
       <div className="atlas-pick">
         <Crumbs workspace={workspace} />
         {/* 标题只用标题字体子集里有的字；工作区名是用户内容，放在面包屑里 */}
-        <h1 className="display">这个工作区没有导图</h1>
+        <h1 className="display">{t('这个工作区没有导图', 'This workspace has no map yet')}</h1>
         <MapGenerate
           name={workspace.name}
           store={load.store}
@@ -273,18 +283,18 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
     return (
       <div className="atlas-pick">
         <Crumbs workspace={workspace} />
-        <h1 className="display">选一张图</h1>
+        <h1 className="display">{t('选一张图', 'Choose a map')}</h1>
         <ul className="pick-grid">
           {mapCards.map((m) => (
             <li key={m.id}>
               <Link className="pick-card art" to={`${wsQuery}&map=${m.id}`} viewTransition>
                 <MapSketch blank={m.id === 'memory'} />
-                <span className="pick-name">{m.name}</span>
-                <span className="pick-meta">{m.line}</span>
+                <span className="pick-name">{mapName(m, en)}</span>
+                <span className="pick-meta">{mapLine(m, en)}</span>
                 <span className="pick-meta">
                   {m.id === 'mechanics'
-                    ? '预置示例 · 整图可交互'
-                    : `${count} 个主题 · 存在 ${m.id === 'mind' ? MIND_PATH : MEMORY_PATH}`}
+                    ? t('预置示例 · 整图可交互', 'Prebuilt sample · fully interactive')
+                    : t(`${count} 个主题 · 存在 ${m.id === 'mind' ? MIND_PATH : MEMORY_PATH}`, `${count} topics · saved in ${m.id === 'mind' ? MIND_PATH : MEMORY_PATH}`)}
                 </span>
               </Link>
             </li>
@@ -298,27 +308,27 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
   return (
     <div className={full ? 'atlas-canvas full' : 'atlas-canvas'} ref={frameRef}>
       <header className="atlas-head">
-        <Crumbs workspace={workspace} map={map.name} />
+        <Crumbs workspace={workspace} map={mapName(map, en)} />
         <div className="atlas-tools">
           {map.id === 'mind' && (
             <button
               type="button"
               className="btn quiet"
               onClick={() => setSyncTick((n) => n + 1)}
-              title="工作区里的笔记改过之后，让 AI 对照最新的笔记更新这张图；先给你看改了什么，确认后才应用"
+              title={t('工作区里的笔记改过之后，让 AI 对照最新的笔记更新这张图；先给你看改了什么，确认后才应用', 'After your notes change, let AI update this map against them — you see the diff first and apply only what you accept')}
             >
               <Icon name="refresh" />
-              按资料更新
+              {t('按资料更新', 'Update from notes')}
             </button>
           )}
-          <button type="button" className="btn quiet" onClick={toggleFull} aria-pressed={full} title={full ? '退出全屏（Esc）' : '全屏阅读与编辑'}>
+          <button type="button" className="btn quiet" onClick={toggleFull} aria-pressed={full} title={full ? t('退出全屏（Esc）', 'Exit full screen (Esc)') : t('全屏阅读与编辑', 'Read and edit full screen')}>
             <Icon name={full ? 'shrink' : 'expand'} />
-            {full ? '退出全屏' : '全屏'}
+            {full ? t('退出全屏', 'Exit full screen') : t('全屏', 'Full screen')}
           </button>
-          <div className="segmented" role="group" aria-label="切换图谱">
+          <div className="segmented" role="group" aria-label={t('切换图谱', 'Switch map')}>
             {mapCards.map((m) => (
               <Link key={m.id} to={`${wsQuery}&map=${m.id}`} aria-current={m.id === map.id ? 'page' : undefined} replace>
-                {m.name}
+                {mapName(m, en)}
               </Link>
             ))}
           </div>
@@ -347,6 +357,19 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
             const exp = toolById(id);
             return exp ? { name: exp.name, href: labHref({ ws: workspace.id, viz: id, node: nodeId }) } : null;
           }}
+          goOf={(topic) => {
+            const node = topic.ref ? (maps.graph?.nodes as AnchoredNode[] | undefined)?.find((x) => x.id === topic.ref) : undefined;
+            const lecture = lectureHref(workspace, node?.noteAnchor);
+            const out = [];
+            if (lecture) out.push({ label: t('打开讲义对应处', 'Open in the notes'), href: lecture, hint: t('在学习工作台打开讲义，定位到讲这个知识点的那一段', 'Open the lecture in Study Desk at the passage about this concept') });
+            out.push({
+              label: t('拿去关联探索', 'Explore connections'),
+              href: exploreHref(workspace.id, exploreQuestion(topic.text || node?.title || '中心主题', topic.neighbors)),
+              hint: t('带着这个主题和图谱里与它相连的知识去关联探索；问题只预填，发不发由你决定', 'Take this topic and its linked concepts to the Connection Explorer; the question is prefilled, sending is up to you'),
+            });
+            return out;
+          }}
+          focus={focus}
           onCanvas={(c) => (canvasRef.current = c)}
         />
       ) : (
@@ -367,7 +390,7 @@ function WorkspaceAtlas({ workspace, mapId, onWorkspace }: { workspace: Workspac
       {mechanics ? null : map.id === 'mind' ? (
         <MindAssist canvas={() => canvasRef.current} store={load.store} graph={maps.graph} name={workspace.name} syncTick={syncTick} />
       ) : (
-        <AskBar placeholder="让它帮你出题，或照你的想法新建一张图" />
+        <AskBar placeholder={t('让它帮你出题，或照你的想法新建一张图', 'Ask it to quiz you, or to draft a new map your way')} />
       )}
     </div>
   );

@@ -78,6 +78,20 @@
   transition: opacity 120ms;
 }
 .nr-h:hover .nr-anchor, .nr-anchor:focus-visible { opacity: 1; }
+/* 标题 → 导图里挂着同一知识点的主题（TASK_R2_LINKAGE L6）。常驻但安静：读者要能发现它，又不抢标题 */
+.nr-golink {
+  margin-left: 6px;
+  font: 400 12.5px var(--nr-sans);
+  letter-spacing: 0;
+  color: var(--nr-blue);
+  opacity: 0.72;
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+  vertical-align: 0.15em;
+  white-space: nowrap;
+}
+.nr-golink:hover, .nr-golink:focus-visible { opacity: 1; border-bottom-style: solid; }
+@media print { .nr-golink { display: none; } }
 .nr-anchor:hover { background: var(--nr-blue-pale); }
 .nr-flash {
   background-color: rgb(255 214 102 / 0.55);
@@ -276,7 +290,9 @@
 }
 @media (max-width: 767px) {
   .nr-sheet { padding: 28px 20px 40px; }
-  .nr-problem .nr-co-body { display: block; }
+  /* 选择器要和桌面那条 :has() 网格规则一样具体，否则压不过它，图片列仍占 230px、正文被挤成三四个字一行 */
+  .nr-problem .nr-co-body:has(> :first-child img) { display: block; }
+  .nr-problem .nr-co-body:has(> :first-child img) > :first-child { margin: 0 0 12px; }
   .nr-drawer { width: 100vw; }
 }
 @media (prefers-reduced-motion: reduce) {

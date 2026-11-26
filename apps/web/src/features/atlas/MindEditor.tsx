@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 // 公式排版所需的样式与字体；字体由构建打成静态资源，按需加载
 import 'katex/dist/katex.min.css';
 import { MindCanvas, SHEET, type CanvasEls, type CanvasIO } from './mindCanvas';
@@ -40,10 +41,16 @@ export interface MindEditorProps extends CanvasIO {
   knowledge: KnowledgeContext;
   /** 把画布交给外面（AI 对话框要读当前导图、整图应用修改） */
   onCanvas?: (c: MindCanvas | null) => void;
+  /** 打开后选中挂着这个知识点的主题（地址里的 ?focus=） */
+  focus?: string | null;
 }
 
 /** 父组件用 `key={工作区 id}` 挂载：换工作区就换一块画布。 */
-export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed, vizOf, onCanvas }: MindEditorProps) {
+export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed, vizOf, goOf, onCanvas, focus }: MindEditorProps) {
+  const navigate = useNavigate();
+  // 画布只建一次；去处要读最新的工作区，所以经 ref 转一手
+  const goRef = useRef(goOf);
+  goRef.current = goOf;
   const rootRef = useRef<HTMLDivElement>(null);
   const canvas = useRef<MindCanvas | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -83,7 +90,7 @@ export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed, v
         timer = window.setTimeout(() => setToast(null), 1800);
       },
       () => setSheet(true),
-      { persist, fresh, savedLabel, seed, vizOf },
+      { persist, fresh, savedLabel, seed, vizOf, goOf: (t) => goRef.current?.(t) ?? [] },
     );
     canvas.current = c;
     onCanvas?.(c);
@@ -92,7 +99,18 @@ export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed, v
     root.addEventListener('me-state', onState);
     const onShow = (e: Event) => ((e as CustomEvent<string>).detail === 'outline' ? setOutline(true) : setInsp(true));
     root.addEventListener('me-show', onShow);
+    // 详情栏里的去处是普通链接（可在新标签打开）；普通点击改走站内路由，不整页刷新
+    const onNav = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-nav]');
+      if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const url = new URL(a.href);
+      if (url.origin !== window.location.origin) return;
+      e.preventDefault();
+      navigate(url.pathname + url.search + url.hash);
+    };
+    root.addEventListener('click', onNav);
     return () => {
+      root.removeEventListener('click', onNav);
       root.removeEventListener('me-state', onState);
       root.removeEventListener('me-show', onShow);
       window.clearTimeout(timer);
@@ -101,6 +119,10 @@ export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed, v
       onCanvas?.(null);
     };
   }, []);
+
+  useEffect(() => {
+    if (focus && canvas.current && !canvas.current.focusRef(focus)) setToast('导图里还没有挂着这个知识点的主题');
+  }, [focus]);
 
   useEffect(() => {
     if (!sheet) return;

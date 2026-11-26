@@ -1,3 +1,4 @@
+import { promptFor } from '../../ai/prompts';
 import { describe, expect, it } from 'vitest';
 import { toHtml } from 'hast-util-to-html';
 import { parseNote } from '../../content/parseNote';
@@ -96,15 +97,15 @@ describe('示例（金样例）', () => {
     expect(result.graph.nodes.filter((n) => n.layer === top)).toHaveLength(1);
   });
 
-  it('学科元思考：四种联系分开，动机不画成前提或推出', () => {
+  it('学科元思考：四种联系分开；动机只在正文里讲，不画成线（图上没有「动机」这种类型，画了就会被读成别的关系）', () => {
     const { result } = presetResult(PRESETS.find((p) => p.mode === 'meta')!);
     for (const s of ['依赖', '等价', '推广', '动机']) expect(result.note).toContain(`**${s}**`);
-    const motives = result.graph.edges.filter((e) => e.explanation.includes('动机'));
-    expect(motives.length).toBeGreaterThanOrEqual(1);
-    for (const e of motives) {
-      expect(e.epistemic).toBe('pedagogical-inference');
-      expect(['prerequisite', 'derives-from']).not.toContain(e.type);
-    }
+    expect(result.graph.edges.filter((e) => /这是动机/.test(e.explanation))).toEqual([]);
+  });
+
+  it('推广的方向统一为「特例 → 一般」', () => {
+    const meta = presetResult(PRESETS.find((p) => p.mode === 'meta')!).result.graph.edges.find((e) => e.id === 'g-op');
+    expect(meta && [meta.from, meta.to]).toEqual(['op', 'map']);
   });
 
   it('分步提示：元思考不强制单线，跨学科允许分叉与回头', () => {
@@ -123,11 +124,11 @@ describe('示例（金样例）', () => {
     expect(STAGE_CLOSING_CROSS).toContain('开放一个正文尚未解决的新分支');
   });
 
-  it('碎片提示：统一模型、双向证明、两类唯一性与边界都不能省', () => {
-    expect(STAGE_SINGLE).toContain('形式化共同模型');
-    expect(STAGE_SINGLE).toContain('必要性与充分性都证');
-    expect(STAGE_SINGLE).toContain('统一求解公式、解的两类唯一性');
+  it('碎片提示：统一模型、双向证明、唯一性与边界写在发给模型的模式文件里，写作指令不再重复成编号清单', async () => {
+    const { text } = await promptFor('connection.fragments');
+    for (const k of ['同一个数学模型', '**必要性**', '**充分性**', '解是否唯一', '成立边界与反例']) expect(text).toContain(k);
     expect(STAGE_SINGLE).toContain('不强制对应表');
+    expect(STAGE_SINGLE).not.toMatch(/^d. /m);
   });
 
   it('碎片示例：统一模型、完整证明、伪逆与四个子空间都落实', () => {

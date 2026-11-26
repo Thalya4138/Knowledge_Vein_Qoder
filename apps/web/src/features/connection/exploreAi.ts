@@ -221,11 +221,8 @@ export function buildUserContent(mode: ModeId, ask: string, files: Attachment[],
 /* ---------- 各步的格式说明 ---------- */
 
 export const STAGE_SINGLE = `## 这一次要写的
-一次写完，按「碎片串联」提示词推进，不套讲义的栏目骨架（不写问题探讨、本节聚焦、练习与应用），也不强制对应表：
-1. 一级标题：把关联本身说出来的一句短语。标题之后第一段直接给判断——这几样东西有没有关系、是什么关系、由什么决定。读者给了自己的猜想时，先说它对在哪里、差在哪里。
-2. 形式化共同模型：把每样东西的研究对象、变量、条件、目标和求解机制写清，再代入同一个模型，说明对应是严格等价、特例、推广、共同机制还是类比。最不像的那样东西要写到可以动手验证。
-3. 证明核心结论：声称「当且仅当」「等价」「充要」时，必要性与充分性都证，逐步给出依据与条件。找到共同模型后，继续给出统一求解公式、解的两类唯一性，以及反例或失效边界。
-4. 往上提炼：写出可以迁移的解题动作、自然产生的新问题，或与工作区已有讲义/此前对话的接点。只写内容真正需要的，不为凑章节而扩展。
+一次写完，按「碎片串联」提示词推进，不套讲义的栏目骨架（不写问题探讨、本节聚焦、练习与应用），也不强制对应表。
+一级标题：把关联本身说出来的一句短语。标题之后第一段直接给判断——这几样东西有没有关系、是什么关系、由什么决定；读者给了自己的猜想时，先说它对在哪里、差在哪里。后面怎么展开，由这次的内容决定。
 小节标题用这一节的内容来起，不用「本质」「总结」「拓展」这类通用名。文末附一个 vein-graph 图块，只画正文讲透的关系。`;
 
 export const STAGE_FOLLOW = `## 这一次要写的（追问）
@@ -256,12 +253,31 @@ const SECTION_LEAD = {
 
 export const stageSection = (k: number, total: number, item: string, tableNo: number, lead: keyof typeof SECTION_LEAD = 'chain') => `## 这一次要写的：第二步，第 ${k}/${total} 节
 上面「已经写好的部分」是这篇的开头、目录和已写的小节。现在只写目录中的这一项：
-${item}
-- 以二级标题开头，节名照抄目录，不加编号；
+${sectionBrief(item)}
+- 以二级标题开头，标题只写节名，不加编号，不抄「这一节要做的」；
 - ${SECTION_LEAD[lead]}
 - 栏目（表、资源卡、相关信息等）只在内容需要时用，不为凑齐而用；确有多个对象要逐项对比时才用表（编号从「表 ${tableNo}」接着排）；栏目里只写行内公式；
 - 不重复已经讲过的内容，不写其他节，不写全文总结；
-- 如果这一节讲到了关联图里没有的关系，在节末附一个 vein-graph 图块补充（新节点的 id 不要与已有的重复，可以连到已有节点）。`;
+- 如果这一节讲到了关联图里没有的关系，在节末附一个 vein-graph 图块补充（新节点的 id 不要与「已有节点」表里的重复；要连到已有节点时，照抄表里的 id）。`;
+
+/** 目录项「节名｜说明」拆开交给模型：标题只照抄节名，说明是这一节的任务 */
+export function sectionBrief(item: string): string {
+  const [name, ...rest] = item.split(/[｜|]/);
+  const task = rest.join('｜').trim();
+  return `节名：${name!.trim()}` + (task ? `\n这一节要做的：${task}` : '');
+}
+
+/** 已有节点表：附在「已经写好的部分」末尾。图块在解析时已从正文剥掉，不附上模型就看不到 id，只能猜 */
+export function nodeTable(graphs: unknown[]): string {
+  const rows = new Map<string, string>();
+  for (const g of graphs) {
+    for (const n of (g as { nodes?: { id?: unknown; label?: unknown }[] } | null)?.nodes ?? []) {
+      if (typeof n?.id === 'string' && !rows.has(n.id)) rows.set(n.id, typeof n.label === 'string' ? n.label : '');
+    }
+  }
+  if (!rows.size) return '';
+  return ['### 已有节点（关联图里已经画出的，id → 名称）', ...[...rows].map(([id, label]) => `- ${id} → ${label}`)].join('\n');
+}
 
 export const STAGE_CLOSING = `## 这一次要写的：第三步，收尾
 上面「已经写好的部分」是整篇正文。现在只写收尾，不复述、不总结全文。从下面挑这篇内容真正需要的一两样来写，以一个二级标题开头（节名用内容来起）：
@@ -350,7 +366,7 @@ export async function explore(
   for (let k = 0; k < items.length; k += 1) {
     onProgress?.({ step: k + 2, total, label: `写第 ${k + 1}/${items.length} 节：${items[k]!.split(/[｜|]/)[0]}` });
     const tableNo = 1 + (sections.join('\n').match(/\[!table\]/g)?.length ?? 0);
-    const written = [opening, toc, ...sections].join('\n\n');
+    const written = [opening, toc, ...sections, nodeTable(graphs)].filter(Boolean).join('\n\n');
     const out = parseOutput(await call(stageSection(k + 1, items.length, items[k]!, tableNo, meta ? 'web' : 'cross'), written));
     // 模型偶尔会重复一级标题：只要从二级标题开始的部分
     const body = out.note.replace(/^#\s+.+\n/, '').trim();
@@ -359,6 +375,7 @@ export async function explore(
   }
   onProgress?.({ step: total, total, label: '写收尾' });
   const closing = parseOutput(await call(meta ? STAGE_CLOSING : STAGE_CLOSING_CROSS, [opening, ...sections].join('\n\n')));
+  if (closing.graph) graphs.push(closing.graph);
   const merged = { nodes: graphs.flatMap((g) => ((g as { nodes?: unknown[] })?.nodes ?? [])), edges: graphs.flatMap((g) => ((g as { edges?: unknown[] })?.edges ?? [])) };
   const note = [opening, ...sections, closing.note.replace(/^#\s+.+\n/, '').trim()].join('\n\n') + '\n';
   return done({ note, graph: merged, title: outline.title }, items.length + 2);

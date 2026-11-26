@@ -1,4 +1,5 @@
 import type { ModelConfig } from '../ui/prefs';
+import { networkHint } from './providers';
 
 /**
  * 模型调用适配层（R3 的最小切片，SYNC_AND_API.md §4）：浏览器直连用户自己的模型服务，
@@ -40,10 +41,32 @@ function explain(status: number, body: string): string {
 }
 
 export async function chat(m: ModelConfig, messages: ChatMessage[], signal?: AbortSignal, maxTokens = 8192): Promise<string> {
+  // 回答被输出上限截断时接着写：把已写的部分作为 assistant 消息带回去，让模型从断点续上。
+  // 很多服务单次最多输出 8K token（如 deepseek-chat），而一篇关联探索的完整回答可以超过它。
+  let text = '';
+  for (let round = 0; round <= MAX_CONTINUE; round += 1) {
+    const part = await once(m, messages, text, signal, maxTokens);
+    text += part.text;
+    if (!part.cut) {
+      if (!text.trim()) throw new ModelError('模型返回了空回答。');
+      return text;
+    }
+    if (m.provider === 'anthropic') break; // 新一代 Claude 思考常开，不接受预填续写；上限已取 16000
+  }
+  throw new ModelError('模型的回答太长，续写几次后仍未写完。可以换一个输出上限更高的模型，或把问题拆小一些再试。');
+}
+
+const MAX_CONTINUE = 3;
+const CONTINUE = '继续。从上一条回答停下的地方接着写，第一个字紧接断点，不重复已经写过的内容，不加任何说明。';
+
+async function once(m: ModelConfig, messages: ChatMessage[], soFar: string, signal: AbortSignal | undefined, maxTokens: number): Promise<{ text: string; cut: boolean }> {
   const base = m.baseUrl.replace(/\/+$/, '');
   const anthropic = m.provider === 'anthropic';
   const system = messages.filter((x) => x.role === 'system').map((x) => asText(x.content)).join('\n\n');
-  const user = messages.filter((x) => x.role === 'user').map((x) => ({ role: 'user' as const, content: wire(x.content, anthropic) }));
+  const user: { role: 'user' | 'assistant'; content: unknown }[] = messages
+    .filter((x) => x.role === 'user')
+    .map((x) => ({ role: 'user' as const, content: wire(x.content, anthropic) }));
+  if (soFar) user.push({ role: 'assistant', content: soFar }, { role: 'user', content: CONTINUE });
   const url = anthropic ? `${base}/messages` : `${base}/chat/completions`;
   const headers: Record<string, string> = anthropic
     ? {
@@ -54,7 +77,8 @@ export async function chat(m: ModelConfig, messages: ChatMessage[], signal?: Abo
       }
     : { 'content-type': 'application/json', authorization: `Bearer ${m.apiKey}` };
   const body = anthropic
-    ? { model: m.model, max_tokens: maxTokens, system, messages: user }
+    ? // 新一代 Claude 的思考常开且计入 max_tokens：上限太低时回答会被思考挤掉，不流式请求取 16000 作底
+      { model: m.model, max_tokens: Math.max(maxTokens, 16000), system, messages: user }
     : { model: m.model, temperature: 0.2, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, ...user] };
 
   let res: Response;
@@ -62,7 +86,7 @@ export async function chat(m: ModelConfig, messages: ChatMessage[], signal?: Abo
     res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal });
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e;
-    throw new ModelError('浏览器连不上这个模型服务：可能是网络不通，或者这家服务不允许网页直接调用（跨域）。可以在设置里点「测试连接」确认。');
+    throw new ModelError('浏览器连不上这个模型服务。' + networkHint(m.baseUrl));
   }
   if (!res.ok) throw new ModelError(explain(res.status, await res.text().catch(() => '')));
   const data = (await res.json()) as {
@@ -73,10 +97,9 @@ export async function chat(m: ModelConfig, messages: ChatMessage[], signal?: Abo
   const text = anthropic
     ? (data.content ?? []).map((c) => c.text ?? '').join('')
     : data.choices?.[0]?.message?.content ?? '';
+  if (anthropic && data.stop_reason === 'refusal') throw new ModelError('模型出于安全策略拒绝回答这次请求。换个问法，或换一个模型再试。');
   const cut = anthropic ? data.stop_reason === 'max_tokens' : data.choices?.[0]?.finish_reason === 'length';
-  if (cut) throw new ModelError('模型的回答太长被截断了。可以换一个上下文更长的模型，或先减少工作区里的笔记再试。');
-  if (!text.trim()) throw new ModelError('模型返回了空回答。');
-  return text;
+  return { text, cut };
 }
 
 /** 从模型回答里取出 JSON 对象：容忍 ```json 围栏与前后多余的话。 */

@@ -84,8 +84,28 @@ interface ModelProvider {
 
 - **OpenAI 兼容接口**一个实现覆盖多家：用户填 base URL、模型名、key（DeepSeek、通义千问的兼容模式、Kimi、OpenAI 等）。
 - **Anthropic**：浏览器直连需要请求头 `anthropic-dangerous-direct-browser-access: true`。
-- **待实测**：各家接口是否允许浏览器跨域直连（CORS）。实测前不在界面上列出「支持某某」。
+- **跨域（CORS）已实测**，结果见下方 §4.1；界面上只把实测放行的服务标为「已实测」。
 - 模型的一切写入都走 `ProposedChange`：预览差异 → 确认 / 拒绝 → 可撤销（`AGENTS.md` §1 第 4 条）。
+
+### 4.1 浏览器直连实测（2026-11-26）
+
+**方法**：无头 Chrome 打开本站页面，在页面里用无效 key `fetch` 各家对话接口（`POST …/chat/completions`，请求头只有 `authorization` 与 `content-type`，与 `ai/chat.ts` 一致）。
+读得到 HTTP 状态码 = 浏览器放行了跨域；抛 `TypeError` = 被浏览器拦下或网络不通。另用 curl 发 `OPTIONS` 预检、带公网站点的 `Origin` 交叉核对响应头。
+
+| 服务 | 浏览器实测 | 预检响应头（公网 Origin） | 结论 |
+| --- | --- | --- | --- |
+| DeepSeek | HTTP 401 | 回显 Origin | 可直连 |
+| 通义千问（兼容模式） | HTTP 401 | `*` | 可直连 |
+| Kimi（Moonshot） | HTTP 401 | 回显 Origin | 可直连 |
+| 硅基流动 | HTTP 401 | `*` | 可直连 |
+| OpenRouter | HTTP 401 | `*`，允许头含 Content-Type | 可直连 |
+| 智谱 GLM | TypeError | 预检 200 但**无** `Access-Control-Allow-Origin` | **不可直连**，界面直接提示 |
+| OpenAI / Anthropic | 不通 | 本机网络超时 / 403 | **未能实测**（网络层面，与跨域无关）；界面标「未实测」 |
+
+「测试连接」用的 `GET …/models` 同样逐家核对过：上面五家都带回 `Access-Control-Allow-Origin`。
+清单与判定在 `apps/web/src/ai/providers.ts`（单测 `providers.test.ts`）。服务会改策略：结论过期就按上面的方法重测再改表，不凭印象改。
+
+**仍未验证**：真实 key 下的生成质量（需用户自己的 key）；Anthropic 新模型思考常开、计入 `max_tokens`，`chat.ts` 已把不流式请求的上限设为不低于 16000，未在真实 key 下核对。
 
 ## 5. 问题式学习：定位不交给模型
 
@@ -123,6 +143,7 @@ interface ModelProvider {
 - **登记表** `prompts/registry.json`：每个 AI 位置（如 `workspace.ask`、`connection.fragments`、`atlas.quiz`）登记它用哪份提示词、输入是什么、输出必须是什么结构、现在的状态。所有位置共用 `QUALITY_BAR.md` 的底线。
 - **调用**：界面只说「我在哪个位置」，由适配层按登记表取提示词、拼输入、校验输出结构；校验不过就不展示，提示重试。模型换了，提示词不跟着散落在代码里。
 - **覆盖**：工作区里放 `.vein/prompts/<位置>.md`，就用它替换内置的同名提示词。工作区接入 GitHub 后，提示词的每次修改都有版本记录，可以对比效果、随时回退。
+- **打包（2026-11-26）**：内置提示词在构建时经 Vite 的 `?raw` 打进网站代码，**不在运行时从 GitHub 或站上读文件**。发给模型前经 `ai/prompts.ts` 的 `forModel()` 整理：`<!-- author -->…<!-- /author -->` 里的版本头、变更记录、用户原话、写给维护者的例子不发；`<!-- only:位置 -->…<!-- /only -->` 只发给列出的位置（共用底线里导图的呈现规则只给导图）。由 `ai/prompts.test.ts` 守住：发出去的文本里没有版本头、变更记录、已撤销的骨架和模型读不到的文件路径。
 
 ## 9. 现状（2026-11-16）
 
@@ -132,8 +153,9 @@ interface ModelProvider {
 | 导图与记忆练习存进工作区 | 2026-11-20 已实现：`maps/mind.json`、`maps/memory.json`，三种工作区同一接口（`store/open.ts`） |
 | 示例工作区的编辑 | 渲染结果与源文件都可编辑，改动存为本机草稿（localStorage），可恢复原稿 |
 | 模型设置与测试连接 | 已实现；key 只在内存；「测试连接」只请求模型列表 |
-| GitHub 拉取 / 推送 | 未实现。本机直连 GitHub HTTPS 不稳定（需代理），要在部署后的公网地址实测跨域与网络后再接 |
-| 统一的模型调用与流式输出 | 2026-11-20 非流式最小切片已实现（`ai/chat.ts`），首个位置是生成第一张导图；流式与其余位置未实现；真实服务跨域未实测 |
+| GitHub 拉取 / 推送 | 2026-11-26 已实现（浏览器工作区，`store/github.ts` + 文件栏「同步 GitHub」）：三份指纹用 git blob SHA-1，推送是一次 Git Data API 提交，比较后再核对远端提交号，冲突逐个选、不删文件；空仓库先用 Contents API 建第一个提交。单测用内存里的假 GitHub 跑完推、拉、冲突、被抢先提交；浏览器验收 `scripts/e2e-github.mjs`。**真实仓库的推送是否实测，以 DEVELOPMENT_LOG 当天条目为准** |
+| 统一的模型调用与流式输出 | 2026-11-20 非流式最小切片已实现（`ai/chat.ts`）；2026-11-26 加截断续写（被输出上限截断时把已写部分作为 assistant 消息带回去续写，最多三次）；已接入位置：生成导图、关联探索三种模式、可视化实验室；流式未实现；浏览器直连实测见 §4.1 |
+| 可视化实验室现场生成 | 2026-11-26 已实现（`features/lab/generate.ts`、`GenPanel.tsx`、`toolCaps.ts`）：页面以 data: 地址放进 sandbox iframe（来源匿名、与本站不同源），内容安全策略只放行实测过的 CDN；8 个浏览器库的真实加载与隔离攻击页见 `scripts/e2e-lab-gen.mjs` |
 
 
 ## 10. 用一张图讲清：模型怎么拿到各个位置的提示词（2026-11-16）

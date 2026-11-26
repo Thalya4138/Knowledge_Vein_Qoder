@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toHtml } from 'hast-util-to-html';
 import type { PhrasingContent, RootContent } from 'mdast';
 import { parseNote, plainText } from '../content/parseNote';
@@ -67,6 +67,7 @@ export function NoteReader({
   onSourceChange,
   annotations,
   onAnnotationsChange,
+  headingLinks,
 }: {
   source: string;
   manifest?: Manifest;
@@ -85,6 +86,8 @@ export function NoteReader({
   /** 叠加层；不传就不开批注 */
   annotations?: Annotation[];
   onAnnotationsChange?: (next: Annotation[]) => void;
+  /** 标题 slug → 去别的板块（如「在导图里看」）；由外面按 graph.json 的 noteAnchor 算好 */
+  headingLinks?: Map<string, { label: string; href: string; hint: string }>;
 }) {
   const doc = useMemo(() => parseNote(source), [source]);
   const [params, setParams] = useSearchParams();
@@ -273,6 +276,11 @@ export function NoteReader({
         >
           {copied?.slug === b.slug ? (copied.ok ? '已复制' : '复制失败') : '§'}
         </button>
+        {headingLinks?.get(b.slug) && (
+          <Link className="nr-golink" to={headingLinks.get(b.slug)!.href} title={headingLinks.get(b.slug)!.hint} viewTransition>
+            {headingLinks.get(b.slug)!.label}
+          </Link>
+        )}
       </Tag>
     );
   };

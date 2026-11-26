@@ -401,6 +401,27 @@
   color: var(--accent);
 }
 
+.chips button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.settings-hint {
+  margin: calc(var(--s-4) * -1) 0 0;
+  color: var(--ink-3);
+  font-size: var(--t-13);
+  line-height: 1.6;
+}
+
+.settings-warn {
+  margin: 0;
+  padding: var(--s-8) var(--s-12);
+  border-left: 3px solid var(--accent);
+  background: var(--fill);
+  color: var(--ink);
+  font-size: var(--t-13);
+}
+
 .settings-actions {
   display: flex;
   justify-content: flex-end;

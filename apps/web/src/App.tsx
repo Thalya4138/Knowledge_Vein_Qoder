@@ -5,10 +5,11 @@ import { useWorkspace, WorkspaceProvider } from './app/WorkspaceProvider';
 import { DEMO_WORKSPACE } from './features/workspace/workspaceData';
 import { Wordmark } from './ui/brand/Wordmark';
 import { Icon } from './ui/Icon';
-import { usePrefs } from './ui/prefs';
+import { usePrefs, useT } from './ui/prefs';
+import { TourProvider } from './app/tour/Tour';
 import { SettingsDialog } from './ui/SettingsDialog';
 import { ErrorBoundary } from './ui/ErrorBoundary';
-import { SPACES, spaceForPath } from './ui/spaces';
+import { SPACES, spaceForPath, spaceText } from './ui/spaces';
 import { HerbariumPlate, LabPlate, VenationPlate } from './ui/plate/Backdrops';
 
 // 封面直接打包：评委落地即见。四个板块按路由懒加载，进哪个才下载哪个（ADR-0002 包体预算）。
@@ -29,13 +30,14 @@ function WorkspaceSwitcher() {
   const navigate = useNavigate();
   const { spaces, ready, workspace } = useWorkspace();
   const current = workspace ?? DEMO_WORKSPACE;
+  const t = useT();
 
   return (
     <label className="workspace-switch">
       <Icon name="folder" />
-      <span className="sr-only">当前工作区</span>
+      <span className="sr-only">{t('当前工作区', 'Current workspace')}</span>
       <select
-        aria-label="当前工作区"
+        aria-label={t('当前工作区', 'Current workspace')}
         value={current.id}
         disabled={!ready}
         onChange={(e) => {
@@ -54,22 +56,33 @@ function WorkspaceSwitcher() {
 /** 页眉右侧：入门文档、白天 / 夜间、设置（模型、存储、语言、账号都在设置里）。 */
 function TopbarActions() {
   const p = usePrefs();
+  const t = useT();
   return (
     <div className="topbar-end">
       <Link to="/guide" className="key small" viewTransition>
         <Icon name="book" />
-        <span>入门</span>
+        <span>{t('入门', 'Guide')}</span>
       </Link>
+      <button
+        type="button"
+        className="key small square lang-toggle"
+        onClick={() => p.setLang(p.lang === 'en' ? 'zh' : 'en')}
+        aria-label={p.lang === 'en' ? '切换到中文' : 'Switch to English'}
+        title={p.lang === 'en' ? '中文' : 'English'}
+        lang={p.lang === 'en' ? 'zh-CN' : 'en'}
+      >
+        {p.lang === 'en' ? '中' : 'EN'}
+      </button>
       <button
         type="button"
         className="key small square"
         onClick={() => p.setTheme(p.resolvedDark ? 'light' : 'dark')}
-        aria-label={p.resolvedDark ? '切换到白天模式' : '切换到夜间模式'}
-        title={p.resolvedDark ? '白天模式' : '夜间模式'}
+        aria-label={p.resolvedDark ? t('切换到白天模式', 'Switch to light mode') : t('切换到夜间模式', 'Switch to dark mode')}
+        title={p.resolvedDark ? t('白天模式', 'Light mode') : t('夜间模式', 'Dark mode')}
       >
         <Icon name={p.resolvedDark ? 'sun' : 'moon'} />
       </button>
-      <button type="button" className="key small square" onClick={() => p.openSettings()} aria-label="设置" title="设置：模型、存储、语言、账号">
+      <button type="button" className="key small square" onClick={() => p.openSettings()} aria-label={t('设置', 'Settings')} title={t('设置：模型、存储、语言、账号', 'Settings: model, storage, language, account')}>
         <Icon name="settings" />
       </button>
     </div>
@@ -81,12 +94,13 @@ function PageLoading() {
 }
 
 function NotFound() {
+  const t = useT();
   return (
     <div className="plain-page">
-      <h1 className="display">这个地址没有页面</h1>
-      <p>链接可能写错了。</p>
+      <h1 className="display">{t('这个地址没有页面', 'Nothing lives at this address')}</h1>
+      <p>{t('链接可能写错了。', 'The link may be mistyped.')}</p>
       <Link className="btn primary" to="/" viewTransition>
-        回到封面
+        {t('回到封面', 'Back to the cover')}
       </Link>
     </div>
   );
@@ -96,21 +110,24 @@ export default function App() {
   const { pathname, search } = useLocation();
   const space = spaceForPath(pathname);
   const currentWorkspace = new URLSearchParams(search).get('ws');
+  const { lang } = usePrefs();
+  const t = useT();
 
   return (
     <WorkspaceProvider>
+      <TourProvider>
       <div className="shell" data-page={space?.key ?? (pathname === '/' ? 'cover' : 'other')}>
       <a className="skip" href="#main">
-        跳到正文
+        {t('跳到正文', 'Skip to content')}
       </a>
       <header className="topbar">
         <div className="topbar-context">
-          <Link to="/" className="topbar-brand" aria-label="知脉 Vein 封面" viewTransition>
+          <Link to="/" className="topbar-brand" aria-label={t('知脉 Vein 封面', 'Vein — cover')} viewTransition>
             <Wordmark size="small" />
           </Link>
           <WorkspaceSwitcher />
         </div>
-        <nav className="topbar-nav" aria-label="工作空间">
+        <nav className="topbar-nav" aria-label={t('工作空间', 'Spaces')}>
           <ul>
             {SPACES.map((s) => (
               <li key={s.key}>
@@ -119,7 +136,7 @@ export default function App() {
                   viewTransition
                   className={({ isActive }) => (isActive ? 'key small on' : 'key small')}
                 >
-                  {s.short}
+                  {spaceText(s, lang).short}
                 </NavLink>
               </li>
             ))}
@@ -150,6 +167,7 @@ export default function App() {
       </main>
       <SettingsDialog />
       </div>
+      </TourProvider>
     </WorkspaceProvider>
   );
 }

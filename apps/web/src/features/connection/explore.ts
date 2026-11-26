@@ -13,9 +13,9 @@ import { layoutGraph as layoutVGraph, texToText } from '../../content/veinGraph'
  */
 
 export const MODES = [
-  { id: 'fragments', label: '碎片串联', slot: 'connection.fragments', hint: '把零散的知识、题目、方法、截图放进来，看它们怎样连成一个结构' },
-  { id: 'meta', label: '学科元思考', slot: 'connection.meta', hint: '说一门课或一个专题，从整体结构重新认识它' },
-  { id: 'cross', label: '跨学科并联', slot: 'connection.cross', hint: '说两个领域，看它们怎样相互改变理解，并提出新的问题与方法' },
+  { id: 'fragments', label: '碎片串联', slot: 'connection.fragments', hint: '把零散的知识、题目、方法、截图放进来，看它们怎样连成一个结构', en: ['Link fragments', 'Drop in scattered concepts, problems, methods or screenshots, and see how they form one structure'] },
+  { id: 'meta', label: '学科元思考', slot: 'connection.meta', hint: '说一门课或一个专题，从整体结构重新认识它', en: ['Subject meta-thinking', 'Name a course or a topic and re-see it through its overall structure'] },
+  { id: 'cross', label: '跨学科并联', slot: 'connection.cross', hint: '说两个领域，看它们怎样相互改变理解，并提出新的问题与方法', en: ['Across disciplines', 'Name two fields and see how each changes your understanding of the other — and what new questions follow'] },
 ] as const;
 
 export type ModeId = (typeof MODES)[number]['id'];
