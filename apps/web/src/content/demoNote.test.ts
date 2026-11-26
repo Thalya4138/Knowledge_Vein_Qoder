@@ -2,14 +2,16 @@
  * 对照 demo 讲义与样张（content/demo/linear-algebra/rendered/src.html）的解析契约测试。
  * 期望值来自样张的版式，不是来自解析器自己的输出——解析器跑偏时这里会红。
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { toHtml } from 'hast-util-to-html';
+import { DEMO_WORKSPACE } from '../features/workspace/workspaceData';
 import { CALLOUT_KINDS, parseNote, renderNodes } from './index';
 import type { CalloutBlock, NoteBlock, NoteDocument } from './index';
 
 const repo = (p: string) => readFileSync(new URL(`../../../../${p}`, import.meta.url), 'utf8');
 const KB = 'content/demo/linear-algebra';
+const CONTENT_URL = new URL('../../../../content/', import.meta.url);
 const source = repo(`${KB}/notes/2.1-列空间中的最近点.md`);
 const doc: NoteDocument = parseNote(source);
 
@@ -33,13 +35,14 @@ describe('demo 讲义：结构', () => {
     expect(doc.headings.filter((h) => h.depth === 2).map((h) => h.slug)).toEqual([
       '从代数问题到几何问题', '最近点满足的条件', '法方程', '点唯一参数未必唯一',
     ]);
-    expect(doc.headings[0]).toMatchObject({ depth: 1, line: 11, slug: '第1节-正交投影与最小二乘法' });
+    expect(doc.headings[0]).toMatchObject({ depth: 1, line: 12, slug: '第1节-正交投影与最小二乘法' });
   });
 
   it('栏目顺序与样张一致', () => {
     expect(callouts.map((c) => c.kind)).toEqual([
-      'problem', 'focus', 'side', 'figure', 'res', 'side', 'res', 'figure',
-      'res', 'res', 'table', 'training', 'training', 'exercise', 'res', 'exercise',
+      'problem', 'focus', 'side', 'figure', 'res', 'side', 'figure', 'res',
+      'figure', 'figure', 'res', 'figure', 'res',
+      'table', 'training', 'training', 'exercise', 'res', 'exercise',
     ]);
   });
 
@@ -49,7 +52,7 @@ describe('demo 讲义：结构', () => {
       'p-normal-eq', 'p-example', 'p-unique', 'p-proj', 'exercises',
     ]);
     const intro = doc.blockById.get('p-intro')!;
-    expect(intro.lines).toEqual({ start: 27, end: 27 });
+    expect(intro.lines).toEqual({ start: 29, end: 29 });
     const html = renderAll(doc).html;
     expect(html).not.toMatch(/\^p-|\^exercises|@p-/);
   });
@@ -90,12 +93,17 @@ describe('demo 讲义：主栏 / 旁栏对齐（样张为准）', () => {
     expect(row.main).toHaveLength(2);
   });
 
-  it('带 @ 的图进旁栏，图注保留行内公式；表留在主栏', () => {
-    const [f1, f2] = byKind('figure');
-    expect(f1).toMatchObject({ placement: 'side', alignTo: 'p-colspace' });
-    expect(f2).toMatchObject({ placement: 'side', alignTo: 'p-example' });
-    expect(f1!.title.some((n) => n.type === 'inlineMath')).toBe(true);
-    expect(f1!.titleText.startsWith('图 2-1')).toBe(true);
+  it('带 @ 的图进旁栏，新增核心图在主栏；表留在主栏', () => {
+    const figures = byKind('figure');
+    expect(figures).toHaveLength(5);
+    expect(figures[0]).toMatchObject({ placement: 'side', alignTo: 'p-colspace' });
+    expect(figures[1]).toMatchObject({ placement: 'main' });
+    expect(figures[2]).toMatchObject({ placement: 'side', alignTo: 'p-example' });
+    expect(figures.slice(3).map((f) => f.placement)).toEqual(['main', 'main']);
+    expect(figures[0]!.title.some((n) => n.type === 'inlineMath')).toBe(true);
+    expect(figures.map((f) => f.titleText.match(/图 2-\d/)?.[0])).toEqual([
+      '图 2-1', '图 2-2', '图 2-3', '图 2-4', '图 2-5',
+    ]);
     expect(byKind('table')[0]!.placement).toBe('main');
   });
 
@@ -127,6 +135,28 @@ describe('demo 讲义：渲染', () => {
     expect(html).toContain('katex-display');
     expect(html).toContain('2-1');
     expect(html).not.toContain('katex-error');
+  });
+
+  it.each(['src.html', 'index.html'])('手工样张 %s 同步三张核心图，使用随讲义导出的相对路径', (file) => {
+    const rendered = repo(`${KB}/rendered/${file}`);
+    for (const figure of ['2-2-从正交到法方程.svg', '2-4-参数不唯一.svg', '2-5-投影矩阵.svg']) {
+      expect(rendered).toContain(`src="../notes/figures/${figure}"`);
+    }
+    for (const label of ['图 2-2', '图 2-4', '图 2-5']) {
+      expect(rendered).toContain(`<span class="fig-no">${label}</span>`);
+    }
+    expect(rendered).toContain('（图 2-3）');
+  });
+
+  it('工作区文件树登记全部讲义图，且每个地址都指向真实文件', () => {
+    const images = DEMO_WORKSPACE.folders.find((folder) => folder.id === 'figures')!.files;
+    expect(images.map((file) => file.id)).toEqual(['fig-2-0', 'fig-2-1', 'fig-2-2', 'fig-2-3', 'fig-2-4', 'fig-2-5']);
+    expect(images.map((file) => file.url)).not.toContain('/demo/linear-algebra/notes/figures/2-2.svg');
+    for (const file of images) {
+      expect(file.kind).toBe('image');
+      expect(file.url).toBe(encodeURI(decodeURI(file.url)));
+      expect(existsSync(new URL(decodeURI(file.url).slice(1), CONTENT_URL)), file.url).toBe(true);
+    }
   });
 
   it('独立公式数与样张一致（样张 index.html 有 9 个 katex-display）', () => {

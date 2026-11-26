@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 300" width="740" height="300" font-family="'Times New Roman','Songti SC','Noto Serif SC',SimSun,serif" font-size="15">
+  <title>向量组就是取系数做线性组合的映射</title>
+  <desc>系数平面中的两个输入相差核方向二减一时，向量组映射把它们送到输出平面中的同一点。像只有一维，输入的自由度被压掉一维。</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#355c72"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#b5661f"/></marker>
+  </defs>
+  <rect x="12" y="12" width="300" height="270" rx="10" fill="#eef6fa" stroke="#9fc3d5"/>
+  <text x="28" y="38" fill="#355c72">系数空间 ℝ²</text>
+  <line x1="62" y1="234" x2="276" y2="234" stroke="#81939d" marker-end="url(#a)"/>
+  <line x1="62" y1="234" x2="62" y2="64" stroke="#81939d" marker-end="url(#a)"/>
+  <line x1="55" y1="158" x2="278" y2="238" stroke="#b5661f" stroke-width="2" stroke-dasharray="7 5"/>
+  <circle cx="147" cy="213" r="5" fill="#355c72"/><circle cx="203" cy="198" r="5" fill="#355c72"/>
+  <line x1="151" y1="209" x2="198" y2="200" stroke="#355c72" stroke-width="1.4" marker-end="url(#a)"/>
+  <text x="107" y="202">x</text><text x="207" y="187">x + (2,−1)</text>
+  <text x="70" y="148" fill="#8e4e17">ker(A)</text>
+  <line x1="322" y1="146" x2="391" y2="146" stroke="#355c72" stroke-width="1.8" marker-end="url(#a)"/>
+  <text x="357" y="132" text-anchor="middle" font-style="italic" font-size="18">T</text>
+  <rect x="402" y="12" width="326" height="270" rx="10" fill="#f7fafc" stroke="#c7d6df"/>
+  <text x="418" y="38" fill="#355c72">输出空间 ℝ²：只有一条像直线</text>
+  <line x1="456" y1="235" x2="690" y2="235" stroke="#81939d" marker-end="url(#a)"/>
+  <line x1="456" y1="235" x2="456" y2="64" stroke="#81939d" marker-end="url(#a)"/>
+  <line x1="421" y1="251" x2="650" y2="71" stroke="#355c72" stroke-width="3"/>
+  <circle cx="563" cy="144" r="6" fill="#b5661f"/>
+  <text x="573" y="139" fill="#8e4e17">同一个 T(x)</text>
+  <text x="419" y="272" fill="#173f56">v₂ = 2v₁；像是一维，核也是一维。</text>
+</svg>

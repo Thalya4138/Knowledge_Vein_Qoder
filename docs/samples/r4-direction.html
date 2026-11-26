@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>知脉 · 方向样张：颜料盒</title>
+<style>
+/* 方向样张（2026-11-20）：只为让用户看方向，不进站点。认可后按 DESIGN.md 落进 tokens.css 与各页面。 */
+@font-face { font-family: 'Vein Title'; src: url('../../apps/web/src/styles/fonts/vein-title.woff') format('woff'); font-display: swap; }
+@font-face { font-family: 'Vein Text'; src: url('../../apps/web/src/styles/fonts/vein-text.woff') format('woff'); font-display: swap; }
+
+:root {
+  --bg: #edf0ea; --surface: #fbfcf8; --glass-strong: rgb(251 252 248 / 0.9);
+  --ink: #1b2430; --ink-2: #3f4a57; --ink-3: #5d6672;
+  --hairline: rgb(27 36 48 / 0.14); --fill: rgb(27 36 48 / 0.05);
+  /* 颜料盒：四种国画颜料，各管一件事 */
+  --huaqing: #1f4e79;          /* 花青：结构、选中、主操作（原 --accent） */
+  --huaqing-soft: rgb(31 78 121 / 0.12);
+  --zhusha: #b53c0b;           /* 朱砂：老师的红笔——当前一步、纠错、提醒（原 --cinnabar） */
+  --zhusha-soft: rgb(181 60 11 / 0.12);
+  --tenghuang: #b98407;        /* 藤黄：新的、AI 提议的、待你确认的（荧光笔） */
+  --tenghuang-mark: rgb(233 178 40 / 0.34);
+  --shilv: #2f7d68;            /* 石绿：已核对、已掌握、两边一致 */
+  --shilv-soft: rgb(47 125 104 / 0.13);
+  --note-paper: #f3d98a;      /* 贴纸是实色的纸，不用半透明的荧光色（夜间会混成泥色） */
+  --note-fold: #d9b24c;
+  --on-dark: #fbfcf8;
+  --font-ui: 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif;
+  --font-display: 'Vein Title', var(--font-ui);
+  --font-text: 'Vein Text', var(--font-ui);
+  --r-outer: 20px; --r-mid: 14px; --r-small: 6px;
+  --lift: 0 12px 40px rgb(14 23 38 / 0.1), 0 2px 6px rgb(14 23 38 / 0.06);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  --bg: #11181c; --surface: #182126; --glass-strong: rgb(24 33 38 / 0.9);
+  --ink: #e5ebe6; --ink-2: #b2bdb7; --ink-3: #8c9892;
+  --hairline: rgb(229 235 230 / 0.14); --fill: rgb(229 235 230 / 0.06);
+  --huaqing: #8fb6dc; --huaqing-soft: rgb(143 182 220 / 0.16);
+  --zhusha: #f08a5d; --zhusha-soft: rgb(240 138 93 / 0.16);
+  --tenghuang: #e9b949; --tenghuang-mark: rgb(233 185 73 / 0.26);
+  --shilv: #6cc3a4; --shilv-soft: rgb(108 195 164 / 0.15);
+  --note-paper: #d8bd6a; --note-fold: #b39443;
+  --on-dark: #11181c;
+  --lift: 0 12px 40px rgb(0 0 0 / 0.4), 0 2px 6px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { overflow-x: clip; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 16px; line-height: 1.6; transition: background-color 220ms var(--ease); }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--huaqing); outline-offset: 2px; }
+
+.top { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 24px 32px 8px; }
+.top h1 { margin: 0; font-family: var(--font-ui); font-weight: 600; font-size: 28px; }
+.top p { margin: 4px 0 0; color: var(--ink-2); font-size: 15px; }
+.key { border: 2px solid var(--ink); border-bottom-width: 4px; border-radius: 9px; background: var(--surface); padding: 6px 14px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.key:active { transform: translateY(2px); border-bottom-width: 2px; }
+
+section { max-width: 1200px; margin: 0 auto; padding: 40px 32px; }
+section > h2 { margin: 0 0 6px; font-family: var(--font-ui); font-weight: 600; font-size: 26px; }
+section > .lede { margin: 0 0 24px; color: var(--ink-2); max-width: 46em; }
+
+/* ---------- A. 颜料盒：在一段批注里看四种颜色各干什么 ---------- */
+.paper { position: relative; background: var(--surface); border-radius: var(--r-outer); box-shadow: var(--lift); padding: 40px 48px 36px; max-width: 760px; font-family: var(--font-text); font-size: 18px; line-height: 1.9; }
+.sel { background: var(--huaqing-soft); box-shadow: inset 0 -2px 0 var(--huaqing); padding: 0 2px; }
+.red { text-decoration: line-through; text-decoration-color: var(--zhusha); text-decoration-thickness: 2px; }
+.redfix { color: var(--zhusha); font-size: 15px; margin-left: 4px; }
+.hl { background: linear-gradient(transparent 38%, var(--tenghuang-mark) 38%, var(--tenghuang-mark) 88%, transparent 88%); padding: 0 2px; }
+.ok { color: var(--shilv); font-weight: 600; font-size: 15px; margin-left: 4px; }
+.legend { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 28px; font-family: var(--font-ui); font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.legend b { display: block; font-size: 15px; color: var(--ink); }
+.legend i { display: block; width: 28px; height: 6px; border-radius: 3px; margin-bottom: 8px; }
+.paper .seal { position: absolute; right: -14px; top: -18px; transform: rotate(8deg); }
+
+/* ---------- B / C. 两块动态场景 ---------- */
+.stage { position: relative; height: 560px; border-radius: var(--r-outer); overflow: hidden; background: var(--bg); box-shadow: inset 0 0 0 1px var(--hairline); }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stage .center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px; pointer-events: none; }
+.stage .center > * { pointer-events: auto; }
+.stage h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 56px; letter-spacing: 0.08em; }
+.ask { width: min(620px, 80vw); display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 22px; border-radius: 999px; background: var(--glass-strong); backdrop-filter: saturate(180%) blur(20px); box-shadow: var(--lift); }
+.ask input { flex: 1; border: 0; background: none; height: 40px; font: inherit; color: var(--ink); outline: none; }
+.ask button { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--huaqing); color: var(--on-dark); cursor: pointer; }
+.modes { display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: var(--fill); }
+.modes span { padding: 6px 16px; border-radius: 9px; font-size: 15px; color: var(--ink-2); }
+.modes span.on { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); }
+.example { font-size: 15px; color: var(--ink-2); }
+.example b { font-weight: 400; color: var(--ink); border-bottom: 1px dashed var(--ink-3); cursor: pointer; }
+.bubble { display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-radius: 20px 20px 20px 6px; background: var(--surface); box-shadow: var(--lift); font-family: var(--font-display); font-size: 22px; }
+.tools { font-size: 13px; color: var(--ink-3); }
+.tools button { border: 0; background: none; color: var(--huaqing); font-weight: 600; cursor: pointer; padding: 0 2px; }
+.note { margin-top: 14px; color: var(--ink-3); font-size: 13px; }
+
+/* ---------- D. 贴纸：只出现在空状态与入门里 ---------- */
+.empty { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; align-items: center; background: var(--surface); border-radius: var(--r-outer); box-shadow: var(--lift); padding: 40px 48px; max-width: 900px; }
+.empty .art { position: relative; height: 180px; }
+.empty .art svg { position: absolute; }
+.empty h3 { margin: 0 0 8px; font-family: var(--font-display); font-weight: 400; font-size: 32px; }
+.empty p { margin: 0 0 16px; color: var(--ink-2); }
+.btn { border: 0; border-radius: 999px; padding: 10px 22px; font-weight: 600; cursor: pointer; background: var(--huaqing); color: var(--on-dark); }
+.sheet { display: flex; flex-wrap: wrap; gap: 36px; align-items: end; margin-top: 28px; color: var(--ink-2); font-size: 13px; }
+.sheet figure { margin: 0; display: grid; justify-items: center; gap: 8px; }
+
+@media (max-width: 720px) {
+  .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stage { height: 520px; }
+  .stage h3 { font-size: 40px; }
+  .empty { grid-template-columns: minmax(0, 1fr); }
+  .paper { padding: 28px 24px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>方向样张：颜料盒</h1>
+    <p>只看方向，不进站点。认可哪一块，就把哪一块铺到全站。</p>
+  </div>
+  <button class="key" id="theme" type="button">切到夜间</button>
+</header>
+
+<section>
+  <h2>四种颜料，各管一件事</h2>
+  <p class="lede">原来只有花青和朱砂。加两种国画颜料，都只当信号用、用量很少：藤黄是荧光笔，标出「新的、AI 提议、等你确认」；石绿标出「核对过、掌握了、两边一致」。</p>
+  <div class="paper">
+    <svg class="seal" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="8" fill="var(--zhusha)"/><rect x="9" y="9" width="46" height="46" rx="5" fill="none" stroke="var(--on-dark)" stroke-width="1.5" opacity=".8"/><text x="32" y="44" text-anchor="middle" font-size="30" font-family="serif" fill="var(--on-dark)">批</text></svg>
+    当方程组 <span class="sel">Ax = b</span> 无解时，我们转而寻找使残差最小的 x̂。
+    残差 <span class="red">e = b + Ax̂</span><span class="redfix">应为 e = b − Ax̂</span> 必须与列空间正交，
+    由此得到法方程 AᵀAx̂ = Aᵀb<span class="ok">✓ 已核对原文</span>。
+    <span class="hl">当 A 的列线性无关时，AᵀA 可逆，解唯一。</span>
+    <div class="legend">
+      <div><i style="background:var(--huaqing)"></i><b>花青</b>选中、结构、主操作</div>
+      <div><i style="background:var(--zhusha)"></i><b>朱砂</b>老师的红笔：当前一步、纠错</div>
+      <div><i style="background:var(--tenghuang)"></i><b>藤黄</b>新的、AI 提议、待你确认</div>
+      <div><i style="background:var(--shilv)"></i><b>石绿</b>核对过、掌握了、已对齐</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>关联探索：碎片在漂，靠近时连一下</h2>
+  <p class="lede">取代那一束交于一点的线。各学科的碎片在背景里慢慢漂；两块漂近了，中间连一条细线，再漂远就断开——就是封面那句「全世界的知识都会相逢」。指针附近的碎片会被轻轻吸过来，像你在把它们串起来。</p>
+  <div class="stage" id="fragStage">
+    <canvas id="frag" aria-hidden="true"></canvas>
+    <div class="center">
+      <div class="modes"><span class="on">碎片串联</span><span>学科元思考</span><span>跨学科并联</span></div>
+      <h3>碎片串联</h3>
+      <form class="ask" onsubmit="return false"><input placeholder="把零散的知识、题目、方法丢进来" aria-label="输入碎片" /><button type="submit" aria-label="发送">↑</button></form>
+      <p class="example">试试：<b>最小二乘、点到平面的距离、异面直线的公垂线，是同一个问题吗？</b></p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>可视化实验室：把看不见的场画出来</h2>
+  <p class="lede">背景是一个缓慢流动的向量场，粒子顺着它流向「最低点」，像梯度下降在找最近点。原来那一面二十个工具按键收成一行「工具：自动选择」，点开再挑——按键墙是这页最像模板的地方。</p>
+  <div class="stage" id="flowStage">
+    <canvas id="flow" aria-hidden="true"></canvas>
+    <div class="center">
+      <div class="bubble"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.5" fill="none" stroke="var(--huaqing)" stroke-width="2"/><circle cx="11" cy="11" r="4" fill="var(--huaqing)"/></svg>你好，我们要看见些什么？</div>
+      <form class="ask" onsubmit="return false"><input placeholder="例如：为什么最近点就是正交投影？" aria-label="想看见什么" /><button type="submit" aria-label="发送">↑</button></form>
+      <p class="tools">工具：<button type="button">自动选择</button>（GeoGebra、Desmos、PhET、Three.js…）</p>
+    </div>
+  </div>
+  <p class="note">两块动态都只在这一页的背景里、对比度很低；系统开了「减少动态」时只画一帧静止画面。</p>
+</section>
+
+<section>
+  <h2>贴纸：只在空状态和入门里出现</h2>
+  <p class="lede">原创的几张小贴纸，跟颜料盒同一套颜色。它们只出现在「什么都还没有」的地方，给下一步一个好看的入口；有内容的页面不贴。</p>
+  <div class="empty">
+    <div class="art" aria-hidden="true">
+      <svg width="150" height="150" viewBox="0 0 150 150" style="left:18px;top:14px;transform:rotate(-5deg)"><path d="M10 10h130v100l-30 30H10z" fill="var(--note-paper)"/><path d="M140 110l-30 30v-24a6 6 0 0 1 6-6z" fill="var(--note-fold)"/><path d="M28 46h86M28 66h70M28 86h80" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" opacity=".5"/></svg>
+      <svg width="40" height="90" viewBox="0 0 40 90" style="left:6px;top:-6px;transform:rotate(-18deg)"><path d="M14 80V18a8 8 0 0 1 16 0v52a13 13 0 0 1-26 0V28" fill="none" stroke="var(--ink-2)" stroke-width="3" stroke-linecap="round"/></svg>
+      <svg width="60" height="60" viewBox="0 0 64 64" style="left:140px;top:110px;transform:rotate(10deg)"><rect x="4" y="4" width="56" height="56" rx="8" fill="var(--zhusha)"/><text x="32" y="44" text-anchor="middle" font-size="30" font-family="serif" fill="var(--on-dark)">批</text></svg>
+    </div>
+    <div>
+      <h3>这个工作区没有导图</h3>
+      <p>用你的模型读一遍笔记，生成第一张；或者从一个空白的中心主题开始。</p>
+      <button class="btn" type="button">用我的模型生成导图</button>
+    </div>
+  </div>
+  <div class="sheet">
+    <figure><svg width="64" height="64" viewBox="0 0 64 64"><rect x="4" y="4" width="56" height="56" rx="8" fill="var(--zhusha)"/><rect x="9" y="9" width="46" height="46" rx="5" fill="none" stroke="var(--on-dark)" stroke-width="1.5" opacity=".8"/><text x="32" y="44" text-anchor="middle" font-size="30" font-family="serif" fill="var(--on-dark)">批</text></svg><figcaption>朱批印</figcaption></figure>
+    <figure><svg width="64" height="64" viewBox="0 0 64 64"><path d="M6 6h52v40L46 58H6z" fill="var(--note-paper)"/><path d="M58 46 46 58V50a4 4 0 0 1 4-4z" fill="var(--note-fold)"/></svg><figcaption>便签</figcaption></figure>
+    <figure><svg width="40" height="64" viewBox="0 0 40 90"><path d="M14 80V18a8 8 0 0 1 16 0v52a13 13 0 0 1-26 0V28" fill="none" stroke="var(--ink-2)" stroke-width="3" stroke-linecap="round"/></svg><figcaption>回形针</figcaption></figure>
+    <figure><svg width="44" height="64" viewBox="0 0 44 64"><circle cx="22" cy="18" r="14" fill="var(--huaqing)"/><circle cx="17" cy="13" r="4" fill="var(--on-dark)" opacity=".5"/><path d="M22 32v28" stroke="var(--ink-2)" stroke-width="2.5" stroke-linecap="round"/></svg><figcaption>图钉</figcaption></figure>
+    <figure><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="var(--shilv-soft)" stroke="var(--shilv)" stroke-width="2.5"/><path d="M20 33l8 8 16-18" fill="none" stroke="var(--shilv)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>已核对</figcaption></figure>
+    <figure><svg width="80" height="64" viewBox="0 0 80 64"><path d="M6 10c20-6 46-6 68 0v44c-22-6-48-6-68 0z" fill="var(--surface)" stroke="var(--ink-2)" stroke-width="2"/><path d="M40 8v48" stroke="var(--ink-2)" stroke-width="2"/><path d="M14 22h18M14 30h14M48 22h18M48 30h12" stroke="var(--huaqing)" stroke-width="2" stroke-linecap="round"/></svg><figcaption>讲义</figcaption></figure>
+  </div>
+</section>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById('theme');
+  btn.addEventListener('click', () => {
+    const dark = root.dataset.theme !== 'dark';
+    root.dataset.theme = dark ? 'dark' : 'light';
+    btn.textContent = dark ? '切到白天' : '切到夜间';
+  });
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const css = (v) => getComputedStyle(root).getPropertyValue(v).trim();
+
+  function setup(canvas) {
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const state = { w: 0, h: 0, ctx };
+    const resize = () => {
+      const r = canvas.getBoundingClientRect();
+      state.w = r.width; state.h = r.height;
+      canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    new ResizeObserver(resize).observe(canvas);
+    return state;
+  }
+  function loop(draw) {
+    let raf = 0, visible = true;
+    const tick = (t) => { draw(t); if (!reduced && visible) raf = requestAnimationFrame(tick); };
+    document.addEventListener('visibilitychange', () => {
+      visible = !document.hidden;
+      cancelAnimationFrame(raf);
+      if (visible) raf = requestAnimationFrame(tick);
+    });
+    raf = requestAnimationFrame(tick);
+  }
+
+  /* ---------- 碎片相逢 ---------- */
+  {
+    const canvas = document.getElementById('frag');
+    const s = setup(canvas);
+    const WORDS = ['Ax = b', '最小二乘', '∫ f dx', 'F = ma', '动量守恒', 'ΔG < 0', '光合作用', '边际成本', '供给曲线', 'p ⊥ e', '特征值', '傅里叶级数', '熵增', '∇·E = ρ/ε₀', '酶', '布朗运动', '梯度下降', '最近点', '正交投影', '简谐振动', '自然选择', '纳什均衡'];
+    const pointer = { x: -1e4, y: -1e4 };
+    canvas.parentElement.addEventListener('pointermove', (e) => { const r = canvas.getBoundingClientRect(); pointer.x = e.clientX - r.left; pointer.y = e.clientY - r.top; });
+    canvas.parentElement.addEventListener('pointerleave', () => { pointer.x = pointer.y = -1e4; });
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const items = WORDS.map((t, i) => {
+      // 家：绕中心一圈均匀分布（椭圆环，避开中间的标题与输入框），再加一点随机
+      const a = (i / WORDS.length) * Math.PI * 2 + rnd() * 0.25;
+      const r = 1.25 + rnd() * 0.55;
+      const hx = 0.5 + Math.cos(a) * 0.3 * r, hy = 0.5 + Math.sin(a) * 0.3 * r;
+      const home = { x: Math.min(Math.max(hx, 0.06), 0.94), y: Math.min(Math.max(hy, 0.07), 0.93) };
+      return { t, x: home.x, y: home.y, home, vx: (rnd() - 0.5) * 0.12, vy: (rnd() - 0.5) * 0.12, size: 13 + Math.round(rnd() * 5) };
+    });
+    const LINK = 150;
+    loop(() => {
+      const { ctx, w, h } = s;
+      ctx.clearRect(0, 0, w, h);
+      const ink = css('--ink-3'), line = css('--huaqing'), meet = css('--tenghuang');
+      // 中间留给标题和输入框：碎片绕开这一块
+      const cx = w / 2, cy = h / 2 + 10, rx = Math.min(420, w * 0.4), ry = 175;
+      const pts = items.map((p) => {
+        let x = p.x * w, y = p.y * h;
+        const dx = (x - cx) / rx, dy = (y - cy) / ry, d2 = dx * dx + dy * dy;
+        if (d2 < 1.15) { const k = (1.15 - d2) * 0.05; p.vx += dx * k; p.vy += dy * k; }
+        const px = pointer.x - x, py = pointer.y - y, pd = Math.hypot(px, py);
+        if (pd < 180 && pd > 20) { p.vx += (px / pd) * 0.006; p.vy += (py / pd) * 0.006; }
+        p.vx += (p.home.x * w - x) * 0.0006; p.vy += (p.home.y * h - y) * 0.0006;
+        p.vx *= 0.985; p.vy *= 0.985;
+        p.vx += (Math.sin(p.y * 9 + p.t.length) * 0.002); p.vy += (Math.cos(p.x * 7) * 0.002);
+        x += p.vx; y += p.vy;
+        if (x < 30 || x > w - 30) p.vx *= -1;
+        if (y < 20 || y > h - 20) p.vy *= -1;
+        p.x = Math.min(Math.max(x, 30), w - 30) / w; p.y = Math.min(Math.max(y, 20), h - 20) / h;
+        return { x, y, p };
+      });
+      // 碎片之间互相让开：按文字宽度估一个包围盒，重叠就各推一点
+      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+        const a = pts[i], b = pts[j];
+        const ww = (a.p.t.length * a.p.size + b.p.t.length * b.p.size) * 0.36 + 16;
+        const hh = (a.p.size + b.p.size) * 0.5 + 10;
+        const ox = ww - Math.abs(a.x - b.x), oy = hh - Math.abs(a.y - b.y);
+        if (ox > 0 && oy > 0) {
+          const sx = Math.sign(a.x - b.x) || 1, sy = Math.sign(a.y - b.y) || 1;
+          if (ox < oy * 2) { a.p.vx += sx * 0.03; b.p.vx -= sx * 0.03; } else { a.p.vy += sy * 0.03; b.p.vy -= sy * 0.03; }
+        }
+      }
+      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+        const a = pts[i], b = pts[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d > LINK) continue;
+        const k = 1 - d / LINK;
+        ctx.strokeStyle = k > 0.72 ? meet : line;
+        ctx.globalAlpha = k * (k > 0.72 ? 0.9 : 0.45);
+        ctx.lineWidth = k > 0.72 ? 1.6 : 1;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (const { x, y, p } of pts) {
+        ctx.font = `${p.size}px ${css('--font-text')}`;
+        ctx.fillStyle = ink; ctx.globalAlpha = 0.72;
+        ctx.fillText(p.t, x, y);
+      }
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  /* ---------- 向量场：粒子顺着场流向最低点 ---------- */
+  {
+    const canvas = document.getElementById('flow');
+    const s = setup(canvas);
+    let seed = 11;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const N = 420;
+    const ps = Array.from({ length: N }, () => ({ x: rnd(), y: rnd(), age: rnd() * 400, hue: rnd() < 0.12 }));
+    // 一个带旋转的碗：-∇f 加一点绕中心的旋度；最低点放在右下，留出中间的对话
+    const field = (x, y, w, h) => {
+      const mx = w * 0.72, my = h * 0.68;
+      const dx = (x - mx) / w, dy = (y - my) / h;
+      const gx = -dx * 1.0 - dy * 0.9, gy = -dy * 1.0 + dx * 0.9;
+      const wave = Math.sin(y / h * 6 + x / w * 3) * 0.18;
+      return [gx + wave * 0.2, gy - wave * 0.15];
+    };
+    let first = true;
+    loop(() => {
+      const { ctx, w, h } = s;
+      if (first || reduced) { ctx.clearRect(0, 0, w, h); first = false; }
+      // 留下淡淡的尾迹：每帧把旧笔画擦掉一点
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
+      const blue = css('--huaqing'), green = css('--shilv');
+      ctx.lineWidth = 1.1;
+      const steps = reduced ? 60 : 1;
+      for (const p of ps) {
+        for (let k = 0; k < steps; k++) {
+          const x = p.x * w, y = p.y * h;
+          const [vx, vy] = field(x, y, w, h);
+          const sp = Math.hypot(vx, vy) || 1;
+          const nx = x + (vx / sp) * 1.2, ny = y + (vy / sp) * 1.2;
+          ctx.strokeStyle = p.hue ? green : blue;
+          ctx.globalAlpha = p.hue ? 0.55 : 0.32;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke();
+          p.x = nx / w; p.y = ny / h; p.age += 1;
+          if (p.age > 520 || sp < 0.02 || p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1) { p.x = rnd(); p.y = rnd(); p.age = 0; }
+        }
+      }
+      ctx.globalAlpha = 1;
+    });
+  }
+})();
+</script>
+</body>
+</html>

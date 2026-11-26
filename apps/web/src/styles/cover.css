@@ -310,6 +310,20 @@
   opacity: 0.7;
 }
 
+.record-stack {
+  display: grid;
+}
+
+/* 叠放：每条都占同一格，格子高度取最高的一条；只显示当前条 */
+.record-body {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+
+.record-body[data-on] {
+  visibility: visible;
+}
+
 .record-display {
   padding: var(--s-8) var(--s-16) var(--s-16);
   background: var(--ink);
@@ -496,8 +510,60 @@
   color: var(--ink-2);
 }
 
+/*
+ * 四个入口是四张标本签：纸底、细双线框（外框墨线，内框一道淡线），右侧是这个板块标本的拓片，右下角是图版号。
+ * 悬停时纸面染上一层该板块的颜料。
+ */
+.key.entry-key {
+  position: relative;
+  min-height: 118px;
+  padding: var(--s-16) 92px var(--s-16) var(--s-16);
+  border: 1px solid color-mix(in srgb, var(--ink) 70%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--surface) 88%, transparent), inset 0 0 0 5px var(--hairline);
+}
+
+.key.entry-key:hover,
+.key.entry-key:active {
+  transform: none;
+  background: color-mix(in srgb, var(--pg) 12%, var(--surface));
+  box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 5px color-mix(in srgb, var(--pg) 45%, transparent);
+}
+
+.entry-key[data-space='workspace'] { --pg: var(--c-workspace); }
+.entry-key[data-space='lab'] { --pg: var(--c-lab); }
+.entry-key[data-space='connection'] { --pg: var(--c-connection); }
+.entry-key[data-space='atlas'] { --pg: var(--c-atlas); }
+
+.key.entry-key .entry-name {
+  color: var(--ink);
+}
+
 .key.entry-key:hover .entry-name {
-  color: var(--accent);
+  color: var(--pg);
+}
+
+.entry-specimen {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  margin-top: -44px;
+}
+
+.entry-plate {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-family: var(--font-text);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+.hero-mark {
+  position: relative;
+  width: fit-content;
 }
 
 .cover-foot {
@@ -589,4 +655,50 @@
   .record-display {
     font-size: 24px;
   }
+}
+
+/* 导览入口：磨砂玻璃胶囊（半透明 + 背景模糊 + 内侧高光），落在四张标本签下面 */
+.cover-tour {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-12);
+  margin-top: var(--s-16);
+  padding: var(--s-12) var(--s-24);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--surface) 52%, transparent);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-17);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px var(--hairline), inset 0 1px 0 color-mix(in srgb, var(--surface) 65%, transparent), var(--lift);
+  transition: background-color var(--d-micro) var(--ease), transform var(--d-micro) var(--ease);
+}
+
+.cover-tour:hover {
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  transform: translateY(-1px);
+}
+
+.cover-tour:active {
+  transform: scale(0.97);
+}
+
+.cover-tour .icon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.cover-tour-arrow {
+  color: var(--accent);
+  transition: transform var(--d-micro) var(--ease);
+}
+
+.cover-tour:hover .cover-tour-arrow {
+  transform: translateX(3px);
 }

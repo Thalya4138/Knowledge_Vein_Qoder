@@ -386,29 +386,43 @@ export function Terrain() {
             </span>
             <span className="record-sec">§2.1</span>
           </header>
-          <p className="record-display">{entry.display}</p>
-          <dl className="record-grid">
-            <div>
-              <dt>由</dt>
-              <dd>{at(rel.from).label}</dd>
-            </div>
-            <div>
-              <dt>得</dt>
-              <dd>{at(rel.to).label}</dd>
-            </div>
-            <div>
-              <dt>依据</dt>
-              <dd>{TYPE[rel.type] ?? rel.type}</dd>
-            </div>
-            <div>
-              <dt>条件</dt>
-              <dd>{rel.assumptions.join('；')}</dd>
-            </div>
-            <div className="wide">
-              <dt>为什么</dt>
-              <dd>{rel.explanation}</dd>
-            </div>
-          </dl>
+          {/*
+            所有条目叠在同一个网格格子里，只显示当前一条：卡片高度恒等于最高的那条。
+            否则卡片随条目变高变矮，等高带（取卡片上沿）跟着变，整张地形重画、图钉与放大镜里的图一起跳。
+          */}
+          <div className="record-stack">
+            {ENTRIES.map((e, i) => {
+              const r = demoGraph.relations.find((x) => x.id === e.rel);
+              if (!r) return null;
+              return (
+                <div key={e.rel} className="record-body" aria-hidden={i !== index} data-on={i === index || undefined}>
+                  <p className="record-display">{e.display}</p>
+                  <dl className="record-grid">
+                    <div>
+                      <dt>由</dt>
+                      <dd>{at(r.from).label}</dd>
+                    </div>
+                    <div>
+                      <dt>得</dt>
+                      <dd>{at(r.to).label}</dd>
+                    </div>
+                    <div>
+                      <dt>依据</dt>
+                      <dd>{TYPE[r.type] ?? r.type}</dd>
+                    </div>
+                    <div>
+                      <dt>条件</dt>
+                      <dd>{r.assumptions.join('；')}</dd>
+                    </div>
+                    <div className="wide">
+                      <dt>为什么</dt>
+                      <dd>{r.explanation}</dd>
+                    </div>
+                  </dl>
+                </div>
+              );
+            })}
+          </div>
           <div className="record-keys">
             <button type="button" onClick={() => step(-1)} aria-label="上一条">
               <svg viewBox="0 0 24 24" aria-hidden="true">

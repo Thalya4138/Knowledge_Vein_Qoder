@@ -1,0 +1,143 @@
+/* 聚光灯导览（app/tour/Tour.tsx）。面板沿用站内的粗墨边 + 下沉投影；分区签用板块颜料色。 */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  pointer-events: none;
+}
+
+/* 亮洞：自身透明，用一圈极大的阴影压暗四周。不拦点击，页面照常可操作。 */
+.tour-hole {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink), 0 0 0 200vmax rgb(14 23 38 / 0.46);
+  transition: top var(--d-short) var(--ease), left var(--d-short) var(--ease), width var(--d-short) var(--ease), height var(--d-short) var(--ease);
+}
+
+.tour-dim {
+  position: fixed;
+  inset: 0;
+  background: rgb(14 23 38 / 0.46);
+}
+
+.tour[data-searching] .tour-dim {
+  background: rgb(14 23 38 / 0.2);
+}
+
+.tour-card {
+  --pg: var(--ink);
+  position: fixed;
+  width: min(360px, calc(100vw - 24px));
+  padding: var(--s-16) var(--s-16) var(--s-12);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--ink), var(--lift);
+  pointer-events: auto;
+  outline: none;
+  transition: top var(--d-short) var(--ease), left var(--d-short) var(--ease);
+}
+
+.tour-card[data-space='workspace'] { --pg: var(--c-workspace); }
+.tour-card[data-space='lab'] { --pg: var(--c-lab); }
+.tour-card[data-space='connection'] { --pg: var(--c-connection); }
+.tour-card[data-space='atlas'] { --pg: var(--c-atlas); }
+
+.tour-card:focus-visible {
+  box-shadow: 0 4px 0 var(--ink), 0 0 0 4px var(--accent-soft), var(--lift);
+}
+
+/* 窄屏：固定在底部，不跟着目标跑（小屏上跟随会把目标盖住） */
+.tour-card.sheet {
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: auto;
+}
+
+.tour-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  margin-bottom: var(--s-8);
+  font-size: var(--t-13);
+}
+
+.tour-section {
+  padding: 1px var(--s-8);
+  border-radius: var(--r-small);
+  background: var(--pg);
+  color: var(--c-workspace-ink);
+  font-weight: 600;
+}
+
+.tour-card[data-space='cover'] .tour-section {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.tour-count {
+  color: var(--ink-2, var(--vein));
+  font-variant-numeric: tabular-nums;
+}
+
+.tour-close {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--r-small);
+  background: none;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tour-close:hover {
+  background: var(--fill-strong);
+}
+
+.tour-title {
+  margin: 0 0 var(--s-8);
+  font-size: var(--t-17);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.tour-body {
+  margin: 0;
+  font-size: var(--t-15);
+  line-height: 1.7;
+}
+
+.tour-progress {
+  height: 3px;
+  margin: var(--s-12) 0;
+  border-radius: 2px;
+  background: var(--fill-strong);
+  overflow: hidden;
+}
+
+.tour-progress span {
+  display: block;
+  height: 100%;
+  background: var(--pg);
+  transition: width var(--d-short) var(--ease);
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-hole,
+  .tour-card,
+  .tour-progress span {
+    transition: none;
+  }
+}

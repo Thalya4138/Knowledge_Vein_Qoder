@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 170" width="720" height="170" font-family="'Times New Roman','Songti SC','Noto Serif SC',SimSun,serif" font-size="16">
+  <title>从残差正交到法方程</title>
+  <desc>最近点的残差垂直于列空间，因此垂直于每一列；把逐列内积为零合成矩阵形式，再整理得到法方程。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#355c72"/></marker>
+  </defs>
+  <g fill="#eef6fa" stroke="#6e9db7" stroke-width="1.4">
+    <rect x="12" y="42" width="148" height="82" rx="8"/>
+    <rect x="194" y="42" width="148" height="82" rx="8"/>
+    <rect x="376" y="42" width="148" height="82" rx="8"/>
+    <rect x="558" y="42" width="150" height="82" rx="8"/>
+  </g>
+  <g fill="#173f56" text-anchor="middle">
+    <text x="86" y="73">残差 e 垂直于</text><text x="86" y="99">整个 Col(A)</text>
+    <text x="268" y="73">逐列检验</text><text x="268" y="99">aᵢᵀe = 0</text>
+    <text x="450" y="73">合成矩阵形式</text><text x="450" y="99">Aᵀ(b − Ax̂) = 0</text>
+    <text x="633" y="73">整理得到</text><text x="633" y="99">AᵀAx̂ = Aᵀb</text>
+  </g>
+  <g stroke="#355c72" stroke-width="1.6" marker-end="url(#arrow)">
+    <line x1="162" y1="83" x2="188" y2="83"/>
+    <line x1="344" y1="83" x2="370" y2="83"/>
+    <line x1="526" y1="83" x2="552" y2="83"/>
+  </g>
+  <text x="360" y="151" text-anchor="middle" fill="#5c6f7a" font-size="14">“法”记录的是垂直条件；箭头表示推导方向，不是可逆运算。</text>
+</svg>

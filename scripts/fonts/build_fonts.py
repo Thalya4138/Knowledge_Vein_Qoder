@@ -80,7 +80,8 @@ def collect_text() -> str:
     return "".join(sorted(chars))
 
 
-# 用站酷小薇的标题文字（字形复杂，按标题实际用字截取；改了标题要同步这里再重跑）
+# 站酷小薇的标题字：字符集与 display 相同（界面源码现取），另加 TITLE_TEXT 兜底。
+# 手工清单曾漏掉后加的标题字（回落系统黑体造成一行两字体），改为现取不再过期。
 TITLE_TEXT = """
 全世界的知识都会相逢，隔山的洞见与跨海的思维在知脉里相拥。
 学习工作台 可视化实验室 知识关联探索 认知记忆图谱
@@ -139,5 +140,5 @@ if __name__ == "__main__":
     build_wordmark(serif_vf)
     build_display(sans_vf)
     if len(sys.argv) > 4:
-        build_subset(sys.argv[3], "vein-title.woff", "".join(sorted(set("".join(TITLE_TEXT.split())))))
+        build_subset(sys.argv[3], "vein-title.woff", collect_with_content())
         build_subset(sys.argv[4], "vein-text.woff", collect_with_content())

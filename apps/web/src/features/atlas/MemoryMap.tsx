@@ -3,7 +3,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEven
 import 'katex/dist/katex.min.css';
 import { Icon } from '../../ui/Icon';
 import { rich } from './mindCanvas';
-import { answerKey, demoKnowledge, loadDoc, toMapNode, type MNode } from './mindDoc';
+import type { MemoryState } from './maps';
+import { answerKey, toMapNode, type KnowledgeContext, type MDoc, type MNode } from './mindDoc';
 import { layoutTree, ROW, type MapNode } from './mindmapData';
 
 /**
@@ -14,28 +15,9 @@ import { layoutTree, ROW, type MapNode } from './mindmapData';
  */
 
 type Tool = 'collapse' | 'cover' | 'blank';
-interface MemoryState {
-  collapsed: string[];
-  covered: string[];
-  blanks: string[];
-  answers: Record<string, string>;
-  offsets: Record<string, { dx: number; dy: number }>;
-  autoAlign: boolean;
-}
-
-const MEM_KEY = 'vein.memory.linear-algebra';
 const PAD = 48;
 const GAP = 56;
 const FS = [22, 17, 15, 15];
-
-function load<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? { ...fallback, ...(JSON.parse(raw) as T) } : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 /** 还没量到真实宽度时的估算（中文约一字一字号宽）。 */
 const estimate = (text: string, depth: number, kids: boolean) =>
@@ -46,9 +28,8 @@ function leaves(n: MapNode): string[] {
 }
 
 const same = (a: string, b: string) => answerKey(a) === answerKey(b);
-const knowledge = demoKnowledge();
 /** 写对主题原文，或写对知识库里登记的别名（如「自由参数」之于「自由变量」），都算对。 */
-const correct = (answer: string, n: MapNode) =>
+const correct = (knowledge: KnowledgeContext, answer: string, n: MapNode) =>
   same(answer, n.text) || (n.ref ? (knowledge.info(n.ref)?.aliases ?? []).some((a) => same(answer, a)) : false);
 /** 主题文字里的 $…$ 渲染成公式（与思维导图一致）。 */
 const Rich = ({ text }: { text: string }) => <span dangerouslySetInnerHTML={{ __html: rich(text) }} />;
@@ -59,8 +40,17 @@ const TOOLS = [
   ['collapse', '收起'],
 ] as const;
 
-export function MemoryMap() {
-  const doc = useMemo(() => loadDoc(), []);
+export interface MemoryMapProps {
+  /** 以思维导图为本源（工作区的 maps/mind.json） */
+  doc: MDoc;
+  knowledge: KnowledgeContext;
+  /** 练习状态（工作区的 maps/memory.json） */
+  memory: MemoryState;
+  persist: (json: string) => Promise<void>;
+  onError: (msg: string) => void;
+}
+
+export function MemoryMap({ doc, knowledge, memory, persist, onError }: MemoryMapProps) {
   const tree = useMemo(() => toMapNode(doc.root), [doc]);
   /** 每个主题所属第一层分支的分区色，与思维导图一致 */
   const bandOf = useMemo(() => {
@@ -75,18 +65,35 @@ export function MemoryMap() {
     });
     return m;
   }, [doc]);
-  const [mem, setMem] = useState<MemoryState>(() =>
-    load(MEM_KEY, { collapsed: [], covered: [], blanks: [], answers: {}, offsets: {}, autoAlign: true }),
-  );
+  const [mem, setMem] = useState<MemoryState>(memory);
   const [tool, setTool] = useState<Tool>('blank');
   const [reveal, setReveal] = useState(false);
   const [widths, setWidths] = useState<Record<string, number>>({});
   const drag = useRef<{ id: string; x: number; y: number; dx: number; dy: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // 改动 400ms 后写进 maps/memory.json；串行写，免得旧版本后落盘
+  const first = useRef(true);
+  const chain = useRef<Promise<void>>(Promise.resolve());
+  const pending = useRef<string | null>(null);
+  const flush = useRef(() => {});
+  flush.current = () => {
+    const json = pending.current;
+    if (json === null) return;
+    pending.current = null;
+    chain.current = chain.current.then(() => persist(json)).catch((e: Error) => onError(`练习记录没有保存：${e.message}`));
+  };
   useEffect(() => {
-    localStorage.setItem(MEM_KEY, JSON.stringify(mem));
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    pending.current = JSON.stringify(mem, null, 2) + '\n';
+    const t = window.setTimeout(() => flush.current(), 400);
+    return () => window.clearTimeout(t);
   }, [mem]);
+  // 离开页面前把还没写的那一次写掉
+  useEffect(() => () => flush.current(), []);
 
   // O 键在原文与自己的填写之间切换
   useEffect(() => {
@@ -160,7 +167,7 @@ export function MemoryMap() {
   // 计分：挖了几处、填了几处、对了几处
   const blanks = mem.blanks.filter((id) => byId.has(id));
   const filled = blanks.filter((id) => (mem.answers[id] ?? '').trim());
-  const right = filled.filter((id) => { const p = byId.get(id); return !!p && correct(mem.answers[id]!, p.node); });
+  const right = filled.filter((id) => { const p = byId.get(id); return !!p && correct(knowledge, mem.answers[id]!, p.node); });
 
   const hints: [string, string][] = reveal
     ? [['O', '回到自己的填写'], ['蓝色「对」', '答对'], ['朱笔', '答错，划掉的是你写的']]
@@ -251,7 +258,7 @@ export function MemoryMap() {
               leaf ? 'leaf' : '',
               isCovered ? 'covered' : '',
               isBlank ? 'blank' : '',
-              isBlank && reveal && answer ? (correct(answer, n) ? 'right' : 'wrong') : '',
+              isBlank && reveal && answer ? (correct(knowledge, answer, n) ? 'right' : 'wrong') : '',
               free ? 'free' : '',
             ]
               .filter(Boolean)
@@ -286,7 +293,7 @@ export function MemoryMap() {
                 ) : isBlank && reveal ? (
                   <span className="mm-check">
                     <Rich text={n.text} />
-                    {answer && (correct(answer, n) ? <em className="ok">对</em> : <em className="no">{answer}</em>)}
+                    {answer && (correct(knowledge, answer, n) ? <em className="ok">对</em> : <em className="no">{answer}</em>)}
                   </span>
                 ) : (
                   <Rich text={n.text} />

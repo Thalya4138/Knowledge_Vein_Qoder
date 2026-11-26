@@ -5,6 +5,1288 @@
 
 ---
 
+## 2026-11-26（夜三）· QoderWang2 · R3f：删除无预置结果的单摆示例入口
+
+**用户指令**：截图指实验室「单摆从小角度到大角度，周期怎么变」这条没做，删掉，提交、更新、部署，快一点。
+
+**改动**（`features/lab/LabPage.tsx`）：`PRESETS` 移除 `result: null` 的单摆条（点了只回「示例模式只准备了这几道题」的死入口，#62/#65 遗留待定项就此结案）；随之 `PRESETS` 类型去掉 `| null`、入口卡「示例」签不再条件渲染、提示语列表去掉 `.filter(p => p.result)`。背景图版的单摆示意属装饰画，不动。
+
+**验证**：四道门全绿（256 tests）；`e2e-lab-fit` 全过；公网无头实测 `/lab` 入口 3 条、全带「示例」签、不含单摆；线上 bundle `index-BLJdGgeH.js` 与本地一致。实现笔 `2487a33` 已 push、已部署（接龙 #74）。
+
+---
+
+## 2026-11-26（夜二）· QoderWang2 · R3e：重跑字体子集修「一行两字体」
+
+**用户指令**：两张截图（入门大标题「知脉 · 入门文档」、正文「切换到英文界面」）指出「这里的字体不一好丑」，改完提交、更新、部署。
+
+**根因**：标题 / 正文用子集字体（站酷小薇 / 霞鹜文楷 / Noto Sans SC，见 `styles/fonts/NOTICE.md`），子集自首个提交 `1c89f23` 后没重跑。R3 起新增的界面字不在子集里：`vein-title` 缺「入门文档英换」等 6 字、`vein-text` / `vein-display` 缺「英」，这些字回落系统黑体，与其余楷体 / 小薇混排成一行两字体。
+
+**改动**
+
+- `scripts/fonts/build_fonts.py`：标题子集字符集从手工 `TITLE_TEXT` 清单改为 `collect_with_content()`（界面源码 + 示例 kb/graph 现取），与 display/text 同口径，手工清单漏字的缺陷类不再复发；`TITLE_TEXT` 保留作兜底注释。
+- 重跑三个子集（源字体为 OFL：站酷小薇、霞鹜文楷 v1.530、Noto Sans SC VF，下载到临时目录、不入库）：`vein-title.woff` 1147 字 / 441 KB、`vein-text.woff` 1147 字 / 290 KB、`vein-display.woff` 1127 字 / 193 KB。cmap 复核「知脉入门文档英文界面换到需要你点一下授权这个工作区打不开」缺字 0（标题个别数学符号 ⊥⇔ 小薇本就没有，回落属预期）。
+
+**验证**
+
+- 四道门：`verify:content` ✓、`typecheck` ✓、26 文件 / 256 tests ✓、`build` ✓。
+- `e2e-tour.mjs` 16 项全过。
+- 无头截图两张目检：`docs/evidence/r3e-guide-{top,lang}.png`——大标题整行站酷小薇、正文「英文」回霞鹜文楷，`document.fonts` 三套均 loaded。
+
+**已知缺陷 / 未验证**
+
+- 子集变大（标题 57→441 KB）：换来全覆盖不再漏字；首屏多约 0.5 MB 字体，属可接受代价。
+- 源字体文件不入库（OFL 允许子集再分发，子集 woff 已带许可声明）；下次改界面文案仍须重跑脚本。
+
+---
+
+## 2026-11-26（夜）· QoderWang2 · R3d：封面导览按钮改磨砂玻璃归位四签之下、入门标题与目录艺术化、拓印装饰
+
+**用户指令**：两张截图（入门目录栏、入门页首）＋四条——①「第一次来跟着导览走」放回四大按钮下面，按键要苹果式半透明磨砂感；②目录栏目做得艺术一点；③大标题就写「知脉 · 入门文档」；④入门页加拓印装饰。**本轮未获 commit / push / 部署授权**，收尾时询问。
+
+**范围**：同一本地分支 `task/R3-QoderWang2`（HEAD `cf01e8b`）。**不做**：改导览站点内容、动九节结构、合并 main、部署。
+
+**改动**
+
+- **封面导览按钮**（`app/CoverPage.tsx`、`styles/cover.css`）：DOM 移回四张标本签 `</nav>` 之后；样式改磨砂玻璃胶囊——半透明纸色底（surface 52%）+ `backdrop-filter: var(--blur)`（saturate 180% blur 20px）+ 内侧高光 + 发丝描边，hover 提亮微浮、箭头右移；删掉 R3c 的宽屏 fixed 底部吊舱媒体块（用户改主意，不再要页面中心）。
+- **入门标题对调**（`app/GuidePage.tsx`）：h1 = 「知脉 · 入门文档 / Vein · Field guide」，朱砂 overline = 「从一节讲义开始 / Start from one lesson」。
+- **目录艺术化**（`styles/guide.css`）：目录做成标本签纸卡——双细框（外 1px 墨 70% + inset 4px/5px 发丝线）、3px 直角圆角、半透明纸底；「入门」标题改朱印小签（seal 底、纸色字、0.18em 字距）；编号改等宽字体，hover 朱砂 + 右移 2px；卡右下角压一枚叶脉拓片（opacity .45）。
+- **拓印装饰**（`app/GuidePage.tsx`、`styles/guide.css`）：页首右上角大蛛网拓片（200px、tilt 12、opacity .3、absolute、pointer-events none，窄屏 ≤899px 隐藏防横向溢出）；四个工作空间 dt 右侧各带本板块标本小拓片（40px，feather/nautilus/web/leaf，dt 改 flex 仅作用于 data-space，FAQ 不受影响）。
+
+**验证**
+
+- 四道门：`verify:content` ✓、`typecheck` ✓、26 文件 / 256 tests ✓、`build` ✓。
+- `e2e-tour.mjs` 16 项全过（入门九节、英文汉字 5、窄屏 overflowX 0、控制台无错误）。
+- 无头 Chrome 截图四张目检：`docs/evidence/r3d-{cover-glass,guide-top,guide-spaces,guide-narrow}.png`。结构检查：按钮在 nav 之下、backdrop-filter 生效、圆角 999px；h1/overline 文案对调正确；目录卡 1px 边框 3px 圆角、hero/toc 拓片在位、四枚 space 拓片；1440 与 390 两档 overflowX 均 0，窄屏 hero 拓片 display none。
+
+**已知缺陷 / 未验证**
+
+- 磨砂玻璃依赖 `backdrop-filter`；不支持的旧浏览器回落为半透明纸色底（仍可读，无白屏风险）。
+- 本轮改动已随 `3539516` 提交、push `task/R3-QoderWang2`、部署公网（见接龙 #73 与 R3e 验证段）；main 仍 `68b280b`，合并由用户定。
+- 沿用缺口：工作区导出缺失（#68）、真实模型 / 真实仓库未实测（#69）。
+
+---
+
+## 2026-11-26（晚）· QoderWang2 · R3c：导览递归修复、力学样例下沉、封面导览入口与入门文档视觉重做
+
+**用户指令**：五张截图反馈——①导览第 10/22、11/22 两站把整站递归套进实验室 iframe；②力学思维导图应作为记忆图谱「选一个工作区」层的样例、右上角标 demo，而不是现在的地图类型签形式；③封面导览入口不显眼，做成好看按钮，随后追加「能不能更醒目？比如放在页面中心」；④入门文档太单调，参考整站风格重做美工（装饰、板块、按钮）；⑤问最新是否合并 main（答：没有）。开工时未获 commit / push / 部署授权；收尾时用户勾选授权三项，均已执行（见验证段与接龙 #71）。
+
+**范围**：同一本地分支 `task/R3-QoderWang2`（HEAD `ef66d2e`）。**不做**：合并 main、改力学导图数据与挂载规则、动 `content/demo` 来源声明。
+
+**改动**
+
+- **导览递归修复**（`app/tour/Tour.tsx`、`features/lab/LabPage.tsx`、`styles/lab.css`）：根因链＝托管 SPA 回退把静态实验页地址解析成站点本身 → 同源 iframe 共享 sessionStorage 的导览进度 → iframe 内导览把 iframe 导航到站点路由 → 无限嵌套。两层防御：导览只在顶层窗口渲染（`IN_FRAME`，node 环境安全写法）；lab iframe onLoad 检测 `contentDocument` 里出现 `#root` 即判回退，显示说明与「重新加载」（换 nonce 重挂 iframe）。
+- **力学样例下沉**（`features/atlas/AtlasPage.tsx`、`styles/atlas.css`）：地图类型签只留思维导图 / 个人记忆图谱；力学导图改为工作区选择层的示例卡（仅示例工作区在列时显示），右上角金色 DEMO 签（`.pick-card.art > span.pick-badge`，优先级压过 art 卡的 span 定位），深链 `?ws=&map=mechanics` 不变；力学页内不再渲染类型签与「更新」按钮，面包屑用正式题名。
+- **封面导览入口**（`app/CoverPage.tsx`、`styles/cover.css`）：文字链接改实色胶囊（locate 图标 + 问句 + 箭头）。宽且够高（≥1200px 且 ≥801px，封面恰好一屏不滚动）用 fixed 吊在页面底部正中，纸环光晕托离地形图；其余档位回落为左栏通栏按钮、位置提到四张标本签之前。DOM 里按钮移到 entries 之前，窄屏第一屏可见。
+- **入门文档视觉重做**（`app/GuidePage.tsx`、`styles/guide.css`）：hero 点阵底 + 朱砂 overline「知脉 · 入门文档」；目录与九节标题编号（decimal-leading-zero / 朱砂节号 + 发丝线）；四个工作空间各带矿物颜料菱形点与「打开……→」动作链接；FAQ 朱砂问号圆签；快捷键表头填底。hero 是 header 不是 section，九节结构不变（e2e 校验沿用）。
+
+**验证**
+
+- 四道门：`verify:content` ✓、`typecheck` ✓、26 文件 / 256 tests ✓、`build` ✓。
+- `e2e-tour.mjs` 16 项全过（含入门九节、英文汉字 5、窄屏 overflowX 0、控制台无错误）。
+- 无头 Chrome 截图八张目检：`docs/evidence/polish-{cover,atlas-pick,mechanics,guide}-1440.png`、`polish-guide-{spaces,faq}-1440.png`、`polish-{atlas-pick,cover}-414.png`。结构检查：1440×900 胶囊中心 x≈720（页面正中）、与记录卡 / 索引 / 页脚零重叠；选择层三卡含「力学思维导图 [demo]」；力学页类型签 0、思维导图页 2；窄屏 overflowX 0。
+- 公网复核：`/visualizations/photosynthesis.html?embed=lab` 返回真实静态页（curl 带 `Accept: text/html`），iframe 内无 `#root`、导览卡仅 1 张——用户截图的递归态在当前线上复现不出，修复属防御性（回退是真实边界故障）。
+- 部署后公网验收（用户授权 commit/push/部署后）：五个深链 curl 带 `Accept: text/html` 全 200，线上 bundle `index-KwxyK02S.js`；无头自点六张 `docs/evidence/public-r3c-*.png` 目检＋结构检查：胶囊 fixed 且中心 x=720、导览 10/11 站 iframe 内无 `#root` 且 0 张卡、顶层 1 张（递归断掉）、选择层 demo 卡在位、入门九节、窄屏通栏胶囊 overflowX 0、控制台 0 错误。实现笔 `6ba836b` 已 push `task/R3-QoderWang2`，发布 published committed。
+
+**已知缺陷 / 未验证**
+
+- 递归根因是托管回退的瞬态；防御修复未能在公网复现原故障态下回归（只能构造回退条件单测式验证）。
+- 封面胶囊 fixed 档依赖「封面恰好一屏」；矮屏 / 窄屏回落通栏按钮，位置与宽屏不同（有意）。
+- 力学导图仍是整图示例、不参与挂载（沿用 #58 口径）；真实模型 / 真实仓库未实测（沿用 #69）。
+- 本轮改动已提交 `6ba836b` 并 push `task/R3-QoderWang2`、部署公网；`ef66d2e` 此前已部署但未 push，随本轮 push 一并进远端。main 仍 `68b280b`，合并由用户定。
+
+---
+
+## 2026-11-26（下午）· QoderWang2 · R3b：实验室现场生成、提示词审查与修正、GitHub 同步
+
+**用户指令**：「可视化的其他工具能否正常和高质量调用以及呈现？各个板块的内置 prompt 是否写得好、高质量？API 的 AI 读的是内置 prompt 还是去 GitHub 读？工作区 GitHub 的功能也需要实现」。用户同意提供测试用的模型 key 与测试仓库（经环境变量），**截至本条写完仍未设置，真实模型与真实仓库均未实测**。仍不得 commit / push。
+
+**范围**：同一本地分支 `task/R3-QoderWang2`。**不做**：接入工作台问答、整理资料、生成讲义、图谱助手、出题这五个位置（审查结论：提示词都还不能直接接）；工作区导出为本地文件夹；流式输出。
+
+**现状回答（查证后）**
+
+- 提示词在**构建时**经 Vite `?raw` 打进网站代码，运行时不去 GitHub 或站上读；工作区 `.vein/prompts/<位置>.md` 可覆盖同名位置（共用底线不可覆盖）。
+- 改之前实验室**没有任何生成路径**：工具按钮是摆设，预置之外的问题只回一句「示例模式只准备了这几道题」；登记表 `lab.visualize` 写着「提示词未写」。
+
+**改动**
+
+- **实验室现场生成**（`features/lab/generate.ts`、`GenPanel.tsx`、`toolCaps.ts`，提示词新建 `prompts/VISUALIZE.md`，从 `visualization-demo` 训练成果 v3.0 蒸馏）：计划 JSON → 单文件 HTML（或本地脚本）→ 沙箱运行 → 报错或白屏时自动修一次 → 仍不行如实显示错误原文与「再修一次」。工具分四类且只写实测事实：网页内运行（GeoGebra、JSXGraph、Plotly、D3、Matter.js、3Dmol、Three.js、Matplotlib/Pyodide、原生 WebGL）、嵌入 PhET（50 个模拟地址逐个核实 200，模型只能从清单挑）、本地代码（Manim、MATLAB、PyTorch、Mathematica、VPython、Blender）、要授权的换替代并写明原因（Desmos→JSXGraph、Falstad→D3、JSmol/ChemDoodle→3Dmol、BioDigital/Z-Anatomy→Three.js）。生成结果存工作区 `.vein/lab/runs/<id>.json`，地址 `?run=` 可读回，会话历史一问一条。
+- **沙箱隔离**：页面以 `data:` 地址放进 `sandbox="allow-scripts allow-same-origin allow-downloads"` 的 iframe——data: 文档来源匿名、与本站不同源。最初用 srcdoc + 无 allow-same-origin，实测 GeoGebra 访问不了自己建的内层框架（SecurityError），据此改。外壳注入内容安全策略（只放行实测过的 CDN）、内存版 localStorage / cookie 替身（GeoGebra 读 cookie，在 data: 页面会抛错导致白屏）、报错与「画完了」回报。
+- **提示词审查**（独立 agent 审读，我逐条核实后修）：分步写作时后续小节看不到已有节点 id（图块解析时已剥掉）→ 每步附「已有节点」表；节名与说明分开传；收尾一步的图块不再丢；`generalizes` 方向统一为特例 → 一般（示例 meta.md 的 g-op 翻向，rev 6→7）；动机不画线（原来画成 `applies-to`，读者看到「应用于」）；`assumptions` 必填、出处格式、`track` 规则写明；取消「每篇至少一张配图」（模型只能输出文字，会编造图片路径）；去掉三层重复的编号清单与模型读不到的文件引用；碎片串联模式文件里的线性代数例子与易错点改为只给维护者。打包新增 `forModel()`：`<!-- author -->` 段落不发给模型，`<!-- only:位置 -->` 只发给指定位置。`chat()` 加截断续写（最多三次）——碎片串联一次写完约 1.4 万字，常见服务单次只出 8K token。未接入的五份提示词审查结论为「不能直接接」，本轮不接。
+- **GitHub 同步**（`store/github.ts`、`features/workspace/GithubSync.tsx`，文件栏「同步 GitHub」）：沿用对齐文件夹的三份指纹，指纹改用 git blob SHA-1（与 `git hash-object` 一致，有单测），不下载就能判断远端变没变；推送是一次 Git Data API 提交，比较之后再核对一次远端提交号、分支更新 `force:false`；冲突逐个选、不自动合并、不删文件；空仓库先用 Contents API 建第一个提交。令牌只在页面内存。
+- **验收脚本**：新增 `e2e-lab-gen.mjs`、`e2e-github.mjs`（设了环境变量就测真实仓库）、`e2e-real-model.mjs`（真实模型，待跑）。**更正上一条（R3）**：`e2e-tour.mjs` 与 `e2e-linkage.mjs` 当时没有开启 `Runtime.enable`，「控制台无错误」收不到任何事件，是空检查。本轮补上后重跑，两份均通过；另给几份脚本的 `evaluate` 加了页面跳转中的重试。
+
+**验证**
+
+- 四道门：`verify:content` ✓、`typecheck` ✓、26 文件 / 256 tests ✓、`build` ✓（入口 `index-C-iz4eQZ.js`）。
+- `e2e-lab-gen.mjs` 16 项全过：9 个浏览器工具的真实库**不经修复**在沙箱里跑起来（假模型返回手写的最小调用页）；隔离攻击页（读父页面、读顶层地址、原生 localStorage / cookie、向本站发请求）全部被拦；报错后自动修复；Manim 给本地代码；Desmos 换 JSXGraph 并写明原因；PhET 嵌入；刷新后不接模型也能读回；历史一问一条。截图目检：GeoGebra 中文界面、滑块与函数可见；Matplotlib 出图。
+- `e2e-github.mjs`（假 GitHub）10 项全过：推、拉、冲突选边、令牌错误提示、令牌不进存储与地址、控制台无意外错误。单测另用内存里的假 GitHub 跑了「比较后被抢先提交 → 拒绝推送」。
+- 重跑 `e2e-tour` 16 项、`e2e-linkage` 9 项、`e2e-lab-fit` 105 项，均通过。
+
+**已知缺陷 / 未验证**
+
+- **真实模型的生成质量完全未测**（实验室与关联探索都是）；**真实 GitHub 仓库的推拉未测**。脚本已备好，等用户设环境变量。
+- 「页面报告画完了」不等于「看得见」：GeoGebra 先回报再抛错时会被判成功。现在会把运行中的错误列出来并给「修一下」，但不自动判失败（库里无害的报错会误伤）。
+- 生成页面的视觉质量取决于模型；提示词只有蒸馏版，训练成果里的 33 项自检没有全部搬进来。
+- `apps/web/dist` 已是本轮构建，含全部未提交改动。
+
+**下一步**：用户设好环境变量后跑 `e2e-real-model.mjs` 与真实模式的 `e2e-github.mjs`，我审读生成结果再调提示词。
+
+---
+
+## 2026-11-26 · QoderWang2 · R3：联动、BYOK、英文界面、聚光灯导览、入门文档、README 与帖子草稿
+
+**用户指令**：「API，联动，英文模式，帖子，引导使用，更新一下仓库的 readme，还有入门文档的更新和撰写」；导览形式用户选「聚光灯逐步提示」，路线原话「首先进入主封面，然后挨个体验工作区→可视化→关联（三个功能都要）→图谱（两种图谱都要），每一个导览都要解释清楚当前页面的功能」。**不得 commit / push**（用户明确）。
+
+**范围**：本地分支 `task/R3-QoderWang2`（从 `origin/task/R2-L4-lab-QoderWang2` 拉出，已解除上游追踪，防误推到别人的分支）。**不做**：提交、推送、部署、GitHub 同步（L7）、工作区整体导出、示例课程内容英译、字体子集重建。
+
+**改动**
+
+- **联动（TASK_R2_LINKAGE L4–L6）**：`app/links.ts`（去处拼法只写一处：讲义对应处 / 拿去探索 / 在导图里看）+ 单测；导图主题详情新增「打开讲义对应处」「拿去关联探索」（`mindCanvas` 的 `goOf` 钩子，地址由 `AtlasPage` 拼）；图谱认 `?focus=`（知识点 id 或主题 id 均可）；讲义标题旁常驻「在导图里看」（`features/workspace/headingLinks.ts` + `NoteReader` 的 `headingLinks`）；实验室结果页的主题名可点回导图。`verify-content` 新增「图谱节点的 `noteAnchor` 必须指向讲义里真实存在的标题」，当场抓到 `graph.json` 一处悬空锚点，修的是数据。
+- **BYOK**：服务清单抽到 `ai/providers.ts`，只写实测结论——2026-11-26 无头 Chrome 带无效 key 调对话接口：DeepSeek / 通义千问 / Kimi / 硅基流动 / OpenRouter 读到 401（跨域放行）；智谱 GLM 被拦；OpenAI / Anthropic 未实测。设置面板：选服务即填地址，「测试连接」只要地址与 key，测通后模型名变成下拉候选；填了被拦的地址当场提示；网络错误按服务给出不同提示。方法与证据写进 `SYNC_AND_API.md` §4.1。
+- **英文界面**：`prefs.tsx` 加 `lang` 与 `useT()`，同步 `<html lang>`；页眉「EN / 中」切换，设置「外观与语言」里的 English 接通。覆盖页眉、封面、设置、入门文档、导览、四个板块入口层、全局提问栏、错误页；示例课程内容、导图编辑器与阅读器内部仍为中文（设置里写明）。实验室的预置问题保持中文：程序按问句原文匹配预置结果与历史。
+- **聚光灯导览**：`app/tour/stops.ts`（22 站，按用户路线；改导览只改这张表）+ `Tour.tsx`（跳到站点地址 → 等目标出现 → 滚进视野 → 压暗四周、留亮洞 + 说明卡；←/→/Esc；进度存 sessionStorage，刷新接着走；窄屏卡片贴底；页面慢时卡片先居中、元素出现后补高亮，15 秒才放弃）+ `styles/tour.css`。入口：封面「第一次来？跟着导览走一遍」、入门文档顶部按钮。说明里写到的每项功能都逐条对过代码，过程中更正一处：关系的按钮叫「收进图谱」，不叫「接受」。
+- **关联探索**：同一示例已打开过且未续问时，再点直接回到那条对话，不在历史里堆重复（导览每走一遍都会点它）。
+- **入门文档**重写为中英双语九节：新增「四个工作空间的关联」（跳转表）、「English 界面」；模型清单直接读 `providers.ts`；删掉已不存在的「封面笔记卡片」快捷键；如实写出「尚未提供：工作区整体导出、GitHub 同步」。设置「存储」里「可以改用导入与导出」改为「用『导入文件夹』」——工作区级导出并不存在。新增两节标题的措辞只用标题字体子集里已有的字（源字体不在本机，没重建子集）。
+- **阅读器窄屏缺陷（导览截图发现，与导览无关）**：≤767px 时「问题探讨」正文被挤成每行三四个字。病因：窄屏的 `display:block` 选择器优先级低于桌面那条 `:has(> :first-child img)` 网格规则，230px 图片列一直没撤。窄屏规则改用同样具体的选择器。
+- **README** 重写：在线地址、五步路径、四个板块（含不接模型时的边界）、BYOK、英文范围、尚未提供、本地运行与验收脚本、「边必须有理由」、数据流、目录、读哪一页、隐私。**未改**第二行「版权所有，侵权必究」——它与 `LICENSE`（MIT）矛盾，待用户定。
+- **帖子**：新建 `docs/CONTEST_POST.md` 九段草稿；第 1、3、7 段涉及本人信息与经历，只给提示不代写；第 5 段只列日志里有据可查的事件，归属待本人确认。`CONTEST_SUBMISSION.md` §2 顶部注明以草稿为准、旧示例步骤已过期。
+- **验收脚本**：新增 `scripts/e2e-tour.mjs`；它与 `e2e-linkage.mjs` 的收尾改为经调试协议 `Browser.close` 关浏览器——`chrome.kill()` 只杀启动器，真正的浏览器留着占住调试端口，下一次跑会连到旧浏览器、读到旧状态（本轮因此误报三次）。启动时若端口上已有浏览器，先关掉它。
+
+**验证**
+
+- 四道门实跑全绿：`verify:content` ✓、`typecheck` ✓、22 文件 / 229 tests ✓、`build` ✓（入口 `index-t_TpCvsz.js`）。
+- `e2e-tour.mjs` 16 项全过：22 站逐站到站且都高亮了目标、说明卡始终在视口内且不挡目标（1440）、刷新停在同一站、「完成」后关闭、示例对话不重复入历史、Esc 结束、英文导览、窄屏卡片贴底、窄屏「问题探讨」最窄段落 302px、窄屏无横向溢出、入门文档九节齐全、文档按钮能启动导览、英文文档仅 5 个汉字（界面里仍为中文的按钮名）、窄屏文档无溢出、控制台无错误。
+- `e2e-linkage.mjs` 9 项全过（本轮改动后重跑）。
+- 证据：`docs/evidence/tour-*.png`（7 张）、`guide-*.png`（3）、`en-*.png`（6）、`byok-settings*.png`（2）、`linkage-*.png`（3），已目检。
+
+**已知缺陷 / 未验证**
+
+- `apps/web/dist` 已是本轮构建，**含本轮全部未提交改动**；Qoder Sites 从本地 dist 打包，现在发布就会发出这些改动。
+- 真实 key 下的生成质量仍未实测；OpenAI / Anthropic 的浏览器直连未实测。
+- 工作区整体导出不存在，AGENTS.md §0 的「导出再导入」一步走不通——比赛闭环里唯一缺的一环。
+- 414 宽下页眉四个板块按钮被截（中英文都有，本轮之前就存在），未处理。
+- 公网站用 curl 测深链要带 `Accept: text/html`，否则得到 404（资源请求不回退，ADR-0002 早有记录）；本轮曾据此误判一次，已核实线上正常。
+
+**下一步**：用户决定提交 / 推送 / 发布；补帖子的本人段落；工作区导出是否赶在 11-30 前做。
+
+---
+
+## 2026-11-25 · QoderWang2 · 本目录入库：新建 task 分支推送 GitHub，不开 PR
+
+**用户指令**：「GitHub 上面新建分支，把这个文件夹推送到新建分支上，不要 PR」。
+
+**范围**：只做入库与推送。**不做**：PR、合并 main、部署、改任何功能代码。
+
+**过程与事实**
+
+- 本目录此前不是 Git 仓库（#62–#65 如实标注）。本轮 `git init`，remote 与 `branch-mindmap` 克隆同为 `https://github.com/Thalya4138/Knowledge_Vein_Qoder.git`；基线取 `origin/main`（`68b280b`）。当时直连 GitHub 不通，基线对象从本地 `branch-mindmap` 克隆已 fetch 的 `refs/remotes/origin/main` 取，未碰该克隆的工作区（它有别人在制品）。
+- 新分支 `task/R2-L4-lab-QoderWang2`（沿用 `task/*` 约定，不 push main）。一笔提交 `8653a5d`：219 文件、+22381/−1102，即 #58–#65 的全部累积成果。提交前扫描：无密钥模式命中；`.gitignore` 排除 node_modules/dist/私有库；唯一 PDF 为 MIT OCW 公开讲义（content/demo 已带来源声明）；`visualization-demo/` 两份原创 prompt 训练稿随目录入库。
+- 推送波折：直连 443 失败；常见本地代理端口无监听；读系统代理被安全策略拦截（未绕过）。用户接通网络后直连推送成功，`git ls-remote` 与本地 commit 一致。**用户在问答里贴了一枚 ghp_ 令牌：本轮未使用（认证走既有凭据）、未写入任何文件/配置/URL；已提醒用户该令牌在对话中暴露、应去 GitHub 撤销重发。**
+- 未开 PR（用户明确不要）。合并 main 由用户另行决定。
+- 本条日志与交接 #66 的文档笔推送时网络再次中断（连接被重置 / 443 不通），改为挂后台监视等网络恢复自动补推。**补推已完成**：监视触发后 `960cc82` + `ae589ad` 两笔文档提交进远端，`git ls-remote` 核对 `task/R2-L4-lab-QoderWang2` = `ae589ad…`，本地与远端一致、工作区干净。收尾更正见交接 #67（随同推送）。
+
+**验证**：`git ls-remote origin task/R2-L4-lab-QoderWang2` 先核对主笔 `8653a5d…`、补推后核对 `ae589ad…`，均与本地一致；推送后工作区干净；四道门对推送内容在推送前已全绿（217 tests）。
+
+---
+
+## 2026-11-25 · QoderWang2 · 实验室顶栏只留视图操作、起点区移除、历史按钮立页面右缘
+
+**用户指令**（三张截图）：①顶栏「夜间 / 在新窗口打开 / 挂到主题上」三个按钮不需要；②入口页「当前工作区的起点」整区去掉；③历史按钮要像关联探索（图三）那样放在页面右边。
+
+**范围**：实验室两视图的按钮布局与入口页内容。**不做**：改预置实验画法、改存储与深链契约、提交与部署。
+
+**改动**
+
+- `LabPage.tsx`：顶栏 `.lab-bar-end` 只剩「折叠右栏 + 历史」；昼夜切换归页眉（外壳与 iframe 经 `vein.theme` 同步的机制不变）。「在新窗口打开 / 挂到主题上」移入窗口脚注文字链接（`lab-foot-open` 全视口可见、新增 `lab-foot-attach`，挂载仍走 AttachViz 预览→确认→可撤销，L5 不丢）。入口页删 `.lab-start` 整区与 `collectWorkspaceFormulas` 调用（`formulas.ts` 模块与测试保留，仍是契约里的确定性收集器）；历史按钮改为 `.lab` 的直接子级，绝对定位立页面右缘、与起手气泡同行（`right: calc(50% - 50vw + 16px)` 把 1080 内容列的按钮送到视口右缘，窄屏落在列右缘），结果页历史在顶栏最右。删 `.lab-entry-end`。
+- `styles/lab.css`：`.lab` 加 `position:relative`；入口历史按钮右缘定位（窄屏 `top: var(--s-16)` 不压气泡）；脚注链接 `white-space:nowrap` 修跨行断词；删 `.lab-start` / `.lab-fml*` / `.lab-entry-end` 全部样式；窄屏不再隐藏「新窗口」（已不在顶栏）。
+- `scripts/e2e-lab-fit.mjs`：新增「顶栏只留视图操作」「挂载移到脚注仍可用」（点开 AttachViz 再关）「入口页历史按钮立页面右缘」「窄屏入口历史按钮右置不压气泡」；昼夜检查改点页眉按钮；入口检查改为「示例入口仍在、起点区已移除」；历史计数选择器改 `.lab-history-btn`。
+
+**验证**
+
+- 四道门实跑全绿：`verify:content` ✓、`typecheck` ✓、19 文件 / 217 tests ✓、`build` ✓。
+- e2e headless 四视口全部通过：顶栏按钮实测 `["折叠右栏","历史 1"]`、0 链接；脚注两链接在且挂载对话框可开可关；入口历史按钮距视口右缘 24px（窄屏 16px）、与气泡零重叠；历史 3→还原→刷新→删 2 同步链路不变；控制台无错误。
+- 证据七张重拍目检：入口页右缘历史按钮与图三同位、无起点区；结果页顶栏一条六元素、脚注「在新窗口打开 挂到主题上」单行不断词。
+
+---
+
+## 2026-11-25 · QoderWang2 · 实验室结果全铺整屏、操作收进一条顶栏、会话历史跟工作区同步
+
+**用户指令**（三轮看图迭代，接续上一条）：①「可视化实验室工作区覆盖整个页面，周围的空间不要留给背景」；②「图一中的操作按钮放在图二所示的工作区顶栏位置，否则页面看起来太扁」——结果页页首、窗口标题、iframe 页内顶栏三层叠带压成一条工作区顶栏；③「会话历史里面的数据也要同步」——历史要真存、跟地址参数与刷新/换页同步。
+
+**范围**：实验室结果页的布局与顶栏、两张预置实验页的嵌入态、会话历史持久化。**不做**：改预置实验的画法与内容、改 `VisualizationRun` 契约、提交与部署。
+
+**改动**
+
+- `styles/lab.css` + `LabPage.tsx`：结果页 `.lab-full` 锁成一屏（`height: calc(100dvh - var(--header-h))`、`overflow:hidden`），iframe `flex:1; min-height:0` 吃掉剩余高度；外壳装饰图版在结果页隐藏（`.shell:has(.lab-full) .plate-backdrop{display:none}`），入口页保留。三层标题带合并为一条 `.lab-bar`：返回实验室 + 工具名 + 来源签（预置实验/可操作/示例）+ 实时计算/恒定签 + 问句胶囊 + 右端操作组（折叠右栏、白天/夜间、历史、在新窗口打开、挂到主题上）。删 `.lab-result-head` / `.lab-context`。
+- 嵌入态：iframe 走 `?embed=lab`，两张实验页 `html.embedded` 隐藏页内顶栏；右栏开关由顶栏经同源 `postMessage`（`vein-lab` ⇄ `vein-viz`）遥控，页内回报状态，顶栏按钮文案随之翻转；昼夜走 `vein.theme`（localStorage + `storage` 事件），外壳与 iframe 同翻。窄屏（≤719）顶栏两行：右栏遥控与「在新窗口打开」让位（折叠会藏掉整列阐释；新窗口移到窗口脚注）。
+- `features/lab/history.ts`（新增）+ `LabPage.tsx`：会话历史存工作区 `.vein/lab/threads.json`（示例工作区走只读原件 + IndexedDB 覆盖层，与关联探索 `threads.ts` 同一套存储口径），KEEP 60、按 `viz|node|q` 去重只更新时间。地址参数即会话状态（`asked` 直接派生自 `?q=`）：问句、深链、历史条目、刷新互为镜像；入口页与顶栏都有历史按钮与计数，抽屉可点回结果、可单条删除。
+- 竞态修复：记录 effect 原先在 `loadLabHistory` 读回前就拿着空列表落盘，把上一轮会话覆盖掉（headless 连跑只攒出 1 条）。改为旧历史读回后才放行 `histStore`，记录与读取不再互踩。
+
+**验证**
+
+- 四道门实跑全绿：`verify:content` ✓、`typecheck` ✓、19 文件 / 217 tests ✓、`build` ✓。
+- `scripts/e2e-lab-fit.mjs`（headless Chromium，1440×900 / 1280×800 / 1024×768 / 414×800）全部通过：外壳零纵滚零横溢、工作区左 0 铺满客户区宽、顶栏桌面一条（49px）窄屏两条（77px）、页内顶栏确认隐藏、内外主题一致、窗口高度自适应（580–638px）、photo 右栏前三卡首屏可见、缩放/一览原位阅读/画布说明/顶栏遥控右栏 false→true→false/顶栏昼夜内外同翻、入口页 12 条公式与示例签仍在、投影页三窗可拖；历史段：入口计数 3 → 抽屉 3 条 → 点「光合作用的全过程」还原结果与地址 → 深链刷新后仍 3 条 → 删 1 条剩 2 → 入口计数同步 2；控制台无错误。
+- 证据七张（本轮重拍）：`docs/evidence/lab-fit-{photo-1440,photo-1024,photo-414,quadric-1440,entry-1440,projection-1440,history-1440}.png`，逐张目检顶栏与抽屉无裁切。
+- 已知限制：headless 默认深色，浅色态以昼夜切换检查覆盖，未另拍浅色截图。
+
+---
+
+## 2026-11-25 · QoderWang2 · 实验室示例入口化、公式渲染成数学式、结果独立成页
+
+**用户指令**（三轮看图迭代）：①示例要像关联探索那样有点击入口；②要改的是公式的 LaTeX 源码串（渲染成数学式），来源标签保留（第一版误删了标签，已改回）；③点入口后不要向下滚动，要像刷新出一个新网页，且那一屏不带公式地址列表。
+
+**范围**：实验室页的入口、公式起点呈现与结果页结构。**不做**：改预置题内容、改 `VisualizationRun` 与深链约定、改可视化页内部逻辑、提交与部署。
+
+**改动**
+
+- `features/lab/LabPage.tsx`：示例问题渲染为 `.lab-try` 入口卡（描边 + 落影 + 右侧「示例」签，与关联探索 `.cx-try` 同一套写法）；有预置结果的三条带签，单摆那条是无签入口。公式起点用 `tex(f.latex, true)`（复用 `mindCanvas` 的 KaTeX 缓存渲染）渲染成数学式，来源标签 `导图 · / 讲义 ·` 恢复显示。入口页与结果页拆成两屏：`asked || vizParam` 时只渲染结果页页首（返回实验室 + 问题/深链上下文）与结果窗口，输入框、工具键、示例卡、公式起点整段不出现；切换时 `window.scrollTo({top:0})`，返回时清掉 `q/viz/node` 参数。删掉上一版的滚动定位效果。
+- `styles/lab.css`：`.lab-try` / `.lab-result-head` / `.lab-back-icon` 新增；公式行改 `.lab-fml-math`（KaTeX display 左对齐、行内横向滚动、细滚动条按本页配色画）+ `.lab-fml-src`；删 `.lab-fml span`、`.lab-output`、`.lab-stage.asked`。窄屏溢出修复保留：`.lab-fml li` `min-width:0`，数学式容器 `max-width:100%` + `overflow-x:auto`，414 视口下网格列 367px、卡片不出屏。
+
+**验证**
+
+- 四道门：`verify:content` 通过；`typecheck` 通过；19 个测试文件 / 217 项通过；`build` 通过。
+- 浏览器（dev，localhost:5179，示例工作区；面板隐藏，以 `evaluate_script` 读宿主 DOM）：入口页 12 条公式全部 `.katex`、0 个 `.katex-error`、来源标签齐全；点「光合作用」→ 无 `.lab-stage` / `.lab-start` / `.lab-presets`，页首「光合作用的全过程」+「返回实验室」，iframe 指向 photosynthesis.html，`scrollY=0`；返回 → 参数清空、入口页与 4 张卡恢复；点「最近点」→ 三扇结果窗 + 可拖 SVG（2 个手柄）；单摆 → 示例提示页含三条示例链接，点其中「二次曲面」可换结果；深链 `?viz=viz.photosynthesis&node=n.solvability` → 页首带「从导图主题「相容性判据」打开」、挂载按钮可用。最长公式在行内横向滚动 15px，页面无横向溢出；控制台无错误。
+- 已知限制：内置浏览器面板隐藏，`take_screenshot` 报 `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`，本轮无新截图，视觉以 DOM/计算样式核对为准。
+
+---
+
+## 2026-11-24 · QoderWang2 · 可视化接入标准化：VisualizationRun、工作区公式起点与主题挂载
+
+**用户指令**：网页接入要符合 `docs/DOMAIN_MODEL.md`、`docs/TASK_R2_LINKAGE.md` 中「底层联通、工作区打通」的约定。
+
+**范围**：把上一轮的三张静态页接入从「示例工作区的展示卡」改造成符合 `VisualizationRun` 与 L5 的联通切片：任意工作区可进实验室、公式作为起点、主题 ↔ 可视化的双向跳转、挂载写入可撤销。**不做**：可视化页内部逻辑、力学页转 `MDoc`、L6 讲义 ⇄ 图谱、Git 提交与部署。
+
+**对齐的契约**
+
+- `VisualizationRun`：`id / tool / inputRef / params / resultRef / status / noteAnchor?`；`status` 只取 `real | pre-rendered | example | failed`，实验室标题旁如实标注（两张预置页标「预置实验」，不写成实时计算）。见 `apps/web/src/features/lab/tools.ts`。
+- 工作区约定：沿用全站 `?ws=`；新增 `?viz=<工具 id>&node=<主题 id>` 深链，缺 `ws` 时落到示例工作区。
+- L5：实验室从当前工作区的导图 `f` 与讲义 `$$…$$` 收集公式作为起点；可视化可挂到导图主题（`MNode.viz`），图谱主题「去可视化」回到实验室，实验室「挂到主题上」回到图谱；两处写入都先展示受影响主题、确认后写 `maps/mind.json`，写完可撤销。
+
+**改动**
+
+- `features/lab/tools.ts`：重写注册表为稳定 id（`viz.photosynthesis`、`viz.quadric-surfaces`），增加 `VisualizationRun`、`RUN_STATUS_LABEL`、`vizRun()` 与 `labHref()`；`runStatus` 与 `status` 分开，页面可用不等于结果实时。
+- `features/lab/formulas.ts`（新）：`formulasFromMind`（遍历 `f`）、`formulasFromMarkdown`（只取独立公式，>240 字跳过）、`dedupeFormulas`（忽略空白/花括号/LaTeX 命令差异，限 12 条）、`collectWorkspaceFormulas`（最多读 6 份 `.md`，报告实际读到的份数）。
+- `features/lab/AttachViz.tsx`（新）：`role="dialog"`，按层级缩进列出全部主题并标出已挂载；这一屏就是写入前的预览。
+- `features/lab/LabPage.tsx`：改为按工作区装载 store / maps / formulas，处理授权与读失败；`?q=`、`?viz=` + `?node=`；非示例工作区隐藏正交投影题；结果窗口显示来源标签与「从导图主题…打开」；挂载写入前取快照，失败不改本地状态，成功给「撤销」。
+- `features/atlas/mindDoc.ts`：`MNode` 增加可选 `viz`；新增 `attachViz`（重复挂载/无需取消时返回 false）与 `nodesWithViz`。
+- `features/atlas/mindCanvas.ts`：`CanvasIO` 增加 `vizOf`；详情栏在有 `viz` 时显示实验名与「去可视化」深链，并给「取消挂载」（走同一套 snapshot/undo/自动保存）。
+- `features/atlas/MindEditor.tsx`、`AtlasPage.tsx`：把 `vizOf` 接到 `labHref({ws, viz, node})`；未注册的 viz id 显示为纯文本，不伪造链接。
+- 真源登记：`schemas/map.schema.json` 的 `topic` 增加 `viz`（字符串，说明它不写知识关系）；`docs/GLOSSARY.md` 新增「可视化挂载 `viz`」。按 `HANDOFF.md` §3，真源改动应单独提交，本轮所在目录不是 Git 仓库，未提交。
+- 样式：`styles/lab.css` 增加起点公式表、上下文行、通知条与挂载对话框；`styles/atlas.css` 增加 `.me-viz*`。
+
+**验证**
+
+- 四道门：`verify:content` 通过；`typecheck` 通过；19 个测试文件 / 217 项测试通过（新增 `formulas.test.ts` 8 项、`mindDoc.test.ts` 挂载 3 项）；`build` 通过。
+- 浏览器（dev，localhost:5173，示例工作区）：`/lab?ws=linear-algebra` 显示 12 条去重后的公式，来源标「导图 · 列空间」等，报告读了 1 份讲义。
+- 深链 `?viz=viz.photosynthesis&node=n.solvability`：标题「光合作用 · 单画布」，来源标签「预置实验」，上下文「从导图主题「相容性判据」打开」，iframe 指向 `/visualizations/photosynthesis.html`。
+- 挂载：对话框列出 24 个主题 → 点「挂上」→ 通知「已把「光合作用 · 单画布」挂到「相容性判据」上」并可撤销；回到 `/atlas?ws=linear-algebra&map=mind` 选中该主题，详情栏出现「光合作用 · 单画布 · 去可视化」，href 为 `/lab?ws=linear-algebra&viz=viz.photosynthesis&node=n.solvability`；点击后实验室还原同一上下文。详情栏「取消挂载」后该节消失，工具栏「撤销」可恢复。
+- 已知限制：① 示例工作区的写入落在浏览器覆盖层（demo store 的既定行为），没有改 `content/demo`；② 力学导图仍是随站发布的整图示例，不读当前工作区、不参与 `viz` 挂载；③ 本轮浏览器面板仍为隐藏态，截图不可用，验证以 `evaluate_script` 读取宿主 DOM 为准；④ 非示例工作区的手动流程未在浏览器里跑（未在本机创建额外工作区），由单元测试覆盖 `collectWorkspaceFormulas` 的任意 store 与无导图分支。
+
+---
+
+## 2026-11-24 · QoderWang2 · 实验室接入光合作用与二次曲面、记忆图谱接入力学导图
+
+**用户指令**：把 visualization 的光合作用网页与 quadric-surfaces 的二次曲面网页接入可视化实验室；力学导图接入记忆图谱板块；接入方式参考关联探索示例的接入方式与交互接口。
+
+**范围**：三张自包含静态页随站发布；实验室增加两个预置结果；图谱增加一张示例导图卡。**不做**：把力学页转换成 `maps/mind.json`（MDoc）、从工作区收集公式、改可视化页内部逻辑、提交与部署。
+
+**接入方式**（与关联探索示例同一套约定）
+
+- 静态页放 `content/visualizations/`，由 `vite.config.ts` 的 `publicDir = ../../content` 直接服务（讲义样张 iframe 用的同一条路）。
+- 地址携带状态：实验室沿用 `?q=` 预填问题、图谱沿用 `?ws=` `?map=`，结果可深链。
+- 生成能力仍按「示例结果」标注，页面内交互由页面自己完成，宿主不注入假数据。
+
+**改动**
+
+- `content/visualizations/photosynthesis.html`：取 `visualization-demo/光合作用/光合作用单画布可视化v4-第17轮原版.html`（用户所称「第七轮原版」；源目录无第七轮文件，取最新的「原版」而非「改动前」）。
+- `content/visualizations/quadric-surfaces.html`：取 `visualization-demo/quadric-surfaces/index.html`。
+- `content/visualizations/mechanics-mindmap.html`：取 `visualization-demo/力学导图/力学思维导图 v2(2).html`（约 2.3 MB，打开该卡时才加载）。
+- `features/lab/tools.ts`：注册 `photosynthesis`、`quadric-surfaces` 两件真实实验，计入封面「真实实验」统计。
+- `features/lab/LabPage.tsx`：预置题与结果解耦（`Result` 联合类型）；`?q=` 初始化与写回；`VizWindow` 用 `<iframe class="lab-frame">` 承载并标「示例结果」、给「在新窗口打开」；未命中时列出三个示例。
+- `features/atlas/AtlasPage.tsx`：`MAPS` 增加 `mechanics`（`demoOnly`），示例工作区出现「力学思维导图」卡；`?map=mechanics` 可直接打开；复用画布全屏；非示例工作区不显示该卡。
+- `styles/lab.css`（`.lab-frame`、`.lab-note-asks`）与 `styles/atlas.css`（`.atlas-embed*`）。
+
+**验证**
+
+- 四道门：`verify:content` 通过；`typecheck` 通过；18 个测试文件 / 206 项测试通过；`build` 通过，产物含 `apps/web/dist/visualizations/` 三份页面。
+- 浏览器（dev，localhost:5173）：`/lab` 显示四个预置；「光合作用的全过程」iframe 加载成功、页内 SVG 存在、标题为「光合作用 · 单画布呈现过程之间的联系」；「二次曲面的标准型与截线」iframe 加载成功、参数区可见；`?q=` 未命中时列出三个示例按钮；正交投影实验仍是真交互（读数 |b−p| 2.17、|b−q| 2.93、r·a 0.00）。
+- `/atlas?ws=linear-algebra&map=mechanics`：选择页出现「力学思维导图」卡；打开后 iframe 加载、正文含「牛顿运动定律」「理论骨架」，页内 SVG 存在，示例说明与新窗口链接可见。
+- 已知限制：本轮浏览器面板处于隐藏态，`take_screenshot` 返回 0×0（与 `HANDOFF.md` §6 的环境限制一致），因此以 `evaluate_script` 读取宿主 DOM 与 iframe 内的 `contentDocument` 验证，未新增截图；力学页较大，窄屏下靠 iframe 内部滚动。
+
+---
+
+## 2026-11-24 · QoderWang1 · 关联导图全屏可编辑与可读（#56）
+
+**用户指令**：关联探索的导图界面全屏之后还得可编辑、可读。
+
+**范围**：全屏关联图的阅读缩放、画布与节点编辑、关系详情交互及浏览器回归。**不做**：私人 `workspace/`、部署、新建站点、访问范围、`main` 与真实 API key 质量评测。
+
+**交付状态**：本地实现与验收完成，实现提交 `495d50c`；日志与证据随本轮文档提交，未部署。
+
+**根因与修复**
+
+- 原全屏按宽高整体适配，1440×900 下缩放为 `0.614`，节点实际只有 `9.2px`。全屏改为保底 `1:1`，画布两个方向可滚动/拖动；图大于视口时通过平移查看，不再为塞进窗口牺牲字号。
+- 全屏对话框虽为 `position: fixed`，但仍处在 `.main` 的 `z-index: 1` 层叠上下文内，工具条被 `z-index: 300` 的页眉遮住；单改对话框 `z-index` 无效。改用 `createPortal` 挂到 `document.body`，对话框置于页眉之上。
+- 全屏切换会重挂载工具条，焦点可能落到对话框外，导致仅在对话框上监听的 Esc 失效。进入全屏时聚焦对话框，退出时恢复焦点；Esc 改为文档级监听，并锁定/恢复页面与根元素滚动。
+- `ArgGraph` 的 `fit="both"` 更名为语义准确的 `fit="fullscreen"`；正常侧栏缩放行为不变。
+
+**浏览器回归**
+
+- 扩充 `scripts/e2e-connection-pan.mjs`，在全屏状态检查实际字号、对话框覆盖、工具条坐标与 `elementFromPoint` 命中、页面滚动锁，避免“按钮存在但被遮住”的假通过。
+- 1440×900 真实鼠标验收：节点字号 `15.0px`；拖动节点、双击改名、加节点、删除节点、点关系看理由、背景平移全部通过；Esc 退出后改名仍保留。
+- 375×812 窄屏全屏：节点字号 `15.0px`，工具条均在视口内且实际可命中，无页面横向溢出，Esc 可退出。
+- 切换预置示例的等待条件增加“URL 已变化且目标标题已渲染”，消除同文档查询参数切换时旧页元素造成的加载竞态。
+- 既有四个预置、工作区六张讲义图与主讲义桌面/窄屏验收继续通过；应用控制台、运行时异常与资源错误均为 0。
+- 新截图：`docs/evidence/r2-explore-fragments-fullscreen.png`、`r2-explore-fragments-fullscreen-detail.png`、`r2-explore-fragments-narrow-fullscreen.png`，已人工查看。
+
+**最终四道门**
+
+- `npm run verify:content`：内容校验通过。
+- `npm run typecheck`：通过。
+- `npm run test`：18 个测试文件、206 项测试全部通过。
+- `npm run build`：463 个模块，`✓ built in 924ms`，入口 `apps/web/dist/assets/index-BC-iDKjR.js`。
+
+**已知限制 / 下一步**
+
+- 大图在全屏中默认保持原始字号，不会一次显示全图；需要拖动画布查看。没有新增缩放/总览控件。
+- 浏览器脚本依赖本机固定 Chrome 路径与端口，不是跨平台测试框架。未部署、未改访问范围、未碰 `main`；提交与推送仅限当前 `task/R2-L4-connection-QoderWang2` 分支。
+
+---
+
+## 2026-11-24 · QoderWang1 · 讲义配图契约、demo 图示与关联导图拖拽
+
+**用户指令**：教材必须为抽象概念配恰当图示，把该要求写进讲义书写规则并更新 demo；关联探索导图要能用鼠标拖动画布。
+
+**范围**：讲义生成契约与质量门、现有讲义/探索 demo 的解释性图示、关联图背景平移与回归测试。**不做**：私人 `workspace/`、重复部署、新建站点、合并 `main`、真实 API key 质量评测。
+
+**交付状态**：本地实现与验收完成，实现提交 `c713f19`；日志与证据随本轮文档提交，未部署。公网仍是 #52 / #53 发布版本。
+
+**改动**
+
+- `prompts/NOTE_GENERATION.md`、`prompts/CONNECTION_EXPLORER.md`、`prompts/QUALITY_BAR.md`：把“每节至少一张解释性图、核心定义/关键推导/对象映射首次出现处必须配图”写成硬要求；图须在正文就地引用，有连续编号、具体图注、可核对来源与许可、具体 alt，SVG 还须有 `title` / `desc`。`docs/QUALITY_GATES.md` 新增 A14 与对应手测项。
+- 主讲义补齐图 2-1～图 2-5：最近点、残差正交到法方程、最佳直线、参数不唯一、投影矩阵。四个探索示例分别补 1 / 3 / 1 / 1 张图，覆盖统一投影模型、向量组即映射、四个子空间、换基、机械臂奇异位形、生物连续动力学与人工静态映射。新增 8 张本项目原创 SVG（MIT），并给既有 SVG 补无障碍标题与描述；没有用装饰图凑数，也未引入 Mermaid 或新依赖。
+- `content/demo/linear-algebra/rendered/src.html` 与 `index.html` 同步，用仓库已有 KaTeX 重新生成静态样张；工作区文件树登记问题图与图 2-1～2-5，清除已改名的 `2-2.svg` 死链。
+- `ArgGraph.tsx` 给关联图容器补 Pointer Events 背景平移：记录起始 client 坐标与 `scrollLeft/scrollTop`，拖动时更新滚动偏移；显式排除节点、按钮、输入框与链接，因此节点拖拽和控件点击不走画布平移。CSS 增加 `grab/grabbing` 状态。
+- 阅读器窄屏修复：图片所在段落原继承正文 `text-indent: 2em`，满宽图被右移并裁切；仅为图片段落取消缩进，并让图片块级居中、自适应宽度。
+
+**确定性回归**
+
+- 新增 `apps/web/src/content/demoVisuals.test.ts`（15 项）：覆盖主讲义与四个探索文档，检查至少一图、编号连续、正文引用、具体 alt、本地文件存在、SVG `title` / `desc`、原创与 MIT 图注。
+- 扩充 `demoNote.test.ts`（23 项）：五张图的编号/位置、静态样张 `src.html` 与 `index.html` 同步、文件树六个图片地址均编码正确且指向真实文件。针对性命令 `npx vitest run src/content/demoNote.test.ts src/content/demoVisuals.test.ts`：38 项通过。
+- 新增 `scripts/e2e-connection-pan.mjs`：用 Node 内置 WebSocket 驱动本机无头 Chrome，不增加依赖；真实鼠标拖动背景 180px 后 `scrollLeft 677 -> 497`，节点坐标不变；另拖节点 45×20px，节点坐标改变。
+
+**浏览器验收**
+
+- 脚本按预置问题文本选择示例，并断言标题、图源与图数，避免同模式选错示例。最终四个预置均通过：碎片 1 图 / 143 组公式，元思考 3 图 / 253 组，机器人 1 图 / 78 组，生物神经 × AI 1 图 / 51 组；KaTeX 错误 0，桌面 1440×900 与窄屏 375×812 图片均加载且不越出纸张，页面无横向溢出。
+- 工作台文件树六张讲义图逐张真实打开成功；主讲义 5 图 / 193 组公式同样通过桌面与窄屏检查。应用控制台、运行时异常与资源错误均为 0（仅排除浏览器自动请求且应用未声明的 `/favicon.ico`）。
+- 截图：`docs/evidence/r2-explore-{fragments,meta,cross,cross-bio}-{desktop,figure,narrow,narrow-figure}.png`、`docs/evidence/r2-note-2-1-{desktop,figure,narrow,narrow-figure}.png`。已人工查看桌面与窄屏关键截图，生物神经图显示连续状态到离散更新/发放与人工静态映射的对照。
+
+**验收过程中修正的问题**
+
+- 首轮浏览器脚本只点击首个 `.cx-try`，`cross-bio` 实际重复打开了机器人示例；截图复查发现后，改为按问题文本选择并核对标题/图源，最终生物神经示例的 51 组公式与新图才被真正验收。
+- 最终 `typecheck` 曾报测试中未使用的 `KB_URL`，已删除；四道门随后全绿。
+
+**最终四道门**
+
+- `npm run verify:content`：内容校验通过（节点 / 关系 / 引用完整性 / 讲义链接 / 资源来源 / 覆盖矩阵 / 布局与证据）。
+- `npm run typecheck`：通过。
+- `npm run test`：18 个测试文件、206 项测试全部通过。
+- `npm run build`：463 个模块，`✓ built in 818ms`，入口 `apps/web/dist/assets/index-TqAXAoQ5.js`。
+
+**已知限制 / 下一步**
+
+- 本轮全部图示为本项目原创 SVG；没有新增网络图片，因此不依赖外部图片服务。真实 API key 的生成质量仍未实测，自动检查不能证明模型以后会主动配恰当的图。
+- 既有 `generalizes` 方向冲突（#47）未在本轮处理。浏览器脚本依赖本机固定 Chrome 路径与 4174/9338 端口，适合当前环境复验，不是跨平台测试框架。
+- 未部署、未改访问范围、未碰 `main`；提交与推送仅限当前 `task/R2-L4-connection-QoderWang2` 分支。是否把本轮构建发布到现有公网站点，由用户后续明确。
+
+---
+
+## 2026-11-24 · QoderWang2 · R2-L4 生物神经网络 × AI 示例：提交、推送与公网发布
+
+**用户指令**：「不把demo放网页里吗」。授权范围是当前任务分支与既有个人版公开站点；不推送 `main`、不新建站点、不改变现有公开访问范围。
+
+**提交与推送**
+
+- 将 #51 的 8 个文件提交为 `17bed90`（`feat: 新增生物神经与 AI 跨学科探索示例`），共 352 行新增、11 行删除；提交包含新的 `cross-bio.md`、预置注册、测试、提示词、产品规格与当时的过程记录。
+- 推送 `17bed90` 到 `origin/task/R2-L4-connection-QoderWang2`，推送后分支与上游一致、工作树干净。**更正 #51 的「未提交 / 未 push / 未部署」状态：代码已提交、已推送并已发布。**
+- 发布前复核 `apps/web/dist`：入口 `index-BONNVgzf.js`，`ConnectionPage-C92u2DAy.js` 含 `cross-bio` 与新标题；无 source map，私钥 / 常见 API key 模式扫描无命中。
+
+**部署**
+
+- 当前会话根目录不是站点源目录，因此由原站点所属的既有部署会话在 `C:\Users\Wang\Desktop\QODER` 执行发布；没有复制源码、切换站点或新建项目。
+- 复用 projectId `01a1ce04-6ca0-7221-9e4a-22dfca5a7d65`，以当前变化的 `dist` 新建 action `1c88e539-e7f9-49ba-8814-49731d3fdd54`，`webDirectory: dist`、`spa: true`；静态发布无 Function / 数据库依赖。
+- `publish_site` 后 `published: true`，operation `01a20d4e-6cd4-77f1-b818-7e9a2bb80f16` 为 `succeeded/committed`，`readiness: publication_completed`；deployment `01a20d4e-2b83-7a9f-ac66-1cf39bf40533`，release `01a20d4e-6cd4-77ae-a07f-a0182c816392`。
+- 站点保持 `active` / `public`，backend disabled，地址仍为 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`；Desktop 已用同一 action 打开发布确认。
+
+**线上验收**
+
+- 部署会话实际打开线上 `/connection`，切到「跨学科并联」后可选择并运行「生物神经网络 × 计算机科学/AI」；正文《神经元不是一个会学习的加权求和》完整，10 个章节、51 组 KaTeX，关联图 SVG 为 1651×732，五类 epistemic 图例齐全。
+- 本会话再次以匿名 Node HTTPS 请求实测：`/`、`/connection` 与任意不存在路径均返回 200 + 应用外壳，入口均为 `index-BONNVgzf.js`；线上 `/assets/ConnectionPage-C92u2DAy.js` 返回 200、`application/javascript`、143,046 B，且含 `cross-bio` 与新标题。
+- `Accept: */*` 的深链 404 是 ADR-0002 已记录的请求头相关回退行为；带文档请求头的匿名深链为 200，本次不是回退缺陷。
+
+**已知限制 / 下一步**
+
+- 内置浏览器面板仍不可见，指针与截图不可用；线上切换经脚本触发并做结构检查，**未宣称桌面视觉 / 截图 QA 通过**。
+- 控制台只有可选历史文件 `threads.json` 的一条预期 404（空历史路径，非本次引入）。
+- 未用真实 API key 生成；自动测试与示例审读不能替代真实模型质量实测。下一步由用户判断线上示例是否与机器人示例一样“点通”。
+
+---
+
+## 2026-11-24 · QoderWang2 · R2-L4 关联探索追加示例：生物神经网络 × 计算机科学/AI
+
+**用户指令**：「跨学科可以像刚刚那样再做一个生物神经网络*计算机科学/AI的demo吗」。
+
+**范围**：保留现有机器人示例，新增一个同模式的生物神经网络 × 计算机科学/AI 预置 demo；同步预置注册、测试与必要说明。不改三种模式的领域契约、图谱 schema 或现有示例。**本轮不做提交、推送或公网部署。**
+
+**认领与当前状态**：已从干净的 `3797e25` 开始，交接接龙 #50 记录认领。本轮内容已完成并通过本地验证；改动仍在本地工作树，**未提交、未推送、未部署**。
+
+**改动**
+
+- `content/demo/linear-algebra/explore/cross-bio.md`：新增《神经元不是一个会学习的加权求和》，从生物与人工网络各自的问题出发，覆盖 Hodgkin–Huxley 膜动力学、连续时间到数值离散化、漏电发放与速率读出、动态阈值、反向传播与信用分配、Hebb / STDP / 奖励调制、预测误差与加权最小二乘、神经形态能耗边界，以及四类可失败的最小验证。关联图 30 个节点、34 条关系；C1 / C2 分开，5 条类比边均写失效边界，并复用已有正交补与最小二乘节点。
+- `apps/web/src/features/connection/presets.ts`：注册 `cross-bio` 为第二个 `cross` 预置；原有机器人示例与现有按模式筛选的 UI 不变。
+- `apps/web/src/features/connection/explore.test.ts`：跨学科 C1 / C2 不变量改为覆盖全部跨学科预置；保留机器人专属断言，新增生物神经 × AI 的模型边界、实验条件、资源锚点与残差类比断言。
+- `prompts/EXPLORE_CROSS.md` → v5.1、`prompts/registry.json`：补充生物神经 × AI 的第二种入口，强调动力系统对应、梯度算法与生物机制的区别、局部学习与全局信用、稀疏事件的能耗条件；仍不把示例当作固定章节模板。
+- `docs/PRODUCT_SPEC.md`：说明示例工作区现有两篇相互独立的跨学科示范，可迁移的是推导强度、证据分层与可失败验证，不是标题或公式清单。
+
+**科学审读与修正**
+
+- 只读审读覆盖 HH、LIF、STDP、反向传播递推、预测误差梯度、能耗论断、三条 DOI 与 C1 / C2 标注。审读确认核心公式与来源无误，指出并已修正：LIF 基本公式不自动包含不应期；预测精度矩阵须固定且正定；资源卡改锚到 HH 与反向传播正文；残差联系改为 C2 类比并限定线性最小二乘最优点和加权内积；数值验证限定光滑轨迹并插值脉冲时刻；速率验证明确等时间平均输入及同任务、读出、损失。
+- 可选澄清也已采纳：HH 外向电流符号约定写明；非线性模型一般只在最优点满足加权切空间正交。
+
+**验证**
+
+- 最终实跑 `npm run verify:content`、`npm run typecheck`、`npm run test`、`npm run build` 全部通过；17 个测试文件、188 项测试通过，463 个模块完成生产构建，最终入口 `index-BONNVgzf.js`。
+- 本地生产预览实际选择“生物神经网络 × 计算机科学/AI”：正文、三张资源卡、51 组 KaTeX 与 34 条关系正常显示，KaTeX 错误 0、控制台消息 0、页面横向溢出为否；596×620 视口可完整操作预置切换与关系详情。
+- 点开“反向传播梯度 → 生物神经元”和“预测误差 → 正交补中的残差”，C2「类比 / 借来的视角」、前提与不适用情形均显示；后者明确写出加权切空间边界。
+- 截图接口返回 `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`（报告视口 596×620，但页面 surface 不可见），**未取得截图，桌面视觉与截图证据未验证**；本次结构、溢出与交互检查不冒充视觉验收。
+
+**已知限制 / 下一步**
+
+- 未用真实 API key 生成；自动测试与人工示例审读不能替代真实模型质量实测，也不能证明生物大脑执行人工算法。
+- 用户需判断这篇示例是否与机器人示例一样“点通”；如需上线或提交，须另给明确指令。本轮不 push、不部署，线上仍是 #49 版本。
+
+---
+
+## 2026-11-24（夜）· QoderWang2 · R2-L4 关联探索第六轮：提交、推送与公网发布
+
+**用户指令**：「推送，提交，部署」。授权范围是当前任务分支与既有个人版公开站点，不含推送 `main`、合并 PR 或新建站点。
+
+**提交与推送**
+
+- 按依赖、功能、文档拆为三笔：`5b1b275`（PDF / PPT 依赖）、`81e6508`（关联探索三种模式、核对、导出与网络接入）、`5503acb`（第六轮演进、验收证据与交接状态）。
+- 推送 `task/R2-L4-connection-QoderWang2` 到 `origin`，上游跟踪已建立；推送前工作树干净，未纳入私人课程材料或凭据。
+- 这三笔包含 #43–#48 的全部工作。**更正 #43–#48 的「未提交 / 未 push」状态：均已完成。**
+
+**部署**
+
+- 发布前复核 `apps/web/dist/index.html`：入口为 `index-yujg0S_A.js`，样式为 `index-Cclu6rWC.css`；无 source map，未发现凭据 / 私钥模式。站点仍为静态、无 Function 或数据库依赖。
+- 首次 `prepare_site` 被当前会话根目录拒绝（`sites_current_session_required`），未生成 draft 或 publication。随后由工作目录正确的既有部署会话重试**同一 action 与同一组输入**，没有新建 action 或站点。
+- `prepare_site` 复用 projectId `01a1ce04-6ca0-7221-9e4a-22dfca5a7d65`，action `0a30eb98-0032-44e6-9faf-58da502245f1`，`webDirectory: dist`、`spa: true`。草稿 `artifactReady=true`、`dependenciesReady=true`、`canPublish=true`，无 blocker。
+- `publish_site` 后 `published: true`，operation `01a20d01-687f-7aa6-bd0c-9a627b22d919` 为 `succeeded/committed`，`readiness: publication_completed`；deployment `01a20d01-0c5d-70e5-b44b-ecff880f897b`，release `01a20d01-687f-7a41-bde3-e0f381014e87`。
+- 站点 `active` / `public` / 静态，backend disabled，公网地址仍为 `https://vein-probe-personal-dx7phlm8g8e.qoder.zone`。Desktop 已用同一 action 打开发布确认。
+
+**线上验收**
+
+- 匿名 curl（不带 cookie，`Accept: text/html` + `Sec-Fetch-Dest: document`）：`/`、`/connection`、`/workspace`、`/atlas`、`/guide` 与任意不存在路径均 200 + 应用外壳，入口全部为本次构建的 `index-yujg0S_A.js`。
+- JS / CSS 资源均 200 且 content-type 正确，大小分别为 289,179 B / 25,059 B。
+- **未做**视觉 / 移动端 QA，也未用真实 API key 生成；沿用第六轮已记录的限制。线上路由与资源验收不等于真实模型质量验收。
+
+---
+
+## 2026-11-24（夜）· QoderWang2 · R2-L4 关联探索第六轮：碎片串联证明共同模型，跨学科并联按差异分叉生长
+
+**范围**：只继续修缮碎片串联与跨学科并联的规范、运行时阶段提示、金样例、测试与用户流程说明。学科元思考本轮未改；`features/lab/` 未动。
+
+**用户反馈**：不要找到一个共同口号就停笔。碎片串联要还原每个原问题，形式化共同模型，完整证明核心等价，再继续统一求解、唯一性、反例、边界与可迁移动作；对象唯一与参数唯一不能混为一谈。跨学科并联不能只是“共用一个数学接口”，要从两边自己的对象、问题、方法、约束与成功标准出发，探索知识、机制、能力、思维、方法、创造、反向与多向迁移，让差异和局限长出新的研究问题；不强制一个中心公式或一个贯穿案例，证明、实验、模型推断、类比与猜想必须分开。
+
+**根因**：上一版碎片示例虽已直接给判断，但仍停在“同一个投影定理”，缺少原问题还原、充要证明、统一求解与两类唯一性。跨学科示例则主要沿雅可比一个入口推进，容易让读者误以为跨学科发现就是找到一个共享公式。运行时目录也仍按单线续写，没有给分叉、对照与回头细化留出明确空间。
+
+**改动**
+
+- `prompts/CONNECTION_EXPLORER.md` → v7.0：三种模式各自规定学习结果与推进方式；碎片串联为“发现 → 形式化 → 证明 → 求解 → 区分唯一性 → 边界 → 接回网络”；跨学科并联为七个迁移镜头、差异驱动发现、多条生长路径与 C1/C2 证据分层。明确“当且仅当 / 等价 / 充要”两个方向都证，以及“功能相同、算法相同、实现相同”是不同判断。示例只作质量规范，不是可套用的章节模板。
+- `prompts/EXPLORE_FRAGMENTS.md` → v5.0：先拆研究对象、变量、条件、目标与机制，再定统一模型的强度；对应表改为可选；补统一求解、对象 / 参数唯一性、四个基本子空间、数值稳定性、反例、推广与网络接点。明确加权内积须对称正定、法方程条件数平方、QR / SVD 的选择条件、平行线、ℓ¹、弯曲集合、函数空间闭性、傅里叶归一化与 Gauss–Newton 的局部地位。
+- `prompts/EXPLORE_CROSS.md` → v5.0：从两门学科自身的问题与证据标准出发；七类迁移是镜头而非固定章节；每条实质联系交代来源、对应、改变了什么、暴露了什么差异、可迁移到哪里、如何验证；允许分叉、对照、回头细化，不强制中心公式或贯穿案例。
+- `prompts/QUALITY_BAR.md` 与 `prompts/registry.json`：同步两种模式新的输出与完成标准。
+- `apps/web/src/features/connection/exploreAi.ts`：碎片阶段明确要求形式化共同模型、双向证明、统一求解与两类唯一性；追问须接回已有讲义、关系或此前对话。跨学科目录改为可生长的探索图，新增 `cross` 小节引导与专门的收尾阶段，不再要求每节接住上一节留下的问题。
+- `content/demo/linear-algebra/explore/fragments.md` rev 5 → 6，重写为《三种最短距离，同一个垂直条件》：把点到平面、异面直线与最小二乘还原成仿射投影问题；证充分性与必要性，并给不用微积分的一阶变化证明；用 Moore–Penrose 伪逆统一写解、残差与距离；分清拟合点和参数唯一性；算三个例子；补四个子空间、数值稳定性、加权 / ℓ¹ / 曲线 / 函数空间 / Gauss–Newton 的边界，以及可迁移的四步动作和两仿射集之差的后续问题。关联图 22 个节点、23 条关系，补齐连通边以支持导图转换。
+- `content/demo/linear-algebra/explore/cross.md` rev 4 → 5，重写为《机械臂的每一个瞬间是一个矩阵》：从非线性正运动学到精确瞬时速度，再分叉到切空间、子空间的物理意义、瞬时与有限自运动、静力对偶、奇异位形、逆速度与正则化；由差异继续走向 SO(3)、李代数、质量 / 坐标度量、反向传播和有限自运动。补可失败的小步长实验，分开数学推导、实验、优化推断、类比与猜想，并接回已有讲义的残差结构。关联图 29 个节点、24 条关系，C1 / C2 分开，类比边只在 C2。
+- `apps/web/src/features/connection/explore.test.ts`：新增碎片统一模型 / 双向证明 / 两类唯一性断言、金样例公式与四子空间断言、跨学科 C1 / C2 与差异分支断言；目录测试从“单线推进”改为“元思考成网、跨学科可分叉对照回头”；布局断言随新的图层语义更新。
+- `docs/PRODUCT_SPEC.md`、`docs/UX_AND_FLOWS.md`、`docs/CONTEST_SUBMISSION.md`：同步新流程与可选对应表，避免旧版单线 / 必填表行为从说明文档回流。
+
+**验证**
+
+- 最终实跑 `npm run verify:content`、`npm run typecheck`、`npm run test`、`npm run build` 全部通过；17 个测试文件、183 项测试通过，462 个模块完成生产构建。
+- 两个示例都经浏览器实际打开：KaTeX 红字 0、正文裸露段落锚点 0；碎片图显示 23 条关系，跨学科图显示 24 条关系。点开跨学科“阻尼最小二乘 → 关节力矩”的类比边，原因、前提与不适用情形均显示。
+- 控制台只有 Vite 连接和 React DevTools 提示，无错误或警告。当前 Qoder 内置浏览器视口为 0×0，无法做截图、桌面 / 移动端视觉与横向溢出验收，**这部分未验证**；没有把结构性 DOM 检查说成视觉检查。
+- 未用真实 API key 生成；提示词与示例的自动测试不能替代真实模型质量实测。
+
+**已知缺陷 / 下一步**
+
+- `generalizes` 的方向在 `CONNECTION_EXPLORER.md` 与 `DOMAIN_MODEL.md` 两处仍相反，沿用 #47 记录，本轮未改。
+- 用户需判断两篇新示例是否真正“点通”；随后用真实 key 各问一次，检查模型是否套示例、跳过证明或混淆证据层级。
+- #43–#48 均未提交、未 push、未部署；本地 `apps/web/dist` 已是本轮最终构建。提交与发布须等用户明确指令。
+
+---
+
+## 2026-11-24（夜）· QoderWang2 · R2-L4 关联探索第五轮：学科元思考从「一条叙事链」改成「几类对象 × 三个动作」
+
+**范围**：只动学科元思考（示例、模式提示词、分步写作的阶段文本）。用户明确：「其他两个功能先不动」——碎片串联与跨学科并联的示例、提示词、生成路径本轮未改。不动 `features/lab/`。
+
+**用户反馈**：用户读完上一版示例《一个线性映射，七个问题》后转来一份逐条评审，结论是「不合格」：它构造了一条看起来连贯的叙事线，却没有建立起这门课的知识生成体系。要点归纳如下（原文不入库）：
+
+1. 把叙述顺序当成了生成逻辑。「后一个问题总是前一个答案留下的缺口」把四种不同的联系混成了一种：依赖、等价、推广、动机。
+2. 「研究对象只有一个：线性映射」过窄。文中自己发现了接缝（映射与二次型不同类），却没有回头改框架。
+3. 跳过了线性组合、张成、线性相关性、基、维数，直接从矩阵讲起。
+4. 四个基本子空间讲浅了，通篇谈「这张图」却没有画出来。
+5. 不变量与完全不变量没有分开；「换法越少留下越多」只在有包含关系时成立。
+6. 十余处为了叙事顺畅而不严谨的说法（缺「方阵」条件、行列式的符号、旋转的特征方向、伪逆的唯一性、条件数是相对误差等）。
+7. 原则：「提纲挈领不等于压缩知识，而是用更高层次的结构组织丰富的知识。」
+
+**根因**：缺陷写在我们自己的规则里。`prompts/EXPLORE_META.md` v4.0 明文要求「研究的对象……尽量只有一个」「全篇是一条推进的链」，并把「并列的分类」列为反例；分步写作的目录提示也写着「目录是一条推进的链：后一节的问题是前一节的答案留下的缺口」。示例是照这条规则写的，换一门课会犯同样的错。所以这一轮示例与规则一起改。
+
+**没有照搬的一处**：评审建议改成八条并列的主线。我们没有采用。八条并列的主线是高一层的分类，清单总能「覆盖」一切，但覆盖不等于生成；其中「分解」与「分类」两条是同一个定理读了两遍（每个标准形都是一次空间拆分）。新稿用的是「几类对象 × 同一套动作」，八条主线的内容都落在这张表的格子里。这个取舍已向用户说明，由用户判断。
+
+**改动**
+
+- `content/demo/linear-algebra/explore/meta.md` rev 5 → 6，整篇重写为《一种运算，四类对象，三个动作》。旧稿另存在仓库外。
+  - 开头：线性组合是唯一的运算；对象四类（空间、映射、算子、双线性型）；动作三个（生成、表示、分类）。随后一段写明四种联系的区别。
+  - 「一组向量就是一个映射」：补回线性组合、张成、相关性、基、维数；用「系数 ↦ 组合」这个映射把向量组与方程组并成一件事（表 1）；维数是第一个完全不变量；秩–零化度是一次清点，方阵条件写明。
+  - 「列在生成，行在测量」：四个子空间是 A 与 Aᵀ 的像和核；左零空间给出无解的证明（3b₁−b₂=0）；行秩等于列秩用 A=CR 证；**图 1 新画**（`explore/figures/四个子空间.svg`）；写明定义不需要内积，图上的直角需要。
+  - 「给空间一把尺子」：内积是被选中的一个双线性型；⟨Ax,y⟩=⟨x,Aᵀy⟩ 推出两个正交补；法方程；Nul(AᵀA)=Nul(A) → 秩相等 → 半正定、列无关时正定；各列相关时最短的最小二乘解与伪逆（算到 (0.08, 0.16)）。「无解 → 最小二乘」标明是动机，不是依赖。
+  - 「同一张数表，三样东西」：同一张表按映射、算子、型三种换基规则变；用行列式做试验（只剩是否为零 / 只剩符号 / 数值保留）；表 2 是对象 × 允许的换基 × 完全不变量 × 最简形；I 与 [1 1;0 1] 说明特征值不是完全不变量；相似与正交相抵互不包含的一对例子；最简形即一次空间拆分；谱定理处相似与合同重合；奇异值分解按任意 m×n 实矩阵陈述，并指出它把图 1 细化一层。
+  - 「只有算子可以反复作用」：不变子空间；Bᵏ 算到数；90° 与 180° 旋转；若尔当块带来 k 的多项式；微分方程解集是核。
+  - 「把表里没写的东西放进去」：小振动简正模（尺子换成质量矩阵）、低秩逼近（中心化、平方和误差两个前提）、条件数（可逆方阵、相对误差）；留一格给读者（只许行变换时什么不变）；三处管不到的地方（多线性、无限维、数值代价）。
+  - 关联图 20 → 28 个节点，25 → 41 条线，分六层。动机类的线用 `applies-to` + 「教学归纳」虚线，说明里写「这是动机，不是推出」。
+- `prompts/EXPLORE_META.md` v4.0 → v5.0：三层（知识点 / 联系 / 生成想法），上层管下层；对象不强行并成一个，出现接缝就回头改框架；不跳过基础概念；四种联系及各自的画法；一节「严谨」自查清单（全称判断找反例、每个结论带条件、一张数表记的是哪种对象、不变量与完全不变量、可比性、前后一致）；该有图的地方画出来。
+- `apps/web/src/features/connection/exploreAi.ts`：新增 `STAGE_OUTLINE_META`（目录是一张网，每项写明与前面各节是哪一种联系，第一项从最基础的概念讲起）；`stageSection` 增加可选参数，元思考的小节不再要求「接住上一节留下的问题」。跨学科并联仍用原来的文本，行为不变。
+- `prompts/registry.json`：`connection.meta` 的输出与状态说明更新。
+- `explore.test.ts`：元思考的断言改为新规则（基础概念在、对象不止一类、完全不变量、配图存在、图上只有一个枢纽、四种联系分开、动机线不是前提或推出）；新增阶段文本的测试（元思考不再要求单线，跨学科不变）。
+
+**没有做的决定**：没有新增第 12 种关系类型「动机」。关系类型是全站共用的领域模型（图谱、封面、校验脚本、导图都依赖），为一篇示例扩枚举的代价大于收益；动机用已有类型如实表达，并用认知状态「教学归纳」加文字区分。若日后多篇内容都需要它，再走 `DOMAIN_MODEL.md` 的变更。
+
+**验证**
+
+- `npm run verify:content` 通过；`npm run typecheck` 通过；`npm run test` 181/181；`npm run build` 通过。
+- 端到端（无头 Chrome，4174 端口，35 项）35/35：含「旧历史打开时换成新版示例、之前的不认同保留」。
+- 逐屏截图核对新稿：KaTeX 253 处，红字 0；两张表、一幅图、四张资源卡正常；窄屏 390 无正文溢出。配图初稿有两处文字被线或面板遮住，已改。
+- 证据：`docs/evidence/r2l4e-meta-1440.png`、`r2l4e-meta-figure-1440.png`、`r2l4e-meta-table-1440.png`、`r2l4e-meta-graph-full-1440.png`、`r2l4e-meta-390.png`。
+
+**已知缺陷 / 未验证**
+
+- 真实模型按 v5.0 提示词写出来的质量**未实测**。规则改了不等于模型做得到；尤其「严谨」一节靠自查，没有确定性的核对手段。
+- 新示例的数学由编写者逐条核对并用同一个 2×2 例子验算过，**没有第三方审读**。
+- 关联图 41 条线，侧栏里偏密；全屏可读。没有为它改图的布局。
+- `prompts/CONNECTION_EXPLORER.md` §6 写「`generalizes` 的 from 更一般」，`docs/DOMAIN_MODEL.md` 写「特例 → 一般」，两处方向相反。三篇示例都按前者画。本轮未处理，记在这里。
+- #43–#47 均未提交、未部署；本地 `apps/web/dist` 已是本轮构建。
+
+**下一步**：用户读新稿，判断「几类对象 × 三个动作」是否立得住；随后拿真实 key 在学科元思考里换一门课问一次，与示例并排比较。
+
+---
+
+## 2026-11-24（晚）· QoderWang2 · R2-L4 关联探索第四轮：三种模式是三种任务；示例是规范，不是模板
+
+**用户反馈（原话摘录）**：「碎片串联我很多时候……就是看到了几个题或者几个概念我觉得他们有关系，我就甩给你。这个时候很显然并不能遵照这个讲义的格式去写。而是应该先就事论事，提纲挈领讲明白关联，然后挨个阐述他们每一个怎么体现关联，最后再给一些更高维的东西」；「你的本质的分析说的非常的不好」（并给出一份用户认可的讲法：三种模式分别是找知识之间的内在联系、找一门学科的生成逻辑、找不同学科之间可以迁移的底层结构，三者不该共用一套模板）；「demo 是作为规范，但是不是作为模板。它绝对不可以成为公式化的套作……我要的就是你去点化我启发我让我 aha 的感觉」；「那个显示不认同的是干啥的我还是没看懂」。
+
+**根因**
+- 上一轮把「表 1 关系一览 → 按关系类型分节」定成三种模式共用的骨架。分类回答的是「这是哪一种关系」，读者问的是「这个关系是怎么来的」；骨架相同，三种任务也就被写成了同一种。
+- 碎片串联沿用了讲义的教学栏目（问题探讨、本节聚焦、练习与应用）。读者要的是一个回答，不是一堂课。
+- 提示词把示例的节名与栏目顺序当作示范骨架写了进去，`checkResult` 还会对「缺少问题探讨」报警——程序在强制套作。
+- 「显示不认同的」按钮在没有任何不认同的线时也出现，点了没有变化。
+
+**改了什么**
+- **三份示例按各自的任务重写**（rev 5 / 5 / 4），三篇没有一个相同的节名：
+  - 碎片串联「三种最短距离，同一个垂直条件」：第一段直接给判断（三个都是在平的集合里找最近点，最近等价于垂直）；再逐个落实到可以动手验证（异面直线化成点到平面；最小二乘的三个数据点就是 ℝ³ 里的一个点到一个平面，两种算法得到同一个 1/√6）；最后讲它靠什么成立（ℓ¹ 距离、圆、平行线三个反例）与同一句话还能说到哪里。不用任何教学栏目。图 14 节点 15 条线。
+  - 学科元思考「一个线性映射，七个问题」：一条推进的链，后一问是前一答留下的缺口；全篇用同一个 2×2 矩阵；照实指出框架的接缝（一张数表既记映射也记二次型）；收尾拿条件数、主成分分析、y″+y=0 来试这张图。图 20 节点 25 条线，唯一的根是线性映射。
+  - 跨学科并联「机械臂的每一个瞬间是一个矩阵」：先说线性是从求导来的，再沿机器人自己的问题走；「末端走不了的方向，恰好是结构能白白顶住的方向」一处把两个现象并成一次降秩；一张表给每条联系定性（同一个对象 / 可推导 / 借用的工具 / 类比）；两个方向都走，并留一个可检验的猜想。图 24 节点 19 条线。
+- **提示词 v6**（`CONNECTION_EXPLORER.md` v6.0，三份模式文件 v4.0）：目标从「列全」改为「讲通」（一句可检验的话、成立的条件与反例、能安放没讲过的东西）；动笔前的思考顺序与文章结构分开；教学栏目降为可选的写法；三份模式文件各写各的推进方式；写明示例是规范不是模板，并给出自查办法（节名换一个题目还能原样使用，就是套来的）。
+- **程序不再强制栏目**：`exploreAi.ts` 的分步说明去掉「必须带表 1」「收尾写练习」；`explore.ts` 去掉「缺少问题探讨」的警告。
+- **「不认同」按钮**：只有存在不认同的线时才出现，写成「找回不认同的 n 条」，展开后是「收起不认同的」。
+- **关联图初始位置**：侧栏放不下四列时，打开先停在最右一列（全图的枢纽），不再把它裁在视野外。
+- **规范**：`DESIGN.md` §13 补一段「规范，不是模板」。
+
+**怎么验证的**：`verify:content` 通过；typecheck 通过；`npm run test` 179 项通过（新增一项：三篇示例不共用任何节名、第一段是正文、碎片串联不含教学栏目）；构建通过。无头 Chrome 35 项全过（`%TEMP%/vein-e2e/drive-cx2.mjs`，新增三项：直接回答、无不认同时不出现找回按钮、枢纽在视野里）。1440 与 390 截图人工看过，无 KaTeX 红字、无横向溢出。截图 `docs/evidence/r2l4d-*.png` 四张。
+
+**已知缺陷 / 下一步**：真实 key 下模型能否不套示例、写出各自的结构，**未实测**——这是本轮最大的未知，单元测试只能守住示例本身。示例是否达到「点通」只能由用户判断。DESIGN §13 列出的四项版式仍未对齐。
+
+---
+
+## 2026-11-24（傍晚）· QoderWang2 · R2-L4 关联探索第三轮：对齐验收样张、以关系为主体重写
+
+**用户反馈（原话摘录）**：「你这个 UI 是参照讲义的格式的，但是很显然你的规范已经发生了偏移，请你自己去重新看讲义的 demo 的格式……不仅格式发生了偏移，你的语言表达上也发生了偏移」；「格式上还是有点怪怪的……把这些计入规范」（截图：没有旁栏的段落主栏左移）；「格式好丑……关联探索，重点在全面的关联，本质的关联，有逻辑的人思考的关联」（截图：问题探讨里一个独立成行的矩阵把句子截断）。
+
+**根因**
+- 版式偏移：阅读器后来加的样式没有逐项对照验收样张（`content/demo/linear-algebra/rendered/`）与参照教材，列表被 `base.css` 的全局重置吃掉、栏目里的换行被合并、没有旁栏的行用了另一套网格。
+- 内容偏移：上一轮的三篇示例是「讲一个主题」的讲义（四个基本子空间、微分运动学），关系散在叙述里。关联探索交付的应当是关系本身：先列全对象和关系，再按关系的类型讲清每一类的共同原因。
+
+**改了什么**
+- **阅读器对齐样张**（`NoteReader.tsx`、`reader.css`）：页眉、「第 N 节」两行标题、主栏位置固定（没有旁栏也不左移，整宽块单独放宽）、问题探讨图标与楷体蓝字加波浪线、本节聚焦圆点、相关信息与批判性思维楷体、单句提问段楷体、图表编号「▲ 图 / ▼ 表」、思维训练与思考·讨论蓝底两栏、练习与应用虚线标题两栏、栏目内软换行。资源卡支持外链（`[!res] 视频` + 正文里的链接，渲染成可点的卡片）。
+- **规范**：`docs/DESIGN.md` 新增 §13「讲义版式（以验收样张为准）」，13 条核对清单 + 偏移的根因 + 尚未对齐的项（（　　）右对齐、选项两栏、表头合并、分页）。其中一条：栏目里只用行内公式。
+- **三份示例以关系为主体重写**（rev 4 / 4 / 3）：
+  - 碎片串联「最近点问题的统一处理」：表 1 六条关系；节为同一个形式 / 同一个判据 / 同一个唯一性条件 / 两种算法的分工 / 只有欧氏距离才这样吗（ℓ¹ 反例）。图 11 节点 13 条线。
+  - 学科元思考「线性代数的整体结构」：问题探讨用各章给出的可逆条件；表 1 五类关系；节为等价 / 推出 / 推广 / 对偶 / 特征值与奇异值是一回事吗（似是而非）。图 17 节点 20 条线。
+  - 跨学科并联「刚体运动与微分运动学中的线性代数」：表 1 十组对应；节为同一个对象 / 同一个线性映射 / 同一组子空间 / 同一个秩条件 / 同一种方法 / 两边关心的不同；弹簧类比放进批判性思维栏目。图 19 节点 15 条线。
+  - 正文中文引号统一为全角。
+- **提示词 v5**（`CONNECTION_EXPLORER.md` v5.0，三份模式文件 v3.0）：先列全对象与关系（表 1「关系一览」），再按等价、推出、推广与特例、对偶、同一机制、似是而非分节，每类讲出能用一条定理或一个事实说清的共同原因；示范骨架改为新示例。分步写作的目录一步必须带表 1、节名不编号、按关系类型分节；收尾一步写思考·讨论、练习与答案解析。禁用表补「下文」「人们往往 / 教材通常」「走向……的一步」。
+
+**怎么验证的**：`verify:content` 通过；typecheck 通过；`npm run test` 178 项通过；构建通过。无头 Chrome 32 项全过（`%TEMP%/vein-e2e/drive-cx2.mjs`，按新示例更新了节点数、线数与资源卡断言）。三篇示例在 1440 宽度逐屏截图人工对照样张，无 KaTeX 红字。截图 `docs/evidence/r2l4c-*.png` 四张。
+
+**已知缺陷 / 下一步**：DESIGN §13 列出的四项版式未对齐；真实 key 下模型能否按「关系一览 → 按类型分节」写，未实测；侧栏关联图在 17 节点以上需要横向滚动。
+
+---
+
+## 2026-11-24（下午）· QoderWang2 · R2-L4 关联探索第二轮：讲义体回答、内容重写、导出与 PDF
+
+**用户反馈（2026-11-24，原话摘录）**：「存在好几处这种渲染问题」（截图：`\begin{psmallmatrix}` 显示成红字）；「语言表达上怪怪的，不易读，非常 AI……防御性太重」；「关联……表述不够专业，不够本质，不够全面。线代本身内容体量就相当庞大了，你为啥产生出的就那么少……和机器人运动学的联系……写的乱七八糟」；「『已拒绝』啥意思」；「讲解栏目……和右边的导图之间的空隙太大了……东一榔头西一棒槌……UI 上太单调，丑。线代的元思考应该至少会基于 Gilbert 的四大子空间说开来去……很多语言的表述都不是说给人听的，只是你自己检验的东西……不要放进来」；「给出的拓展资源请直接附上可以点开的链接」。关于导出：「PPT 导出要，读 PDF 正文要。前者可以选择是导出到本地还是直接放到工作区，可以选择是导出关联导图还是导出左边的文字解释，可以是导出成独立文件，也可以……复制一下，然后原格式导入到……讲义里去（这里尤其请注意导图的 UI 呈现）」。
+
+**根因（逐条对照了上一轮的产出）**
+- 红字：上一轮已在示例源文件改掉 `psmallmatrix`，但对话历史存的是当时的副本，打开历史看到的仍是旧版本。
+- AI 味与防御性：上一轮让每条关系在正文里列「成立条件 / 何时不成立」，回答前挂「核对：删掉 3 处」、后挂「模型自己承认没做到」，还有「下面按……顺序展开」这类元话语——这些是核对机制，被当成内容给读者看了。
+- 单薄与零散：上一轮给元思考设了 3000 字、14 个节点的上限（担心模型输出被截断），一门课被压成几条要点。
+- 版式：仓库已有教材式讲义阅读器（栏目、旁栏、编号图表），关联探索却另做了一套聊天气泡样式；阅读列限宽 760px 居中，于是与关联图之间空出一大块。
+
+**改了什么**
+- **回答改为讲义体**：模型直接写与工作台讲义同一种 Markdown 方言（问题探讨、本节聚焦、相关信息、知识链接、表、批判性思维、思维训练、练习与应用），文末一个 ```vein-graph 关联图块；页面用工作台的 `NoteReader` 渲染，可就地编辑。核对改到幕后：只在确有线没画出或做过自动修正时，文末一行说明，可展开。
+- **提示词 v4**（`CONNECTION_EXPLORER.md` + 三份模式文件 v2）：文风直接引用 `NOTE_GENERATION.md` §6 / §6.5 的教材腔与禁用表，新增「不写自我辩护与检验清单」；取消字数上限；学科元思考要求先找学科公认的主干（线性代数：四个基本子空间）；跨学科要求沿应用一侧的工作流程走、用一个贯穿全文的小例子算到底；链接只给确定存在的稳定地址。
+- **分步写作**：学科元思考与跨学科并联先写开头与目录（同时规划整张图）→ 逐节写（每节看得到目录和上一节结尾，可以补图）→ 收尾（回收问题探讨、思维训练、练习）；进度条显示第几步。碎片串联与追问一次写完。
+- **示例全部重写**（`content/demo/linear-algebra/explore/*.md`，讲义体）：「最近点问题的统一处理：最小二乘与两类距离」；「线性代数的整体结构：四个基本子空间」（五节：四个子空间与基本定理 → 方程组 → 五种分解与 SVD → 特征值 → 换基与不变量，三张表）；「刚体运动与微分运动学中的线性代数」（六节，平面两连杆贯穿全文：正运动学、雅可比、四个子空间的物理意义、$\det J=l_1l_2\sin q_2$、伪逆与阻尼最小二乘、可操作度）。所有链接用带 Chrome UA 的请求逐个验证可打开（维基百科在本机网络超时，未使用）。
+- **关联图块**（`content/veinGraph.ts`）：讲义、页面、Word、PPT、图片共用一套布局与线型；阅读器管线里把 ```vein-graph 换成 SVG 图（在白名单之后，图只用数字与文本节点生成）。**粘贴或接到讲义里的关联图，在工作台里显示为一幅编号的图**。布局改为按列宽排列（长标签不再被裁掉）+ 重心法排序（交叉明显减少）。
+- **导出与复制**（`exporting.ts` + `ExportDialog.tsx`）：内容（讲解与关联图 / 只要讲解 / 只要关联图）× 去处（复制 / 下载到本地 / 存进工作区某文件夹 / 接到讲义末尾）× 格式（Markdown、Word、PPT、PDF 打印、PNG、SVG）。复制同时放讲义 Markdown 与网页格式两种；PPT 讲解按小节分页、表格是 PPT 表格、关联图是可编辑的 PPT 形状、参考答案单独一页；接到讲义末尾时标题降一级，写入路径与工作台保存一致（示例讲义写本机草稿，浏览器工作区写 IndexedDB，本地文件夹写回硬盘）。
+- **PDF 正文**（`pdf.ts`，按需加载 pdf.js）：PDF 附件按页抽文字，出处锚点 `文件.pdf#page=N`；工作区里的 PDF 也参与检索。扫描版没有文字层，如实说明。
+- **其他**：对话历史里的示例按版本号自动换成新版本（保留对线的态度；示例改版后旧的拖动位置不再带过去）；KaTeX 不认的 `psmallmatrix` 等写法在核对时自动改写；节点与线上的字支持 `$公式$`；裁决的说法改为「收进图谱 / 先放着 / 改一改 / 不认同」，「已拒绝」开关改为「显示不认同的」；侧栏关联图最小缩放 0.72、放不下横向滚动；阅读器的「问题探讨」只在以图片开头时用左右两栏（之前没有图时第一段会被挤进右栏，工作台讲义同样受益）；`NoteReader` 新增可选的 `wikiHref`（工作台行为不变）。
+- **新依赖**（用户 2026-11-24 批准）：`pptxgenjs`、`pdfjs-dist`，都拆成按需加载的独立包，不进首屏。`npm audit` 报 pptxgenjs 依赖的 `image-size` 有高危项（读取恶意图片时拒绝服务），它只在 Node 端读图片文件尺寸时使用，本站只传入自己生成、带尺寸的图片，不经过这条路径；KaTeX 的审计项是此前就有的。
+
+**怎么验证的**：`verify:content` 通过；typecheck 通过；`npm run test` 17 文件 178 项通过（`explore.test.ts` 改写为 36 项：示例零删改与无禁用说法、示例与图上每个公式能渲染、链接是 https、元思考覆盖四个子空间、**讲义阅读器把关联图块渲染成 SVG 而不是 JSON**、旧历史升级、拆分模型输出、目录解析、核对规则、PPT 块序列、LaTeX 转文字）。无头 Chrome 32 项全过（脚本 `%TEMP%/vein-e2e/drive-cx2.mjs`）：旧版历史打开后无红字且保留不认同；讲义体渲染（栏目、旁栏、表、119 处公式、可点链接）；讲解与关联图间距 24px；收进图谱写 `graph.json`；PPT（解压核对 16 页文字）、Word（含关联图图片）、PNG 存进工作区；接到讲义后在工作台里关联图是一幅图；PDF 附件按页带锚点发给模型；假模型下三条不合格的线没画、`psmallmatrix` 自动改写；追问带不认同的理由；跨学科四次调用（目录、两节、收尾）拼成一篇、图合并；390 宽度无横向溢出；无未捕获异常。截图 `docs/evidence/r2l4b-*.png` 九张。
+
+**已知缺陷 / 未验证**：真实模型的产出质量**仍未实测**（分步写作只用假模型验证了流程）；Word 里的公式是 LaTeX 源码；PPT 里的公式转成文字（矩阵写作 `[1 0; 0 1]`），复杂公式可读性有限；PDF 只认文字层；学科元思考的关联图有 20 条线，侧栏里仍偏密，要全屏看；分步写作中途失败时已写的部分不保留（会报错，可重试）；本地文件夹工作区的写入未在真实授权下测。
+
+**下一步**：用户拿自己的 key 三种模式各问一次，与示例并排比较，不达标先改 `prompts/EXPLORE_*.md`；图谱侧「拿去探索」入口。
+
+---
+
+## 2026-11-24 · QoderWang2 · R2-L4 关联探索：三种模式接入、论证核对、逐条裁决与图谱联动
+
+**用户要求（2026-11-24，原话）**：「我的朋友那边正在完成 QODER 的可视化部分的 demo 训练，我们这边完成一下关联探索的 part 吧……基于我们之前所有的讨论和……对我的任务构想和愿景的全部了解放手去做」。需求原文见 `VISION.md` 第三部分 ③：输入可以是文字、网页、文件、截图；返回像 chat 一样的回答，同时返回可拖动、可编辑、可建立联系的关联图；结果能原格式复制进笔记、拖进认知与记忆图谱、导出成文件；三种模式的区别「本质在给 API 接口的模型的 prompt 和约束不同」；「最大的两点不是这些功能本身的实现，而是真真正正的做出高质量的东西」。
+
+**范围**：关联探索板块，以及它与图谱的联动（`TASK_R2_LINKAGE.md` L4）。**不做**：可视化实验室（并行进行，本轮未改 `features/lab/`）；PPT 导出（需新依赖）；PDF 附件读正文（需 pdf.js）；网页跨域抓取代理。
+
+**设计判断**
+- **一份结果，多种呈现。** 模型只产出一份结构化的论证（`ExploreResult`：正文、对应表、分节长文、不能统一处、边界、检验问题、关联图、出处、自检）。对话正文、关联图、Markdown / Word、导图分支都从它渲染，复制进笔记和拖进图谱拿到的是同一个论证。
+- **先核对，再给人看。** 模型输出先过确定性核对（`checkResult`）：关系类型不在规定集合（如「相关」）、理由不足 12 字、没有成立条件、类比或猜想没写失效处——删掉；跨学科里把视角启发（C2）写成事实的降级为类比，C1 里混进的类比移到 C2；标「有出处」却没有真实出处的降级；工作区里没有的节点 id 去掉；套话与黑话标出。删了什么、改了什么，在回答上方逐条列出。
+- **每条边由人裁决。** 接受（写进工作区 `graph.json`，status = accepted，可撤销）/ 待探索 / 修改（四问仍须齐全）/ 拒绝并写原因（追问时一并告诉模型）。手画的「我的连线」理由选填、不进知识图谱（ADR-0006）。
+
+**改了什么**
+- 提示词：`prompts/CONNECTION_EXPLORER.md` 升 v3.0（共用纪律 + 界面直接消费的 JSON 契约 + 关系类型与可信度表 + 「横向层级、纵向逻辑」的画图规则）；新增 `EXPLORE_FRAGMENTS.md` / `EXPLORE_META.md` / `EXPLORE_CROSS.md`，各有合格与不合格的对照示范、必须交付表、体量上限。系统提示 = 质量底线 + 共用契约 + 模式文件；工作区 `.vein/prompts/connection.<模式>.md` 只能替换模式文件。
+- 示例结果（无 key 时展示，标「示例结果」）：`content/demo/linear-algebra/explore/{fragments,meta,cross}.json`——最小二乘与两类最短距离（异面直线距离可逐字写成以 $[\mathbf u,-\mathbf v]$ 为系数矩阵的最小二乘）、线性代数的骨架（四种换坐标下的完全不变量与标准形）、线性代数 × 机器人运动学（SE(3)、雅可比的四个基本子空间、伪逆与阻尼最小二乘、可操作度椭球；「虚拟弹簧」单列为 C2）。它们与模型输出走同一道核对，测试要求零删改，所以同时是三份提示词的金样例。
+- `features/connection/`：`explore.ts`（类型、核对、分层布局、导出 Markdown / 导图大纲）、`exploreAi.ts`（附件读取：文本读原文、截图转图片随消息发送、网页尽力读正文并如实说明读不到；从工作区笔记按词切片确定性检索相关段落；追问附上一轮的结论与拒绝原因）、`bridge.ts`（加入思维导图：生成树进主题笔记与角标，放不进树的边变成带理由的连线，可一步撤回；接受关系写 `graph.json`，缺的知识点一并加入）、`threads.ts`（对话历史存工作区 `.vein/explore/threads.json`）、`ArgGraph.tsx`（画板：拖动只改位置、双击改字、连线模式、加节点、自动排列、全屏；认知状态用颜色 + 线型 + 文字三重区分；线上的字避让节点与彼此）、`Inspector.tsx`（四问与裁决）、`TurnView.tsx`（回答与导出：复制 Markdown / 复制为导图大纲 / 存进工作区「探索/」/ 下载 .md、.doc / 打印为 PDF）、`ConnectionPage.tsx`（对话、历史、追问、无 key 降级、本地文件夹授权）。
+- `ai/chat.ts`：用户消息可带图片（OpenAI 兼容用 data URL，Anthropic 用 base64），纯文本调用不变；模型不支持看图时给出人话报错。`ai/prompts.ts`：新增三个位置与共用约束层。
+- `features/atlas/maps.ts`：示例工作区也先读本机覆盖层里的 `graph.json`，在探索里接受的关系回到图谱能看到。
+- 删去旧的 `LinkGraph.tsx`。`styles/connection.css` 按 `DESIGN.md` §11–§12 重写（键帽、墨边面板、点阵画板、牌式节点）。
+
+**怎么验证的**：`verify:content` 通过；typecheck 通过；`npm run test` 17 文件 167 项通过（新增 `explore.test.ts` 25 项：三份示例零删改、示例里每个公式都能被 KaTeX 渲染、坏输出逐类被拦、布局、导出、导图分支、检索、追问内容）；build 通过。无头 Chrome 30 项全过（示例三种模式、接受写进 `graph.json`、拒绝带原因、拖动后存盘、加入导图后在图谱里看到新分支、历史、无 key 不冒充、假模型下核对删 3 条改 2 处并标出套话、追问带拒绝原因、跨学科 C2 降级、存进工作区、无未捕获异常）。截图 `docs/evidence/r2l4-*.png` 十张（1440、390、夜间）。
+
+**验收中发现并修掉的问题**
+1. 编造的笔记锚点 `notes/编造的.md#第三节` 因含「第三节」被当成文献放行 → 长得像文件路径的引用只认本次真的送去的片段（加测试）。
+2. 新版 Chrome 的 `scrollIntoView` 返回 Promise，effect 里 `return` 它，React 把它当清理函数调用，整页崩溃 → 改写，代码里注明。
+3. 回答与图上的文字用了字符子集字体，未收录的字回落成另一种字形，一块一块的 → 模型生成的文字一律用系统字体。
+4. 390 宽度横向溢出：外层 grid 的隐式列被公式撑宽 → `minmax(0, 1fr)`。
+5. KaTeX 不支持 mathtools 的 `psmallmatrix`，示例与提示词示范里都用了（提示词里用了，模型就会照抄）→ 改为 `\left(\begin{smallmatrix}…\end{smallmatrix}\right)`，并加了「示例公式全部能渲染」与反向测试。
+
+**已知缺陷 / 未验证**：真实模型的产出质量**未实测**（只用假模型验证了管线与核对）；多数网站不允许跨站读取，网页附件通常只发地址；PDF 读不了正文；截图需要模型支持看图；Word 导出的公式是 LaTeX 源码；PPT 未做；单次输出上限 8192 token，跨学科长文可能被截断（会明确报错，不会静默截断）；本地文件夹工作区下的写入（`graph.json`、`探索/`、`.vein/explore/`）只走了接口，未在真实文件夹授权下测；关联图节点多时侧栏里缩得较小，要全屏看；390 宽度页眉溢出（既有）。本地 `apps/web/dist` 已是本轮构建，而本轮改动未提交——发布前须先提交。
+
+**下一步**：用户拿自己的 key 每种模式各问一次，与示例并排比较（`QUALITY_BAR.md` §1），不达标先改 `prompts/EXPLORE_*.md`；图谱选中主题「拿去探索」（关联探索已支持 `?q=` 预填，图谱侧入口未加）；L5 实验室接入。
+
+---
+
+## 2026-11-24 · QoderPeng1 · 第 18 轮：事实决定画法（转化箭头触酶＋物质去圆圈）＋注解徽标修复（本轮）
+
+- **目标**：用户两条指示（附教材光反应图）：①物质转化箭头必须与酶接触、由反应物指向生成物
+  （因为催化发生在酶的活性位点），此类转化中物质不加圆圈，生成物参与后续反应直接由箭头自标签引出；
+  举一反三范围为页内一切酶催化转化（CO₂ 固定触 Rubisco、C₃ 还原、RuBP 再生、C4/CAM 固定与脱羧、
+  光呼吸加氧；多反应物各箭头汇于酶再指向生成物）；圆圈只许给酶与腔/液泡等真实存在的物体作依托；
+  "图怎么画由事实决定"须跨学科写入 prompt，且本轮犯错与纠错过程本身作为学习例子入 prompt；
+  ②"注"徽标点不开的缺陷修复；③行动前先汇报理解（已汇报，用户确认并推广后才动手）。
+  顺序：先改 prompt（v2.7）→ 就地改 v4 页。**明确不做**：不接原站不改原站、不新增依赖、
+  不 push、不部署；教材图不进 Git。
+- **做了什么**
+  1. **prompt v2.7 就地修订**（`可视化泛化Prompt架构v2.md`）：R28 事实决定画法四款
+     （一转化一有向箭尾反应物头生成物且触酶／多反应物汇酶再指生成物／物质纯文字标签、
+     形状只给现实物体（酶·区室·细胞·细胞器·膜载体·结构），过程与状态词也不加圈／
+     生成物链条自标签起箭、回路以回流边闭合物质环／跨学科迁移：化学催化剂触点、物理力作用点、
+     电路引脚、地理汇流）；C30 审计（路径 ≥20 采样触酶 bbox、物质 id ∩ circle.body = ∅、
+     端点距标签 ≤30、via 非空、点击须可见反馈）；§0/§4.4/§5 计数改 C1–C30／≥26/30；
+     §7.10 犯错→纠错档案（第 17 轮误读"式图一体"为表面邻接之错例与纠正流程）；
+     §10 教材范本＋画图三问（转化在哪里物理发生／物体还是名字／生成物去哪）＋跨学科迁移＋错例档案；
+     JSON 增 drawing_policy、nodes.kind（label|enzyme|protein|carrier|compartment|organelle|structure）、
+     conversion_edges.via；§9.1 旁注锚点改催化酶（h2o 锚 PSII 左上方基质侧空隙）。
+  2. **v4 HTML 物质层重构**（`光合作用单画布可视化v4.html`）：24 个物质节点去 circle.body
+     改纯标签 `.slabel`（主标签＋副标签、同底色 halo）；圆圈仅留 PQ/PC 膜载体与过氧化物酶体/线粒体
+     细胞器；酶统一 chip（Rubisco／再生酶系／还原酶／PEP 羧化酶×2／脱羧酶×2）；
+     区室 `.compartment` 框（叶肉细胞／维管束鞘细胞／液泡）；全部转化边加 via：
+     单反应物一箭穿酶（h2o 穿 PSII、fd_nadph 穿 Fd、atpsyn 穿 ATP 合酶、cam_night/cam_mal 等），
+     多反应物汇酶再指生成物（co2_rub+rubp_rub→Rubisco→fix→C3；red+atp_go+nadph_go→还原酶→red_out→G3P；
+     reg1+reg2→再生酶系→reg3→RuBP；C4 三箭头汇 PEP 羧化酶/脱羧酶）；回流边 adp_ret/nadp_ret
+     指回 ADP/NADP⁺ 反应物标签闭合物质环；C4 补 PEP 底物标签与丙酮酸标签＋耗 ATP 回流；
+     CAM 苹果酸入液泡框；光呼吸分支自 Rubisco chip 起；光抑制为纯标签因果箭（非酶转化，无 via）。
+     图例增"转化箭头 · 触酶"行。
+  3. **注解徽标修复**：showGloss 增 revealCard 滚动定位＋flash 朱砂高亮 1.6s＋折叠时 setRail(false)
+     自动展开；徽标 g 增 role=button/tabindex=0/aria-label 与透明命中圆 r12；glossDef aria-live=polite；
+     GLOSS 补还原酶/再生酶系/脱羧酶三条泛指酶类（来源标"拓展注解 · 泛指酶类"）。
+  4. **几何修正**（扫掠驱动）：NADPH 标签 (508,318)→(496,320) 避 ATP 合酶头圆；C4 展开标题改右对齐
+     避叶肉细胞标签；副标签行距 13→15（消窄屏主/副标签 1.1px 叠）；ATP 合成旁注 ay288→294；
+     C4 标签 y182→180 使副标签留叶肉框内；nadph_make 引线端点 (456,334)→(452,336) 避徽标。
+- **验证**（本轮实跑：主世界注入断言＋headless Edge 三宽度扫＋八截图目检）
+  - C30：contactN=30、contactFail=[]（每条 via 边 24 采样点落入酶 bbox+2px）；
+    circleIds=[PQ,PC,Perox,Mito]、circleOK=true、labelN=24；endFail=[]（via 边端点距标签 ≤30px）；
+    glossDef/glossVisible/glossFlash/glossExpand/glossVisible2 全 true（含折叠态自动展开与二次揭示）。
+  - 回归：48 配置（步 [0,1,4,5,6,8,9,15] × 6 参数配置）形状级 bbox 两两扫在 1574/1024/492
+    三宽度均 0 碰撞；noLedger/noFooter=true、计数 grep=[]、noEqband=true；annCount=6 全在 #scene，
+    锚距 {h2o:16, nadph_make:50, atp_make:11, atp_use:63, nadph_use:0, co2fix:67} 均 ≤80、引线 3；
+    步映射 step1=[h2o]、step6=[atp_use,nadph_use]；旁注点击跳步 4；导出克隆含 6 旁注＋13 纯标签
+    且无 vp transform；ratio3 光呼吸边宽 3.5、强光防御关光子边宽 2.8→1.52/不透明度 0.48；
+    scrubPure=true、gateMsg=true、播放自停 step15、zoom 1.9、docW==winW、控制台 errs=[]；
+    node --check SYNTAX_OK。
+  - 截图八张复截并逐张目检：desktop-full／desktop-coupling／tablet／mobile／rail-collapsed／
+    mobile-collapsed／zoom／**gloss（新增：徽标点击后注解卡揭示＋朱砂高亮）**。
+    窄屏 pan-hint 实测位于首屏折线之下（y846..888），但拖动指引已含于顶部单画布说明文字、
+    折叠 minibar 实测 807..844 在首屏内，判无缺陷；gloss 截图首版因 headless 虚拟时间下
+    smooth scroll 不收敛而未露卡，改即时滚动重截（真实浏览器仍保留 smooth）。
+- **已知缺陷**：无新增。窄屏首屏不见全画布为既定取舍（字号保真优先、拖动平移查看）。
+- **下一步**：待用户下一轮指示。
+
+---
+## 2026-11-24 · QoderPeng1 · 第 17 轮：学科定量边界＋方程式旁注一体＋页底阐述清理
+
+- **目标**：用户两条指示：①按学科特点选择定量描述——生物不在侧栏描述物质间比例
+  （系数只留在方程式），删除"物质 · 能量读数（累计至当前步）"面板，散文只讲物质种类与转移路径；
+  ②方程式与过程图示融为一体（参照教材光反应图：2H₂O→O₂+4H⁺ 在 PSII 旁、NADPH 合成在 Fd 旁、
+  ATP 合成在 ATP 合酶旁）；③删除页底整段阐述。顺序：先改 prompt（v2.6）→ 就地改 v4 页。
+  **明确不做**：不接原站不改原站、不新增依赖、不 push、不部署；教材图不进 Git。
+- **做了什么**
+  1. **prompt v2.6 就地修订**（`可视化泛化Prompt架构v2.md`）：R25 学科定量边界（系数仅方程式、
+     无累计读数面板、参数滑杆豁免）、R26 方程式与过程图示一体（旁注锚定＋halo＋引线＋点击跳步＋
+     随缩放/导出、无独立方程式带）、R27 页底阐述清理（保真声明收敛为图元处一行）；C27–C29 审计；
+     §0/§4.4/§5 计数改 C1–C29／≥25/29；§7.9 反例→律；§9.1 锚点列与单轨计量、§9.2 旁注契约、
+     §9.5 新增定量/页底契约；JSON 契约删 ledger、equations 增 anchor/ax/ay/lead。
+  2. **v4 HTML 就地改**（`光合作用单画布可视化v4.html`）：
+     - 删 LEDGER／ledgerOf／全部 deltas 与读数卡；**删整个 footer**；模块标题改"只改显示，不改过程"；
+       步叙述/联系卡/来龙去脉/读图行/parChips/GLOSS 全量去数字（系数仅存六方程式）。
+     - 方程式带改六处画布旁注 `g.eqann`（名称/式/条件三行、同底色 halo、按步 aria-current、
+       点击跳步、距锚点 >20 加虚线引线 eqlead）；置于 #scene 内随缩放、入导出；
+       来源声明收敛为画布右上的一行 complab。
+     - 几何修正（形状级 bbox 两两扫驱动）：ATP 合成旁注移 (560,214)、NADPH 生成移 (380,170)＋引线、
+       水的光解旁注整体移至叶绿体框外下方 (60,590)＋引线接 O₂；膜结构句移 (240,600)；
+       腔标签 y448、泵 H⁺ y470、捕光效率下降 y560、白昼脱羧 y470、夜间 CO₂ 进入 (1020,440)、
+       丙酮酸·耗 ATP y186；C4 收起 chip 移 x1180 并重绘连接边；**气孔开闭弧方向矫反**
+       （原夜间两弧相交似闭，改为夜开昼闭），气孔标签移弧下、注徽章下移；
+       光抑制展开区标题右对齐避水的光解旁注；旁注行距 ay+37。
+- **验证**（本轮实跑：主世界注入断言＋headless Edge 三宽度扫＋七截图复截）
+  - 定量/页底：noLedger=true、noFooter=true、侧栏＋页眉可见文本计数 grep=[]、noEqband=true。
+  - 旁注：annCount=6 全在 #scene；锚距 {h2o:49, nadph_make:66, atp_make:7, atp_use:28,
+    nadph_use:1, co2fix:67} 均 ≤80；引线 4；步映射 step1=[h2o]、step6=[atp_use,nadph_use]；
+    旁注点击跳步 4；导出克隆含 6 旁注且无 vp transform。
+  - 几何：步 [0,1,4,5,6,8,9,15] × 6 参数配置（c3 收起／c3 全展开／c4+ratio3／cam 夜／cam 昼／
+    强光防御关）＝48 配置，形状级 bbox 两两扫（circle.body／protein rect+circle／chipbox rect／
+    eqann text／elab／complab／zonelab／legend text／气孔 text+弧，除注徽章）在 1574/1024/492
+    三宽度均 0 碰撞；无横向溢出（docW==winW）。
+  - 引擎抽查：step5+ratio3 ⇒ pr_branch 活跃 3.5px；ph680 2.8px（光1）→1.52px/op0.48（光2.4 防御关）；
+    scrub 往返 scene 串相同；光 0 门控消息在；播放到末步 15 自停（playing=false）；控制台 0 消息；
+    node --check 通过。
+  - 交互态：折叠 minibar 桌面 bottom16／窄屏 bottom44 与 pan-hint 不相交（843.6<845.6）；
+    缩放 190% 旁注随场景同缩放。
+  - 七截图复截：vis-v4-{desktop-full,desktop-coupling,tablet,mobile,rail-collapsed,
+    mobile-collapsed,zoom}.png；窄屏截图改取 headless 最小布局宽 492（window 518），
+    避免 390 截幅造成的裁切假象。
+- **已知缺陷**：headless Edge 布局宽下限 ~492，真 390 布局无法截图复现（窄屏证据为 492 布局，
+  断点与交互逻辑同 390）；自带有 rel 的步回到无 rel 的步时联系卡保留上一次选择
+  （阅读面板语义，第 12–16 轮既有行为，本轮未动）。
+- **下一步**：如用户再供参照或学科定量要求，按 R25–R27 继续就地修订；团队共用本 prompt
+  为定量边界与旁注契约的单一来源。
+
+---
+## 2026-11-24 · QoderPeng1 · 第 15–16 轮：方程式带＋右栏阐释一览／折叠＋画布缩放
+
+- **目标**：第 15 轮用户供光反应教材图（图不进 Git）：①图文并茂，物质转化要有方程式
+  （来源＝教材正文／图／旁批，如水的光解、ATP⇄ADP、NADPH⇄NADP⁺）；②文字阐释做成链接放右栏，
+  一眼看到（不翻页）。第 16 轮：右栏可折叠、图片可缩放、提升交互感受。
+  顺序：先改 prompt（v2.5）→ 就地改 v4 页。
+  **明确不做**：不接原站不改原站、不新增依赖、不 push、不部署；教材图不进 Git。
+- **做了什么**
+  1. **prompt v2.5 就地修订**（`可视化泛化Prompt架构v2.md`）：R21 方程式（来源三件套＋页码未核对、
+     不编造配平）、R22 右栏阐释一览（不翻页）、R23 右栏可折叠（折叠不丢操作）、R24 画布缩放平移
+     （导出恒完整画布）；C23–C26 审计；§0/§4.4/§5 计数改 C1–C26／≥22/26；§7.8 第 15–16 轮反例→律；
+     **新增 §9 设计契约**（9.1 六方程式表与步映射、9.2 方程式带、9.3 一览目录、9.4 折叠/缩放契约）；
+     JSON 契约增 equations／equation_band／explain_directory／view 字段。
+  2. **v4 HTML 就地改**（`光合作用单画布可视化v4.html`）：
+     - 方程式带 `.eqband`：六 chip（水的光解／NADPH 生成／ATP 合成／ATP 水解／NADPH 氧化／CO₂ 固定），
+       条件置于箭头上方，按步 aria-current 高亮，点击跳对应步；带标题注明
+       "依据教材正文／图／批注（页码未核对）"；footer 说明双计量口径（方程式最简比 vs 账本每 3CO₂ 倍数）。
+     - 右栏一览 `.card.directory` sticky 顶：11 链接（6 联系＋5 来龙去脉），点击原位阅读＋滚动定位，
+       aria-current 随步/联系同步（render 与 showRel 双调用 syncDir）。
+     - 折叠：页眉"折叠右栏"（aria-expanded），桌面右栏列宽 0，折叠态浮 minibar
+       （◀ 播放 ▶ 步数 展开右栏），状态入深链 rail=0；代码不自动折叠。
+     - 缩放：`<g id="vp">` 包 scene+pulses；滚轮锚点缩放 0.5×–6×、拖拽平移、双指捏合、
+       双击/f/百分比钮复位、键盘 +/−/f；导出 exportClone() 剥离 vp transform → PNG 恒完整画布。
+     - 窄屏 ≤700：stage 改 flex 竖排，zoombar 入流左对齐，svg min-width 1000 以拖拽平移代原生滚动，
+       minibar 左对齐＋按钮 nowrap 防竖排。引擎（账本/门控/并行/反馈）未动。
+- **验证**（本轮实跑：主世界注入断言＋headless Edge 四视口＋三交互态截图，15:48 复截）
+  - 方程式：6 chip 全在首屏（rowScroll==rowClient 1120）；步映射
+    ["","h2o","","nadph_make","atp_make","co2fix","atp_use,nadph_use","","atp_use","nadph_make,atp_make",…]；
+    chip 点击跳步正确；条件与名称无重叠（裁剪图目视）。
+  - 一览：directory 为 panel 首卡、sticky 滚动后 top0、11 链接全可见（高 167）；
+    点击联系链接后散文更新且 aria-current=true。
+  - 折叠：stage 宽 1144→1528、panel display none、minibar 可见且 ◀▶/播放可用、hash 含 rail=0、
+    展开复原 1144；窄屏 minibar 单行标签、右缘 337<390、位于方程式带之上。
+  - 缩放：滚轮锚点漂移 0、百分比同步、clamp 6/0.5、拖拽 dx≈112.6、双击复位、键盘 1.25×/复位、
+    捏合 k=2；zoom 态下 exportClone().#vp 无 transform。
+  - 引擎复查：全步账本 24/6/3/24/6/9/3/6/6/3/1/3/6/9；c4 6/3、cam 3/3；门控光 0 归零；
+    反馈 2.8→1.52px；抑制 2.5→1.80769px；scrub/模块开合纯函数；
+    几何 step0/6/9/15 × c3/c4/cam bbox 两两扫＝0 碰撞。
+  - 深链 #step=11&plant=cam&light=2&ratio=3&defense=0&rail=0 复原且 UI 同步；键盘 ←→；
+    播放至 step15 自停；1574/998/492 无横向溢出；控制台 0；node --check 通过；C21/C22 清单 grep＝0。
+  - 截图 7 张：vis-v4-{desktop-full,desktop-coupling,tablet,mobile,rail-collapsed,zoom,mobile-collapsed}.png。
+- **已知缺陷／测量边界**：headless Edge 窄屏把布局视口钳到 ~492px（截图仍 390），右锚绝对元素会被裁
+  → 窄屏控件改入流左对齐规避；应用内浏览器隐藏 tab 视口报 0×0，布局断言均走 headless；
+  tick dt 上限 0.05，播放到底测试需 ~480+ 次手动 tick。方程式页码未核对（UI 已注明来源三件套）。
+- **下一步**：如用户供带页码教材原件，补方程式页码；团队共用 prompt v2.5 为图文/交互契约单一来源。
+
+---
+## 2026-11-24 · QoderPeng1 · 第 14 轮：第二/三章结构语体 / 推论链
+
+- **目标**：用户补充参照＝必修2 PDF（`introduction to 知脉/资料/参照教材学习.pdf`，**PDF 不进 Git**）
+  第2章（基因和染色体的关系）／第3章（基因的本质）。学习其**结构描述与推论链**语体，
+  修改 prompt 与网页；沿用第 13 轮要求（禁口语、默认禁比喻）。
+  提取方式：pdftotext 中文不可恢复（CID 字体），改用 PyMuPDF 逐页取文本（ch2＝pdf25–48、ch3＝49–70）。
+  **明确不做**：不接原站不改原站、不新增依赖、不 push、不部署；PDF 与课本图不进 Git。
+- **做了什么**
+  1. **prompt v2.4 就地修订**（`可视化泛化Prompt架构v2.md`）：新增 R20（结构描述与推论链语体：
+     由…组成／构成／按…方式／排列在外侧内侧／交替连接／通过…连接成…／称作叫作；推论用
+     由此推论／也就是说／因为…平行关系／说明了；区分假说与实验证据）；C22 结构语体审计；
+     §0/§4.4/§5 计数改 C1–C22／≥18/22；§7.7 第 14 轮反例→律；§8 标题 v2.2/v2.3/v2.4；
+     **新增 §8.4** 收录萨顿推论／基因线性排列／DNA 双螺旋三特点／5'3'端逐字范本＋
+     结构口语/比喻清单（排成/搭在/堆在/外圈/内圈…）＋四组结构口语→书面语改写对照。
+  2. **v4 HTML 就地改**（`光合作用单画布可视化v4.html`）：膜结构句改 ch2/ch3 结构语体——
+     画布 complab 与 footer 改"类囊体膜由磷脂双分子层构成基本骨架，蛋白质镶嵌其中（流动镶嵌模型）"；
+     GLOSS PQ 改"于磷脂双分子层中横向移动"；footer 新增必修2 第2/3章结构语体来源行。引擎未动。
+- **验证**（本轮实跑：主世界注入断言＋headless Edge 四截图复截 14:45）
+  - 语体：可见文本（header/.stage-sub/.card/footer/#scene）对 C21 口语/比喻＋C22 结构口语清单 grep＝0。
+  - 几何：step0/5/9/13/15＋cam 全开 bbox 两两扫＝0 碰撞（膜标签加长后仍无重叠）；无横向溢出；控制台 0。
+  - 引擎抽查：step5+ratio3 ⇒ pr_branch 活跃；全步账本 24/6/3/24/6/9/3/6/6/3/1/3/6/9 不变。
+  - node --check 通过；四截图 vis-v4-{desktop-full,desktop-coupling,tablet,mobile}.png 复截。
+- **已知缺陷**：PDF 为必修2（遗传），与本页光合（必修1）内容不同；本轮只借其**结构/推论语体**，
+  不搬遗传内容；结构语体对膜/骨架/区室的迁移已落地，其余分子连接句本页较少。
+- **下一步**：如用户再供参照，继续按 R19/R20 语体准绳就地修订；团队共用本 prompt 为单一语体来源。
+
+---
+## 2026-11-24 · QoderPeng1 · 第 13 轮：教材书面语 / 禁口语 / 默认禁比喻
+
+- **目标**：用户给出课本页（人教版必修1 第5章第4节「光合作用与能量转化」页 97，图不进 Git），
+  要求学习教材语言风格：禁口语（"多花 2 个 ATP""哪一边停了，另一边缺了底物，也跟着停"）、
+  默认禁比喻（"重新充电"）。第 12 轮矫 AI 腔时滑向讲课口语，本轮矫回**书面语**。
+  顺序：先理解 → 改 prompt（v2.3）→ **就地改** v4 HTML。
+  **明确不做**：不接原站不改原站、不新增依赖、不 push、不部署；课本图不进 Git。
+- **做了什么**
+  1. **prompt v2.3 就地修订**（`可视化泛化Prompt架构v2.md`）：新增 R19（教材书面语准绳、
+     因果连接词因此/可见/说明/由此/从而、条件精确、推断留分寸、默认禁比喻、比喻须"（比喻）"标注）；
+     C21 语体审计；§4.4 增 C21 断言；§5 计数改 C1–C21／≥17/21；§7.6 第 13 轮反例→律；
+     §8 标题改 v2.2/v2.3；§8.1 改写对照改为书面语；**新增 §8.3** 收录页 97 逐字范本＋
+     口语清单／比喻清单（C21 grep＝0）＋五组口语→书面语改写对照。
+  2. **v4 HTML 就地改**（`光合作用单画布可视化v4.html`）：标题/页眉/mode-tag/stageSub/pan-hint/
+     各 h3/label/parEmpty/滑杆 note/模块标题/STEPS 全部 t+d+gate msg/REL 六卡 prop+prose+fig/
+     WHY 五链/parChips/边标签/LEDGER grp/GLOSS 把→将/footer（新增页 97 语体来源行）全量书面语化。
+     引擎（S/params/model/parallel/gateOf/ledgerOf/edgeD/渲染宽度/setStep/hash/键盘）未动。
+     修复一处因标签加长导致的碰撞：cam_sto「夜间 CO₂ 进入」ly 428→414。
+- **验证**（本轮实跑：主世界注入断言＋headless Edge 四截图）
+  - 语体：数据全串＋可见文本（header/.stage-sub/.card/footer）对 §8.3 口语/比喻清单 grep＝0。
+  - 同时性：step5+ratio3 ⇒ pr_branch 与 fix 同帧活跃（3.5px）；step2+light2.4+防御关 ⇒
+    pi_eff 与电子传递同帧，eff0.64 不可逆。
+  - 反馈渲染值：ph680 computed 2.8px（光1）→2.224px/op0.77（光2.4 防御关）。
+  - 抑制：c3+ratio3 分支 3.5px vs c4+ratio1 1.81px 且 share0.077<0.08 不活跃。
+  - 账本：全步 24/6/3/24/6/9/3/6/6/3/1/3/6/9；模块 c4 6/3、cam 3/3、pr 1/1/1；门控光0/CO₂0 归零；
+    scrub 与展开/收起纯函数不变。
+  - 几何：step0/5/9/13/15＋cam＋c4 全开 bbox 两两扫＝0 碰撞；无横向溢出；控制台 0 消息。
+  - 交互：键盘 → 步号+hash 同步；深链 #step=12&plant=cam&light=2.4&ratio=3&defense=0 冷加载
+    同步滑杆/selector/防御开关；播放至末步自停（step15、playing=false）。
+  - 四截图复截：vis-v4-{desktop-full,desktop-coupling,tablet,mobile}.png（13:10）。
+- **已知缺陷**：in-app 浏览器隐藏态 rAF 节流，播放自停改用手动驱动 tick 验证（逻辑与第 12 轮一致）。
+- **下一步**：第 14 轮以必修2 第2/3章为结构描述语体参照（见下条）。
+
+---
+## 2026-11-24 · QoderPeng1 · 第 12 轮：人类用语 / 联系优先于形式 / 第四版新建
+
+- **目标**：用户两条质问＋一条示例——①"乘捕光边宽与相对速率，出处在哪？？？"：该句**无出处**，
+  是本页示意模型的可视化 mechanics 被误写进生物学叙述，本轮承认并分离；②"学习重点是概念之间的联系，
+  不是机械地复制板块形式"：物理四槽卡（理论动机/前提/机制推导/为什么这是连接点）与点链 why 模板
+  不适用于生物（生物没有物理式公理化体系），"水分预算"等非学科用语清除；③按用户给的 CAM 示例段落
+  （沙漠干旱→白昼失水→**夜间无光无法光合**→夜捕碳存苹果酸→昼释放光合）补全缺失因果环。
+  顺序：先改 prompt（人类用语、去 AI 味）→ **单独新建第四版 HTML**，不覆盖 v3。
+  **明确不做**：不接原站不改原站、不新增依赖、不 push、不部署；引擎（步进/门控/账本/深链）沿用已验证实现。
+- **做了什么**
+  1. **prompt v2.2 就地修订**（`可视化泛化Prompt架构v2.md`）：R15 来龙去脉因果散文（CAM 必须含
+     "夜间无光→光反应无法进行→捕获的 CO₂ 须先储存"一环）；R16 散文联系卡（关系命题＋2–3 段连续散文
+     ＋单独"读图"行＋出处＋交叉引用，禁跨学科槽位搬运）；R17 人类用语禁 AI 味（禁语清单：乘捕光/边宽/
+     相对速率/反馈乘/eff/onset/deltas/selector/挂点/闭环/份额=/有效比/浓缩因子/水分预算/槽位标签/叙述中的⇒；
+     量化只允许出现在"示意模型读数"与"读图"行）；R18 联系优先于形式；C19 grep 审计 / C20 散文独立可读；
+     §8.1 收录用户示例原文与三组改写对照。
+  2. **新建 `光合作用单画布可视化v4.html`**（cp v3 后全量改写叙述层，引擎不动）：
+     - 联系卡改散文体：6 张卡各 3 段教师口吻连续散文＋"读图"行＋出处行＋交叉引用按钮；
+       CAM 卡首段即用户示例因果链（含夜无光环）；光抑制卡明写"阈值与效率公式为本页示意模型，无文献出处"。
+     - why 链改"来龙去脉 · 它为什么存在"散文卡（5 板块各 3 段＋出处），删除点链与前提/后果/适应/代价槽标签。
+     - 16 步标题与描述、门控提示、并行 chips、滑杆注记、账本分组、边标签、页脚全部改自然语言
+       （"耦合·ATP 去"→"ATP 送往卡尔文循环"；"反馈·效率↓"→"效率下降拖累捕光"；"反应门控"→"这一步停下了"…）。
+     - 几何修正（本轮实测发现）：气孔开度读数原与"夜 CO₂ 入"边标签重叠（stomata 的 g 无 .node 类，
+       ns 落回 start 锚）→ 读数改为 CAM 区底状态行"气孔开度 N%"（区高 250→258），气孔标签居中、
+       注 badge 移glyph 右下；"光强超出利用限度"边标签右移躲超额光能节点标签。
+- **验证**（本轮实跑：in-app 浏览器主世界注入断言＋headless Edge 四张复截）
+  - 散文卡：6 张 rel 卡各 3 段＋读图行＋出处＋xref（2–3 个）；5 张来龙去脉卡各 3 段＋出处；
+    xref 点击同步 S.rel 与焦点 selector；CAM 卡与第 12 步描述均含"夜间没有光(照)"环。
+  - 禁语审计：可见 UI 文本（header/舞台注/卡片/页脚）不含 理论动机/为什么这是连接点/机制推导/⇒/
+    水分预算/浓缩因子/有效比/反馈乘/selector；全文 grep 残留仅代码标识符与注释（已改注释）。
+  - 引擎回归全绿：step5+ratio3 竞争边同帧活跃 3.5px；ratio0.2 关闭 1.75px / ratio4 3.79px；
+    step2+light2.4 光抑制同帧（展开后 pi_dmg active）；光2.4防御关 ph680/ph700 computed 1.52px（eff0.20 不可逆）
+    vs 光1防御开 2.8px；scrub 8→15→3→8 账本不变；模块收展账本不变；光0 门控 photons=0；
+    满步账本 24/6/3/24/6/9＋3/6/6/3/1/3/6/9；模块累计 c4 6/3、cam 3/3、pr 1/1/1；
+    播放到末步即停（step15 playing=false）；深链 #step=12&plant=cam&light=2.4&defense=0 回同步滑杆/开关；
+    键盘 → 步号与 hash 同步；全展开场景文本两两 bbox 碰撞 0；无横向溢出；控制台零消息。
+  - 证据四张复截：`evidence/vis-v4-desktop-full.png`（1440×900，#step=13&ratio=3）、
+    `vis-v4-desktop-coupling.png`（#step=8&light=2.4&defense=0）、`vis-v4-tablet.png`（1024×768，#step=12&plant=cam）、
+    `vis-v4-mobile.png`（390×844，#step=5），目视复核 CAM 区读数不再重叠。
+- **已知缺陷 / 限制**：示意模型（浓缩倍数、光抑制阈值/效率）仍无文献出处，界面与卡内均已明写"示意/无文献出处"；
+  视频音频转写仍未获得（环境无 ASR，记未验证）；≤700px 横向平移保字号；v3 与第 10 轮存档保持原样未动。
+
+---
+## 2026-11-24 · QoderPeng1 · 第 11 轮：并行联系 / why 链 / 关联卡片 / 学科语言
+
+- **目标**：用户三条修正举一反三——①禁止自造专名（"CO₂亏"式缩写），语言＝学科专名＋自然语言阐释；
+  ②概念间联系转化必须可见（光呼吸与卡尔文是**竞争**、光抑制与光能传递**同时**发生，
+  反对"各板块依次轮播"）；③分支要有前提 why 链（CAM＝干旱→白昼开孔失水→夜吸碳→时间分离），
+  用户材料只给单板块时可视化要补全局联系；联系表达参考《力学思维导图.html》关联卡片样例。
+  顺序：先理解 → 改 prompt → **就地改** HTML（本轮允许覆盖第 10 轮文件）。
+  **明确不做**：不接原站不改原站、不新增依赖、不 push、不部署；思维导图只借联系表达不借布局。
+- **做了什么**
+  1. **prompt v2.1 就地修订**（`可视化泛化Prompt架构v2.md`）：R13 学科语言 / R14 同时性与竞争 /
+     R15 前提 why 链＋单板块补全局 / R16 关联卡片；S2b 全局联系补全（联系表→关联卡四槽→why 链→
+     并行流表→替代 selector）；C15–C18 自检；§7 反例→律对照与思维导图 ecard 学法；
+     本轮末补**渲染层契约**（CSS 不得覆盖语义 stroke-width/stroke 属性；反馈/抑制/高亮用
+     getComputedStyle 验渲染值）与深链带参契约（`#step=&plant=`＋非默认 `light/co2/ratio/defense=0`）。
+  2. **单画布 HTML 就地改 v2.1**（`光合作用单画布可视化.html`）：
+     - 并行条件流：活跃流＝当前步焦点流 ∪ {并行流 | step≥onset ∧ condition(params)}。
+       光呼吸自固定步（5）起与主链同帧、份额=有效比÷(有效比+3) 调分支宽；光抑制自电子传递步（2）起
+       同帧，eff 反馈乘捕光边宽/不透明度与相对速率；C4/CAM 为 selector 切换的**替代**入口，
+       浓缩因子（C4×4 / CAM 昼×3）除环境比 → 竞争分支可见变窄。步 10–15 改为联系/焦点步（deltas 空）。
+     - 关联卡片（力学思维导图法）：6 张关系命题卡（核心耦合 / 竞争 / C4 抑制 / CAM 时间分离 /
+       光抑制反馈 / C4CAM 两解），四槽＝理论动机/前提/机制推导/为什么这是连接点＋交叉引用按钮；
+       画布联系边与"此刻同时发生"chips 均可点开。
+     - why 链卡：5 板块前提→后果→适应→代价链（CAM＝沙漠干旱→失水→夜储酸→昼脱羧→时间分离），
+       焦点 selector 与关联卡/selector 联动。
+     - 学科语言审计：清除 CO₂亏/碳泵/H⁺腔/昼释/夜储/泵送/C3回收/亏碳亏能/脱羧供/夜·固定 等缩写，
+       节点与账本改完整表述（腔·H⁺ 积累、CO₂ 释放、C3 回卡尔文循环、夜间固定/白昼脱羧…）。
+     - 渲染层修复（本轮实测发现）：`.edge.active`/`.protein rect`/`.chipbox rect` 的 CSS
+       stroke-width/stroke 覆盖属性 → 反馈变细与 changed 高亮"属性在、渲染不在"；改独立 changed 类；
+       边标签加同色 halo；竞争标签移空白带躲气孔开度读数；深链带参冷加载回同步滑杆/开关。
+- **验证**（本轮实跑：in-app 浏览器注入断言＋headless Edge 截图；隔离世界问题用主世界注入脚本绕过）
+  - 同时性：step5+ratio3 ⇒ pr_branch 与 fix 同帧活跃；step2+light2.4 ⇒ pi_eff 与电子传递链同帧；
+    "此刻同时发生"chips 列耦合/竞争/光抑制三项。
+  - 反馈渲染值：ph680  computed strokeWidth 2.8px/op1（光1）→ 1.52px/op0.48（光2.4 防御关，eff0.20 不可逆）。
+  - 抑制渲染值：c3+ratio3 分支 3.5px vs c4+ratio1 分支 1.81px 且 pr 不活跃（share0.077<0.08）；CAM 昼 conc×3。
+  - 纯函数：scrub 前进-后退-前进累计一致；四模块全收起累计不变（收起时联系边落 chip 不断链）；
+    光0/co20 门控归零；CAM 上下文门只遮画面（supply op0.10）累计不变（模型瞬时读数随相位变属语义正确）。
+  - 关联卡四槽非空＋3 交叉引用可点（xref 点击同步 rel/焦点/why 链）；why 链 CAM 6 条含代价；
+    植物 selector 切换开模块＋同步 hash；键盘 ArrowRight 实按键生效；播放/暂停按钮生效；
+    深链 `#step=8&light=2.4&defense=0` 冷加载滑杆/开关同步；控制台零消息；390/1024/1440 无横向页溢出。
+  - 证据四张复截（11:19；desktop-full 于 11:23 线粒体副标改完整表述后复截）：`evidence/vis-uni-desktop-full.png`（step13+ratio3 竞争宽分支）、
+    `vis-uni-desktop-coupling.png`（step8+光2.4 防御关：捕光箭头变细变淡＋光抑制同帧）、
+    `vis-uni-tablet.png`（step12 CAM 昼）、`vis-uni-mobile.png`（390 平移布局），目视复核无文字重叠。
+- **已知缺陷 / 限制**：浓缩因子与光抑制损伤/修复仍为**示意模型**（界面标注）；视频转写未验证沿用第 10 轮；
+  关联卡"为什么这是连接点"正文在 900px 高面板需内滚可见（sticky 动作行取舍）；≤700px 横向平移保字号。
+- **下一步**：六概念泛化验收（S0–S4＋C1–C18，耦合族必须 D-D）。
+- **存档补记（11:37）**：本轮就地改动前未留备份；应询问从会话记录恢复第 10 轮原版为
+  `光合作用单画布可视化-第10轮原版.html`（769 行、语法与 headless 渲染复验 OK）与
+  `可视化泛化Prompt架构v2-第10轮原版.md`（v2.0 全文）。证据截图同路径复截，第 10 轮旧图未留档（二进制不可恢复）。
+
+---
+## 2026-11-24 · QoderPeng1 · 单画布论证重建 + prompt v2 + 视频样例通道探针
+
+- **目标**：把第 9 轮四条修正（作图严谨 / 课本终极参照 / 物质能量耦合 / 单画布看见依赖前提分支）
+  从"例子"泛化进工作流；第 10 轮要求从三个 bilibili 视频（光呼吸 / 光系统电子传递 / 卡尔文循环）
+  学习可视化角度方法与工具调用，内容作参考不必全收。**新建** prompt v2 与单画布 HTML，
+  **不覆盖**旧文件。**明确不做**：源–库–流、不接原站不改原站、不新增依赖、不 push、不部署；
+  视频与探针临时产物只放系统 temp，不进 Git。
+- **做了什么**
+  1. **视频通道探针**（环境无 ffmpeg/ffprobe/cv2/av）：同源 localhost HTTP + 浏览器 seek +
+     canvas 接触表（45 帧 + 密集探针 + 讲者机位裁剪）+ mp4 box 遍历（moov/trak/hdlr/stsd）+
+     decodeAudioData → 16k 单声道 WAV。结论：三条视频的**视觉通道＝静态封面＋教师 talking head**，
+     无板书/示意图帧、无字幕轨；System.Speech / SAPI 多条 ASR 路线在本环境全部失败 →
+     **转写未获得，记未验证**。探针协议本身沉淀为 prompt v2 铁律 R12 与可复用工具链。
+  2. **新建 `可视化demo开发/可视化泛化Prompt架构v2.md`**：R8–R11 四条反例铁律
+     （结构同构 / 课本注解 / 耦合闭环 / 单画布论证）+ R12 样例通道验证；S0–S4 工作流
+     （S0 硬输入探针先行）、C1–C14 自检与自动重写 ≤2 次、JSON 输出契约；骨架 D-D 单画布 +
+     步进引擎契约 + ≥7 控件下限 + 机器断言；六个未见概念验收表。
+  3. **新建 `可视化demo开发/光合作用单画布可视化.html`**：单画布论证图——核心＝光反应膜
+     （磷脂双分子层：两层脂质头尾 glyphs 8px 间距、跳过蛋白跨段；5 个跨膜蛋白＋PQ/PC 移动载体）
+     ＋卡尔文环常驻；ATP/NADPH 去流与 ADP+Pi/NADP⁺ 回流构成**耦合闭环**；C4/CAM 为可点开模块区、
+     挂在 CO₂ 入口（收起时保留虚线 chip 连接边，**永无孤岛**）；光呼吸/光抑制为前提分支区
+     （前提 chips＋进/回/亏物质交换标签＋C3 回收、效率↓ 依赖边）；21 条课本外名词"注"注解；
+     16 步步进、累计读数、反应门/上下文门、≥7 控件、PNG 导出、键盘、深链、昼夜阻尼相位。
+- **验证**（本轮实跑：in-app 浏览器断言 + headless Edge 截图）
+  - 断言全 OK：满步 ledger 24 光子/6 H₂O/3 O₂/24 H⁺/6 NADPH/9 ATP＋卡尔文 3/6/6/3/1/3/6/9＋
+    模块 6/3/3/3/1/1/1；模块 union 自动展开；收起/展开 ledger 不变；光=0 门控归零；
+    scrub 纯函数；不可逆 eff 0.20 / 防御 1.00；分支宽度随 O2/CO2 比变化；注解点击、键盘、
+    播放到末步即停；标签几何复核（效率↓ 与膜标题、C4 区标题与 PEP 圆、丙酮酸标签与 PEP 圆
+    距 28.5>26）修正后复截；控制台零消息；无横向页溢出。
+  - 证据四张：`可视化demo开发/evidence/vis-uni-desktop-coupling.png`、`vis-uni-desktop-full.png`
+    （1440×900）、`vis-uni-tablet.png`（1024×768）、`vis-uni-mobile.png`（390×844），目视复核。
+- **已知缺陷 / 限制**：视频**音频转写未获得**（环境无可用 ASR），样例学习限于视觉通道探针＋
+  教材图方法源，已在 prompt v2 §1.2 与页脚记"未验证"；浓度倍率/光抑制为示意模型（界面标注）；
+  ≤700px 横向平移保字号；headless rAF 帧数限制 → 冷加载落收敛相位。旧 v1 HTML 与 v1 prompt 未改动。
+- **下一步**：用 prompt v2 跑六个未见概念验收（≥16/20）；若用户提供字幕文件或可用 ASR，
+  补视频音频通道后再修订 R12 的方法源清单。
+
+---
+
+## 2026-11-23 · QoderPeng1 · 光合作用过程可视化单页 · 知脉白天风格
+
+- **目标**：用户给两张教辅图（光合作用原理页；C3/C4/CAM + 光呼吸/光抑制专题页），要求把静态图里的
+  物质与能量传递做成**逐个步骤展示变化过程**的单页可视化，知脉站点风格、白天模式。
+  **明确不做**：源–库–流（用户暂不想了解）、不接入原站、不改原站任何文件、不新增依赖、不 push、不部署；
+  教辅原图与裁剪块不进 Git（裁剪临时块只放系统 temp 目录）。
+- **做了什么**（`可视化demo开发/光合作用过程可视化.html` 单文件，七视图：
+  总览 / 光反应 / 卡尔文循环 / C4 / CAM / 光呼吸 / 光抑制）
+  1. 步进引擎：状态 = (参数, 步号) 的纯函数；读数 = ≤当前步 deltas 的累计，滑杆来回 scrub 不漂移；
+     每步高亮 changed 节点 + 朱砂色活跃流 + 物质/能量珠；六类载体颜色+形状+文字三重编码。
+  2. 门控语义：反应门（光=0、CO2=0）deltas 归零且隐藏流；CAM 昼/夜为**上下文门**——只遮画面，
+     夜步确实发生过、计入累计（本轮实测发现并修复的语义错误）。
+  3. 可变参数：光照强度、CO2 浓度、O2/CO2 比（光呼吸分支宽度随之变化）、CAM 连续昼夜相位
+     （气孔开度 = 1−相位，rAF 阻尼过渡）、光抑制超额光强 + 防御开关（损伤/修复/效率模型，
+     不可逆区间明确标注）。
+  4. 布局：≥1200×620 单屏（右面板内滚 + 动作行 sticky）；<1200 纵向滚动、舞台全宽；
+     ≤700 横向平移看全舞台（svg min-width 900）+ 图例改静态流内 + 平移提示。
+  5. 深链 `#view=&step=` + hashchange 监听；冷加载直接落收敛相位（headless rAF 帧数限制的对策）。
+  6. 键盘 ←/→ 单步、空格播放、0 重置；prefers-reduced-motion 跳过脉冲；页脚诚实声明
+     （页码未核对不伪造引用、流量为教学计量比、浓度倍率/抑制效率为示意模型、源库按要求排除）。
+- **验证**（本轮实跑：in-app 浏览器断言 + headless Edge 截图）
+  - 断言全 OK：光反应满步 8 光子/2 H₂O/1 O₂/8 H⁺/2 NADPH/3 ATP；卡尔文 3CO₂/9ATP/6NADPH/
+    1 三碳糖出/3 RuBP 再生；C4 每 CO₂ 额外 2ATP；CAM 夜步计入累计、昼相位收敛 1.00 气孔 0%；
+    光呼吸每 2 C₂ 释 1 CO₂、回收 3 C、耗 1 ATP；光抑制无防御不可逆 eff 0.2、有防御 0.87；
+    光=0 自动暂停且读数归零；卡尔文 CO₂=0 全环停；scrub 纯函数（前进-后退-前进读数一致）；
+    键盘 ArrowRight 生效；总览证据卡 ≥4；419×403 无横向页溢出。
+  - 控制台零消息；播放逐步推进、到末步立即停（修复多停一拍的缺陷）。
+  - 证据五张：`可视化demo开发/evidence/vis-photo-desktop-light.png`、`vis-photo-cam-day.png`、
+    `vis-photo-photoinh.png`（1440×900）、`vis-photo-tablet.png`（1024×768）、
+    `vis-photo-mobile.png`（390×844）；桌面光反应（类囊体膜带）、CAM 昼态、窄屏平移布局已目视复核。
+- **已知缺陷 / 限制**：浓度倍率与光抑制损伤/修复为**示意模型**（界面已标注，非实测数据）；
+  headless virtual-time 下 rAF 只走 2–3 帧，故 CAM 深链冷加载直接落收敛相位（真实浏览器阻尼动画正常）；
+  ≤700px 需横向平移看全舞台（保字号的取舍）；教辅页码未核对，页脚声明不伪造引用。
+- **下一步**：用户决定是否接入原站可视化实验室；接入时沿用本页 token 与步进引擎契约。
+
+#### 2026-11-21 ·QoderPeng1· 二次曲面实验室 · 截口贴面 / 单屏自适应 / 退化全覆盖（本轮）
+
+- **目标**：落实用户四条改动——①截口曲线必须落在曲面上；②去掉网格密度滑杆并取最密；
+  ③整页一屏显示、画面自动取景，免用户手调；④k 的量程覆盖退化时刻（一点 / 直线 / 空集）。
+  **明确不做**：不接入原站（用户自行接入）、不改原站任何文件、不新增依赖、不 push、不部署。
+- **做了什么**（`quadric-surfaces/index.html` 单文件）
+  1. 贴面：网格高度取 `max(H, 截口包围球)`，双曲抛物面 / 抛物柱面的矩形域再按截口 |x|、|y|
+     扩展；截口长大时触发网格重建，曲线不再悬空。
+  2. 取景：`Rfit = max(网格包围球, 截口包围球)` 决定单位比例与相机距离，滚轮改为缩放系数
+     （0.4–3），双击 / `0` 复位；网格、坐标轴、平面幽灵片随 Rfit 缩放。
+  3. 单屏：≥980×620 时 `100dvh` 网格布局，控制栏改为贯通舞台与底栏的右轨（内部滚动、
+     动作行 sticky 兜底），底栏读数 / 方程对照 / 方法三窗各自内滚；矮屏与窄屏有降级布局。
+  4. 退化：k 量程 ±`kMax()` 且对齐 0.01 步长网格（此前无理数 min 使 k=0、±a、±c 被步长
+     吸附偏移，退化点取不到——本轮实测发现并修复）；`sectionR()` 补椭球 c 与双叶 c√−t 项。
+  5. 性能：闭合曲面（椭球 / 双叶 / 椭圆柱）背面剔除 +  shading/fog 颜色 LUT + 描边色提常量
+     + dpr 上限 1.5；headless 软件渲染下空闲帧率 6.5 → 38 fps。
+- **验证**（本轮实跑，in-app 浏览器脚本 + headless Edge 截图）
+  - 32/32 截痕分类断言与手算一致：九种曲面 + 连续族在轴对齐与任意 θ/φ 下的
+    椭圆 / 双曲线 / 抛物线 / 两平行直线 / 两相交直线 / 一条直线 / 一点 / 空集。
+  - 交互：扫描推进并止于 kMax、滚轮缩放、双击复位、方向键 / +− / 0、重置、随机、
+    导出 PNG（dataURL 552KB）、昼夜主题；8s 扫描 + 旋转 soak 后控制台零消息。
+  - 布局：1280×800 / 1280×900 无页滚且控制栏全可见；1280×640 / 1000×700 单屏 + 内滚 +
+    sticky 动作行；800 / 407 窄屏纵向降级无横向溢出。
+  - 证据：`docs/evidence/vis-quadric-desktop.png`、`vis-quadric-dark-family.png`、
+    `vis-quadric-mobile.png`、`vis-quadric-tablet.png`、`vis-quadric-saddle-tilt.png`
+    （马鞍 θ37°/φ52° 截口贴面、遮住段虚线）。
+- **已知缺陷 / 限制**：headless Edge 默认深色且 virtual-time 会冻结入场动画，截图需
+  `still=1` 关动画（真实浏览器与 in-app 实测动画正常）；<980px 宽仍为纵向滚动页
+  （单屏放不下全部控件，属自适应降级）；族参数 t 取无理数时退化点不在 0.01 网格上，
+  只能逼近（分类仍诚实显示微小椭圆）。
+- **下一步**：用户自行把单页接入原站可视化实验室；接入时沿用本页 token 与键帽语言。 2026-11-20 · QoderWang2 · 讲义块级编辑 + 叠加层批注 + Obsidian 兼容 + 文件树
+
+**用户要求（2026-11-20，原话摘录）**：「工作区讲义在编辑模式下就变成了源代码……不是说过在什么形式下编辑吗？」「笔啊、颜色啊、字体啊、加粗、淡化、字号、便签啊、荧光啊……都没有」「打开了本地的文件夹，它并没有保留我本地文件夹的分层，而是直接一股脑把所有的文档平铺了出来，而且 obsidian 能渲染的很多代码框、提示框、荧光笔、公式 etc 都无法正常渲染」；随后：「赶紧修好就是。叠加层做一下呗」，并指认 r4 方向样张里的批注样式。
+
+**查到的原因**
+- 编辑：11-16 `9720aa5` 有在渲染态编辑的工具栏（execCommand 改 HTML），11-19 `c8c2abd` 换新阅读器时删掉、改成源码文本框，交接文档没记。改 HTML 难以无损写回 Markdown，是被删的技术原因。
+- 平铺：数据模型只有「一级目录 → 文件」两层，更深的被压成「a / b / 文件名」；超过 3 层的目录、超过 400 个的文件**静默跳过**。
+- 渲染：提示框白名单只认教材栏目；`==荧光==`、`![[嵌入]]`、`%%注释%%`、`#标签` 不认；代码无着色；`![](附件/图.png)` 只按笔记目录找；脚注定义单独成块时**正文整个丢失**、id 重复加前缀。
+
+**改了什么**
+- `content/obsidian.ts`：解析前逐行改写（`%%` 注释抹掉、`\[ \]`/`\( \)` → `$$`/`$`，不动代码块与 `\\[4pt]`，行号不变）；行内 `==荧光==`、`![[嵌入]]`、`#标签`；Obsidian 提示框类型表（按家族着色，不报诊断）。
+- `content/highlight.ts`：不加依赖的轻量代码着色（注释 / 字符串 / 数字 / 关键字 / 函数名）。**`npm install rehype-highlight` 被权限拦下，未安装**。
+- `content/render.ts`：脚注定义按引用补进块里渲染、修重复前缀；嵌入按 Obsidian 规则找文件（相对笔记 → 相对库根 → 按文件名全库找）。
+- `features/workspace/FileTree.tsx`：按 `file.path` 重建真实层级、可折叠、数字按大小排；数据模型不动。`localFolder.ts`：深度上限 20、文件上限 3000，跳过的按原因逐条报告。
+- `reader/BlockEditor.tsx` + `NoteReader`：阅读视图下「编辑」= 块级编辑（点一段只改这一段的 Markdown，工具栏：加粗 / 斜体 / 删除线 / 荧光 / 代码 / 公式 / 双链 / 链接 / 标题 / 列表 / 引用；「+」在下面插入；空着保存删除该段）；整篇撤销 / 重做。「源文件」视图下编辑仍是整篇文本框。
+- `reader/annotations.ts` + `AnnotationLayer.tsx` + `annotationStore.ts`：叠加层六种笔——藤黄荧光、花青划线、淡化、朱砂批改（删除线 + 应为）、石绿核对、便签；TextQuote 锚定；失去锚点的保留在列表并标红点；存 `.vein/annotations/<讲义路径>.json`，不写进讲义。
+- 讲义纸在夜间仍是白纸：纸张范围内钉住白天的颜色变量。
+- 追加（用户反馈「荧光笔的颜色咋是棕色的，黄色啊」「希望可以编辑改字体颜色」）：荧光统一改用荧光黄 `--hl-yellow`（藤黄是颜料色，压在白纸上发棕）；编辑工具栏加「字色」（七色 + 清除），写成 `<span style="color:#…">`，sanitize 只放行 `color: #十六进制`，其余内联样式过滤（新增 2 项测试）。浏览器验收：字色正文显示为朱红、写进草稿、荧光计算色为 rgba(255,221,64,0.62)，原 20 项回归全过。
+
+**怎么验证的**：typecheck 通过；`npm run test` 16 文件 140 项通过（新增 `obsidian.test.ts`、`FileTree.test.ts`；`edgeCases.test.ts` 里拿 `[!warning]` 当未知类型的例子改为 `[!zzz]`，测试意图不变）；build 通过。无头 Chrome 验收 20 项全过（Obsidian 渲染 8 项、块级编辑 5 项、批注 5 项含刷新后仍在、失去锚点 1 项、无未捕获异常）。
+
+**已知缺陷**：本地文件夹无法在无头浏览器授权，文件树层级只有单元测试、未用真实 Obsidian 库实测；「对齐文件夹」会把 `.vein/` 一起同步，未测；代码着色是简化版；Obsidian 的笔记嵌入（`![[另一篇笔记]]`）显示为链接，不做内容嵌入；字体 / 字号未做（Markdown 无标准写法，待定是否做成阅读设置）；字色已做。
+
+**下一步**：用户用自己的 Obsidian 库实测；公式若仍有坏的，要一份样例。
+
+---## 2026-11-20 · QoderWang2 · 讲义块级编辑 + 叠加层批注 + Obsidian 兼容 + 文件树
+
+**用户要求（2026-11-20，原话摘录）**：「工作区讲义在编辑模式下就变成了源代码……不是说过在什么形式下编辑吗？」「笔啊、颜色啊、字体啊、加粗、淡化、字号、便签啊、荧光啊……都没有」「打开了本地的文件夹，它并没有保留我本地文件夹的分层，而是直接一股脑把所有的文档平铺了出来，而且 obsidian 能渲染的很多代码框、提示框、荧光笔、公式 etc 都无法正常渲染」；随后：「赶紧修好就是。叠加层做一下呗」，并指认 r4 方向样张里的批注样式。
+
+**查到的原因**
+- 编辑：11-16 `9720aa5` 有在渲染态编辑的工具栏（execCommand 改 HTML），11-19 `c8c2abd` 换新阅读器时删掉、改成源码文本框，交接文档没记。改 HTML 难以无损写回 Markdown，是被删的技术原因。
+- 平铺：数据模型只有「一级目录 → 文件」两层，更深的被压成「a / b / 文件名」；超过 3 层的目录、超过 400 个的文件**静默跳过**。
+- 渲染：提示框白名单只认教材栏目；`==荧光==`、`![[嵌入]]`、`%%注释%%`、`#标签` 不认；代码无着色；`![](附件/图.png)` 只按笔记目录找；脚注定义单独成块时**正文整个丢失**、id 重复加前缀。
+
+**改了什么**
+- `content/obsidian.ts`：解析前逐行改写（`%%` 注释抹掉、`\[ \]`/`\( \)` → `$$`/`$`，不动代码块与 `\\[4pt]`，行号不变）；行内 `==荧光==`、`![[嵌入]]`、`#标签`；Obsidian 提示框类型表（按家族着色，不报诊断）。
+- `content/highlight.ts`：不加依赖的轻量代码着色（注释 / 字符串 / 数字 / 关键字 / 函数名）。**`npm install rehype-highlight` 被权限拦下，未安装**。
+- `content/render.ts`：脚注定义按引用补进块里渲染、修重复前缀；嵌入按 Obsidian 规则找文件（相对笔记 → 相对库根 → 按文件名全库找）。
+- `features/workspace/FileTree.tsx`：按 `file.path` 重建真实层级、可折叠、数字按大小排；数据模型不动。`localFolder.ts`：深度上限 20、文件上限 3000，跳过的按原因逐条报告。
+- `reader/BlockEditor.tsx` + `NoteReader`：阅读视图下「编辑」= 块级编辑（点一段只改这一段的 Markdown，工具栏：加粗 / 斜体 / 删除线 / 荧光 / 代码 / 公式 / 双链 / 链接 / 标题 / 列表 / 引用；「+」在下面插入；空着保存删除该段）；整篇撤销 / 重做。「源文件」视图下编辑仍是整篇文本框。
+- `reader/annotations.ts` + `AnnotationLayer.tsx` + `annotationStore.ts`：叠加层六种笔——藤黄荧光、花青划线、淡化、朱砂批改（删除线 + 应为）、石绿核对、便签；TextQuote 锚定；失去锚点的保留在列表并标红点；存 `.vein/annotations/<讲义路径>.json`，不写进讲义。
+- 讲义纸在夜间仍是白纸：纸张范围内钉住白天的颜色变量。
+- 追加（用户反馈「荧光笔的颜色咋是棕色的，黄色啊」「希望可以编辑改字体颜色」）：荧光统一改用荧光黄 `--hl-yellow`（藤黄是颜料色，压在白纸上发棕）；编辑工具栏加「字色」（七色 + 清除），写成 `<span style="color:#…">`，sanitize 只放行 `color: #十六进制`，其余内联样式过滤（新增 2 项测试）。浏览器验收：字色正文显示为朱红、写进草稿、荧光计算色为 rgba(255,221,64,0.62)，原 20 项回归全过。
+
+**怎么验证的**：typecheck 通过；`npm run test` 16 文件 140 项通过（新增 `obsidian.test.ts`、`FileTree.test.ts`；`edgeCases.test.ts` 里拿 `[!warning]` 当未知类型的例子改为 `[!zzz]`，测试意图不变）；build 通过。无头 Chrome 验收 20 项全过（Obsidian 渲染 8 项、块级编辑 5 项、批注 5 项含刷新后仍在、失去锚点 1 项、无未捕获异常）。
+
+**已知缺陷**：本地文件夹无法在无头浏览器授权，文件树层级只有单元测试、未用真实 Obsidian 库实测；「对齐文件夹」会把 `.vein/` 一起同步，未测；代码着色是简化版；Obsidian 的笔记嵌入（`![[另一篇笔记]]`）显示为链接，不做内容嵌入；字体 / 字号未做（Markdown 无标准写法，待定是否做成阅读设置）；字色已做。
+
+**下一步**：用户用自己的 Obsidian 库实测；公式若仍有坏的，要一份样例。
+
+---
+
+## 2026-11-20 · QoderWang2 · 美工：博物图鉴 · 拓印（四色颜料、标本拓片、三张背景图版）
+
+**用户要求（2026-11-20，原话摘录）**：「我的意思不是整个网站的大背景颜色改变啊……你看看我的个人网站，不是让你学习风格，但是配色、贴纸 etc」；随后：「没让你风格全盘抄袭人家美式复古风，可以去学学比如博物图鉴拓印机理风」「可视化、关联和记忆图谱的页面背景都很丑，能不能基于风格改一改」。
+
+**范围**：点缀层 + 三个板块的背景。底色、版式、封面地形图、讲义阅读区、导图编辑画板不动。**不做**：`DESIGN.md` §14 正文（待用户认可）。
+
+**过程**：① 撤回上一轮未完成的「蓝晒」整站换色（机器重启时中断、未提交），保住 #40 的改动；② 中间做过一版「四色色块 + 白边贴纸 + 彩条」，用户指出那是照搬个人站的美式复古，已整版替换，`ui/Sticker.tsx` 删除。
+
+**改了什么**
+- `tokens.css`：四个板块各一种矿物颜料——赭石 / 藤黄 / 花青 / 石绿（`--c-*`），朱砂 `--seal` 只用于印章与图钉；拓片与刻线的浓淡变量。夜间一组提亮的值。
+- `ui/plate/rub.tsx`：拓印滤镜（细噪声 × 粗噪声决定着墨，低频位移让轮廓毛糙）；所有拓片共用。
+- `ui/plate/Specimen.tsx`：四件程序生成的标本——羽毛笔（工作台）、鹦鹉螺剖面（实验室，对数螺线）、蛛网（关联探索）、叶子（图谱）；朱砂白文印「知脉」。
+- `ui/plate/venation.ts`：叶脉「空间殖民」生长，从搁置的封面代码抽出、与叶形解耦。
+- `ui/plate/Backdrops.tsx` + `styles/plate.css`：三张背景图版，在 `App.tsx` 按板块挂一次，钉在视口里。实验室＝鹦鹉螺拓片 + 对数螺线作图 + 正交投影与单摆两幅铜版示意（对应示例题）；关联探索＝标本台纸，三件标本挂「最小二乘 / 点到平面的距离 / 异面直线的距离」标签，丝线汇到问题框下的图钉；记忆图谱＝整片叶脉拓片。删去旧的轨道椭圆、透视网格与汇聚线。
+- 封面四个入口改为标本签（细双线框、拓片、图版号）；字标旁的朱砂印按用户反馈（「不好看」）已删，`Seal` 组件一并删除；页眉当前项与工作区方块用板块颜料。
+
+**怎么验证的**：`verify:content` 通过；typecheck 通过；`npm run test` 14 文件 125 项通过；build 通过。无头 Chrome 截图：封面 / 实验室 / 关联探索 / 图谱选择页 / 图谱选图页，白天 + 夜间 1440，封面与关联探索 390；无未捕获异常。修过两处：图钉类名与封面地形的 `.pin` 冲突导致偏移；截图脚本路由含 `=` 时切分错误。
+
+**已知缺陷**：390 宽度页眉导航横向溢出（本轮之前就有）；拓印滤镜只在 Chrome 验证，Firefox / Safari 未验证。
+
+**下一步**：用户看效果；认可后把规则补进 `DESIGN.md` §14、登记 HANDOFF 接龙。
+
+---
+
+## 2026-11-20 · QoderWang2 · 对齐文件夹 + 导图 AI 对话 / 按资料更新 / 全屏 + 封面跳动修复 + 美工方向样张
+
+**接龙 #40**。**用户要求（2026-11-20，原话摘录）**：导入的工作区「可以同步给本地文件夹，也可以根据本地文件夹的更新而更新……有一个功能按键（命名上不要像我表达的这样）」；
+导图页「有一个类似『同步』『sync』这样的功能，可以在工作区更新后手动选择同步更新」「需要让 AI 可以帮我更新和编辑导图，而且这个步骤是可以撤回的」「那个页面里是需要一个AI的对话框」「一个全屏的阅读、编辑模式」；
+美工：「首页那个类似放大镜+地图的东西，它在我鼠标挪到不同的地方的时候图标会形状大小跳跃」「可视化的那个背景我觉得有点单调」「关联探索的那个……好多条线交于一点的那个也太丑了」「色彩上……稍微加一点其他的颜色来点缀……贴纸、图标以及类似我的个人网址的那种背景里动态的小东西」。
+
+**范围**：上面的功能全部做；美工**只做方向样张**（`docs/samples/r4-direction.html`），按用户的既有要求「先给一页样张，认可后再铺开」。
+**明确不做**：样张未铺进站点；可视化 / 关联探索的功能实现、工作台与关联探索的真实 AI、引导功能（排下一轮）。不提交、不部署。
+
+**做了什么**
+
+- **对齐文件夹**（工作台文件栏「对齐文件夹」，浏览器工作区与导入的工作区才有）：`store/link.ts` 三份指纹（这里 / 文件夹 / 上次对齐时）定方向——只有一边改过就照那边，两边都改过列为冲突逐个选「留这里的 / 留文件夹的」；
+  先列清单再点「对齐」；**不删除任何一边的文件**；可断开。`FolderAlign.tsx` 面板。Chrome / Edge 可用，其他浏览器说明原因。
+- **导图 AI 对话框**（`MindAssist.tsx`，取代导图页的示例输入条）：提问只回答；要改图时模型给整张修改后的导图，经 `checkOutput` 核对（原有公式 / 出处 / ref 视为已认可，新增的照旧必须有原文出处；保留主题须沿用原 id，记忆练习才不断；「我的连线」原样保留）→
+  `diffDocs` 列出新增 / 删去 / 改动 / 移动 → 「应用这些修改」→ `MindCanvas.applyDoc` 作为**一步**入历史：Ctrl+Z 或提示里的「撤回这次修改」一下整体撤回。
+- **按资料更新**（导图页头）：同一条路，要求固定为「对照笔记最新内容更新」；没有要改的只回答。示例工作区的 AI 现在读得到示例讲义（`demoStore` 列出随站发布的讲义）。
+- **全屏**（导图页头「全屏」，Esc 退出）：浏览器全屏，浏览器不给时退回铺满窗口。
+- **封面跳动**：根因是右下卡片高度随条目变（「为什么」长短不一）→ 等高带取卡片上沿 → 指针掠过图钉换条目时整张地形重画、图钉移位、放大镜里的图跟着变。修法：所有条目叠在同一网格格子，卡片高度恒为最高一条。
+- **方向样张**（`docs/samples/r4-direction.html`，双击打开）：颜料盒四色（花青 / 朱砂 + 新增藤黄「新的、AI 提议」、石绿「已核对、已对齐」）、关联探索的碎片相逢场、实验室向量场背景与工具收成一行、原创贴纸六张。截图 `docs/evidence/r4-sample-{light,dark}.png`。
+
+**怎么验证的**
+
+- 四道门：`verify:content` 通过；`typecheck` 无输出；`test` **14 个文件、125 项全过**；`build` 通过。新增测试：`store/link.test.ts`（方向判定）、`mindGen.test.ts` 更新 / 差异 / 只回答三项。
+- 浏览器端到端（无头 Chrome，4174）**18 / 18**：封面扫过全部 8 个图钉卡片高度与图钉位置不变；对齐面板首次列出「读入 1 + 冲突 1」、选「留这里的」后文件夹被覆盖、新笔记进工作区、文件夹再改只剩「读到这里」；
+  AI 改图先预览（公式已排版）→ 应用多一个主题且落盘 → 「撤回」与 Ctrl+Z 各一步撤回且落盘；按资料更新带最新笔记、无改动只回答；全屏画板变大、退出复原；示例工作区 AI 读到示例讲义。全程无未捕获异常。
+- **模型仍是拦截请求的假回答**；本地文件夹用 OPFS 目录句柄代替原生选择框。真实模型的改图质量、各家服务的跨域都未实测。
+- 截图：`docs/evidence/r3-{cover,align,assist-preview,sync-reply,mind-full}-1440.png`、`r3-mind-1024.png`、`r3-mind-390.png`。
+
+**已知缺陷 / 限制**
+
+- 封面卡片高度恒定后，短条目下方留白（卡片取最高一条的高度），铺开美工时一并处理。
+- AI 修改是「整体接受 / 不要」，还不能逐条勾选；按资料更新不区分「用户改过的主题」，靠差异预览与一步撤回兜底。
+- 对齐不处理删除（一边删了的文件会被另一边补回来），这是有意的安全取舍。
+
+**下一步**：用户看样张定方向 → 铺开美工（tokens、关联探索、实验室、封面卡片留白、贴纸进空状态）→ 可视化与关联探索功能 → 工作台 / 关联探索接真实 AI 并联动 → 引导。
+
+---
+
+## 2026-11-20 · QoderWang2 · R2-L L0 补全 + L3 导图落进工作区 + R3 最小切片（导图生成）
+
+**范围**（HANDOFF 接龙 #38）：
+1. 把导图与记忆练习从写死的 localStorage 键挪进**每个工作区自己的** `maps/mind.json`、`maps/memory.json`；
+2. 补完 L0：示例 / 浏览器 / 本地文件夹三种工作区走同一个 `WorkspaceStore`，全站一个入口 `openStore()`；
+3. 按用户裁决接上「从工作区资料生成第一张导图」：BYOK 模型调用 + 内置 `prompts/MINDMAP.md` + 输出核对 + 预览确认后写入；
+4. 零碎：工作区改名入口、「导入文件夹」入口（任何浏览器）、浏览器工作区相对图片。
+
+**明确不做**：L4 关联探索写导图、L5 实验室挂主题、L6 讲义 ↔ 导图深链、L7 GitHub；已有导图的「AI 更新」（要走 `ProposedChange` 差异预览，另排）；
+关联探索 / 实验室对非示例工作区仍是空态；不装新依赖；不提交、不 push、不部署（部署由用户交给 Qoder）。
+
+**用户裁决（2026-11-20，原话）**：
+- R2-L §4 ①②：「导图是基于工作区的各种数据库，经由类似demo制作的时候的精确的呈现结果和令人满意的内容质量的（这是不是涉及后面API的实现，以及内置prompt）存进文件夹。」
+  → ① 选 C（按工作区资料、走模型 + 内置提示词生成，质量对齐示例）；② 存进工作区文件夹。
+  → 没有模型时**不退回目录导图**（目录导图达不到「令人满意的内容质量」），只给「接入我的模型」与「从空白导图开始」两个明确动作。
+- ③ 截止前做到哪一步：用户本轮未答，仍开放。
+
+**做了什么**
+
+- **存储层（L0 补全）**：新增 `store/folder.ts`（File System Access 读写，路径拒绝 `..`）、`store/demo.ts`（示例原件只读 fetch + 本机覆盖层）、
+  `store/open.ts`（`openStore(workspace)` 与 `readText / readJson / writeText / writeJson`）、`store/tree.ts`（文件分类、分组、显示名，本地扫描 / 导入 / 新建笔记 / 写导图共用一份）。
+  `localFolder.ts` 改用这些共用规则。
+- **导图进工作区（L3）**：`features/atlas/maps.ts` 读写 `maps/`。示例工作区第一次打开时把旧 localStorage 键（`vein.mind.linear-algebra.v2`、`vein.memory.linear-algebra`）
+  **一次性搬进** `maps/`，搬成功后删旧键。`MindCanvas` 不再碰 localStorage，存到哪里由外面传入（`CanvasIO`）；写入串行，旧版本不会后落盘。
+  `MemoryMap` 的答案判定改用当前工作区 `graph.json` 的别名。浏览器工作区写 `maps/` 时登记进文件栏，工作台能看到 `mind.json` / `memory.json`。
+- **生成第一张导图（R3 最小切片，位置 `atlas.mindmap`）**：`ai/chat.ts`（OpenAI 兼容 + Anthropic，浏览器直连，key 只在请求头）、
+  `ai/prompts.ts`（内置提示词随站发布；工作区 `.vein/prompts/atlas.mindmap.md` 可覆盖，但 `QUALITY_BAR.md` 永远附在前面）、
+  `features/atlas/mindGen.ts`：笔记按标题切片并记锚点（单次上限 48,000 字，超出的段落计数告诉用户）→ 拼输入（kb / 图谱节点与已接受关系 / 笔记片段）→ 调模型 → **逐项核对**：
+  公式必须能在笔记原文里找到、出处必须是真实片段锚点、`ref` 必须是图谱里的节点、id 去重、不收模型画的连线；核对改掉的地方原样展示给用户。
+  `MapGenerate.tsx`：材料统计 → 生成 → 预览（大纲 + 核对结果）→「确认，写入 maps/mind.json」/ 重新生成 / 放弃；没有模型时「接入我的模型」/「从空白导图开始」。
+- **零碎**：工作区栏「改名」（只改站内显示名；本地文件夹重扫时保留改过的名字）、「导入文件夹」（`webkitdirectory`，复制成浏览器工作区，跳过隐藏目录 / node_modules / 不支持的文件）；
+  浏览器工作区 Markdown 的相对图片能显示了；打开工作区默认进第一份笔记而不是 `maps/` 里的数据文件；工作区栏底部两个入口各占一行（之前挤在一行被截成半个字）。
+- **顺手修的既有缺陷**：思维导图的**撤销 / 重做、导入 JSON、恢复示例之后不存盘**（刷新后被撤掉的内容回来）——现在都会存。
+- **改了真源**：新增 `schemas/map.schema.json`（`maps/mind.json` 与 `maps/memory.json`，有测试用 ajv 校验示例导图 / 空白导图 / 练习状态）；`GLOSSARY.md` 给 `PersonalEdge` 补别名「我的连线」。
+
+**实现中发现并修掉的问题**
+
+- **单页应用的托管站对不存在的路径回 200 + 首页 HTML**（本地 `vite preview` 与 Qoder Sites 都是）。示例工作区读 `maps/mind.json` 时覆盖层没有 → 回退去站上 fetch → 拿到首页 HTML 当 JSON → 报错。
+  单元测试抓不到，浏览器验收抓到。修法：非 `.html` 路径收到 `text/html` 视为文件不存在（`store/demo.ts`，有测试）。
+- **标题字体是子集**（只含界面源码出现过的字），新标题「给「工作区名」生成第一张导图」一半标题体一半回落。工作区名是用户内容，任何子集都覆盖不了 →
+  标题改为子集里全有的「这个工作区没有导图」，名字留在面包屑；授权 / 报错页用正文字体标题。字体文件未重建（源字体不在本机）。
+
+**怎么验证的**
+
+- 四道门：`npm run verify:content` 通过；`npm run typecheck` 无输出；`npm run test` **13 个文件、119 项全过**（基线 9 / 95）；`npm run build` 通过。未装新依赖。
+  新增测试：`store/tree.test.ts`、`store/demo.test.ts`、`features/atlas/maps.test.ts`（含 schema 校验）、`features/atlas/mindGen.test.ts`（切片、核对、OpenAI / Anthropic 请求形状、401 / 截断 / 跨域的报错、工作区覆盖提示词）。
+- **浏览器端到端**（无头 Chrome，`vite preview` 4174，全新 profile）**25 / 25 通过**：新建工作区与笔记 → 图谱进生成页（材料统计来自真实笔记）→ 设置面板填模型 → 生成 →
+  预览显示「1 条公式 / 1 处出处 / 1 处指向」被核对删掉 → 确认写入 → 画布状态栏「已保存到工作区 maps/mind.json」→ 加主题落盘 → 撤销也落盘 → 记忆图谱读同一张导图、练习写 `maps/memory.json` →
+  刷新仍在 → 工作台文件栏出现 `mind.json` / `memory.json` 且默认打开笔记 → 改名刷新后仍在 → 示例旧 localStorage 导图迁移、旧键删除 →
+  本地文件夹（OPFS 目录句柄，与原生选择框同一套 File System Access 接口）进生成页 →「从空白导图开始」→ 文件夹里真的出现 `maps/mind.json` → 工作台重扫看得到。全程无未捕获异常。
+- **模型是拦截请求返回的假回答**（同源 `/mockai/`，回答里故意夹了编造的公式、出处、ref）。所以验证的是链路与核对，**没有验证真实模型的生成质量，也没有验证真实服务的跨域**。
+- 截图：`docs/evidence/r2l3-generate-nokey-1440.png`、`r2l3-preview-{1440,1024,390}.png`、`r2l3-mind-1440.png`、`r2l3-memory-1440.png`、`r2l3-workspace-{1440,390}.png`。
+
+**已知缺陷 / 限制**
+
+- 真实模型的导图质量**未实测**：要用户接自己的 key 生成一次，与示例导图并排比（`QUALITY_BAR.md` §1「比样本差就不上线」）。DeepSeek / 通义千问等的浏览器跨域也未实测。
+- 已有导图后没有「重新生成 / AI 更新」入口；按 `MINDMAP.md` §2，更新必须是差异预览，不能覆盖用户改过的主题。
+- Windows 原生目录选择框仍未自动化验收（同 #37）。本地文件夹两个同名文件夹会撞同一个工作区 id（`local:<文件夹名>`，既有设计）。
+- 导图标题与中心主题若是用户内容，标题字体子集同样会回落（既有设计，归视觉层）。
+- `apps/web/dist` 已是本轮构建：**Qoder Sites 从本地 dist 打包**，部署即发布本轮全部改动。
+
+**下一步**：用户用真实 key 跑一次生成并评质量 → L4「加入思维导图」（差异预览 + 可撤销）→ L6 讲义锚点 ↔ 导图主题（`src` 已带「文件 § 标题」）→ L5。
+
+---
+
 ## 2026-11-19 · QoderPeng1 · R1b 阅读器 + R2-L 工作区打通（开工声明）
 
 **范围**（HANDOFF 接龙 #36 认领）：

@@ -23,6 +23,23 @@ export function initTheme() {
   applyTheme(saved);
 }
 
+/**
+ * 界面语言。英文模式只覆盖外壳、封面、设置、入门文档与四个板块的入口层；
+ * 示例讲义正文、导图编辑器与阅读器内部仍为中文（切换时界面上会说明）。
+ * 文案原地写成中英一对：t('学习工作台', 'Study Desk')——改中文的人一眼看得到英文要不要跟着改。
+ */
+export type Lang = 'zh' | 'en';
+const LANG_KEY = 'vein.lang';
+
+function savedLang(): Lang {
+  return localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'zh';
+}
+
+/** 在首次渲染前调用：<html lang> 决定断词、字体回退与读屏语言。 */
+export function initLang() {
+  document.documentElement.lang = savedLang() === 'en' ? 'en' : 'zh-CN';
+}
+
 export interface ModelConfig {
   provider: 'openai-compatible' | 'anthropic';
   baseUrl: string;
@@ -31,6 +48,8 @@ export interface ModelConfig {
 }
 
 interface Prefs {
+  lang: Lang;
+  setLang: (l: Lang) => void;
   theme: ThemePref;
   setTheme: (t: ThemePref) => void;
   resolvedDark: boolean;
@@ -52,6 +71,12 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   const [model, setModel] = useState<ModelConfig>({ provider: 'openai-compatible', baseUrl: '', model: '', apiKey: '' });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('model');
+  const [lang, setLangState] = useState<Lang>(savedLang);
+  const setLang = useCallback((l: Lang) => {
+    localStorage.setItem(LANG_KEY, l);
+    document.documentElement.lang = l === 'en' ? 'en' : 'zh-CN';
+    setLangState(l);
+  }, []);
 
   const setTheme = useCallback((t: ThemePref) => {
     localStorage.setItem(THEME_KEY, t);
@@ -71,6 +96,8 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Prefs>(
     () => ({
+      lang,
+      setLang,
       theme,
       setTheme,
       resolvedDark,
@@ -84,7 +111,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       },
       closeSettings: () => setSettingsOpen(false),
     }),
-    [theme, setTheme, resolvedDark, model, settingsOpen, settingsTab],
+    [lang, setLang, theme, setTheme, resolvedDark, model, settingsOpen, settingsTab],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -99,4 +126,10 @@ export function usePrefs(): Prefs {
 /** 模型是否已配置（填了地址、模型名与 key）。 */
 export function modelReady(m: ModelConfig): boolean {
   return Boolean(m.baseUrl && m.model && m.apiKey);
+}
+
+/** 中英一对里取当前语言的那一个。 */
+export function useT(): (zh: string, en: string) => string {
+  const { lang } = usePrefs();
+  return useCallback((zh: string, en: string) => (lang === 'en' ? en : zh), [lang]);
 }

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 360" width="780" height="360" font-family="'Times New Roman','Songti SC','Noto Serif SC',SimSun,serif" font-size="15">
+  <title>两连杆机械臂在普通与奇异构型下的雅可比列空间</title>
+  <desc>左图普通构型的两条雅可比列方向不共线，末端可瞬时分方向运动。右图手臂伸直时两列都竖直，水平方向不可达，水平外力落在左零空间。</desc>
+  <defs>
+    <marker id="blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#246b91"/></marker>
+    <marker id="orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#b5661f"/></marker>
+  </defs>
+  <g fill="#f7fafc" stroke="#c7d6df"><rect x="12" y="12" width="366" height="336" rx="10"/><rect x="402" y="12" width="366" height="336" rx="10"/></g>
+  <text x="28" y="38" fill="#355c72">普通构型 q = (0, π/2)</text>
+  <line x1="68" y1="286" x2="68" y2="72" stroke="#9eabb3"/><line x1="68" y1="286" x2="344" y2="286" stroke="#9eabb3"/>
+  <line x1="92" y1="286" x2="202" y2="286" stroke="#355c72" stroke-width="8" stroke-linecap="round"/>
+  <line x1="202" y1="286" x2="202" y2="176" stroke="#355c72" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="92" cy="286" r="8" fill="#fff" stroke="#355c72" stroke-width="2"/><circle cx="202" cy="286" r="8" fill="#fff" stroke="#355c72" stroke-width="2"/><circle cx="202" cy="176" r="8" fill="#b5661f"/>
+  <line x1="202" y1="176" x2="128" y2="176" stroke="#246b91" stroke-width="2.4" marker-end="url(#blue)"/>
+  <line x1="202" y1="176" x2="202" y2="82" stroke="#b5661f" stroke-width="2.4" marker-end="url(#orange)"/>
+  <text x="103" y="166" fill="#246b91">J 第 1 列 (−1, 1)</text><text x="211" y="91" fill="#8e4e17">第 2 列 (−1, 0)</text>
+  <text x="28" y="326" fill="#173f56">两列不共线：Col(J) = ℝ²。</text>
+
+  <text x="418" y="38" fill="#355c72">奇异构型 q = (0, 0)</text>
+  <line x1="458" y1="286" x2="458" y2="72" stroke="#9eabb3"/><line x1="458" y1="286" x2="734" y2="286" stroke="#9eabb3"/>
+  <line x1="482" y1="286" x2="702" y2="286" stroke="#355c72" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="482" cy="286" r="8" fill="#fff" stroke="#355c72" stroke-width="2"/><circle cx="592" cy="286" r="8" fill="#fff" stroke="#355c72" stroke-width="2"/><circle cx="702" cy="286" r="8" fill="#b5661f"/>
+  <line x1="702" y1="286" x2="702" y2="112" stroke="#246b91" stroke-width="2.4" marker-end="url(#blue)"/>
+  <line x1="702" y1="286" x2="702" y2="154" stroke="#b5661f" stroke-width="2.4" marker-end="url(#orange)"/>
+  <line x1="638" y1="286" x2="766" y2="286" stroke="#8e4e17" stroke-width="1.8" stroke-dasharray="6 4"/>
+  <text x="675" y="104" fill="#246b91">J = [0  0; 2  1]</text>
+  <text x="419" y="326" fill="#173f56">两列共线：水平速度不可达，水平外力 JᵀF = 0。</text>
+</svg>

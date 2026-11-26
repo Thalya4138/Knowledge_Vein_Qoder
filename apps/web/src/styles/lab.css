@@ -1,6 +1,7 @@
 /* 可视化实验室：深色。对话气泡起手，结果是几扇可视化窗口。 */
 
 .lab {
+  position: relative;
   flex: 1;
   width: min(100% - 48px, 1080px);
   margin: 0 auto;
@@ -16,11 +17,6 @@
   justify-items: center;
   gap: var(--s-24);
   padding-top: 8vh;
-  transition: padding var(--d-long) var(--ease);
-}
-
-.lab-stage.asked {
-  padding-top: 0;
 }
 
 .lab-bubble {
@@ -141,25 +137,221 @@
 
 .lab-presets {
   display: grid;
-  gap: var(--s-4);
+  gap: var(--s-12);
   width: min(680px, 100%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.lab-presets button {
+/* 示例入口：与关联探索的示例卡同一套写法（边框 + 落影 + 「示例」签） */
+.lab-try {
+  display: flex;
+  align-items: center;
+  gap: var(--s-12);
   width: 100%;
-  padding: var(--s-12) var(--s-16);
-  border: 0;
-  border-radius: var(--r-inner);
-  background: transparent;
-  color: var(--ink-2);
+  padding: var(--s-12) var(--s-16) var(--s-12) var(--s-24);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-mid);
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--ink);
+  color: var(--ink);
   font-size: var(--t-15);
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--d-micro) var(--ease), box-shadow var(--d-micro) var(--ease);
+}
+
+.lab-try span {
+  flex: none;
+  margin-left: auto;
+  padding: 1px 7px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--r-small);
+  color: var(--accent);
+  font-size: var(--t-13);
+}
+
+.lab-try:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--ink);
+}
+
+.lab-try:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+/* 结果页顶栏：返回、来源、这一问、右栏与历史，全收在一条里；昼夜跟页眉走 */
+.lab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-8) var(--s-12);
+  padding: var(--s-8) var(--s-16);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.lab-bar-name {
+  font-family: var(--font-display);
+  font-size: var(--t-17);
+  font-weight: 600;
+}
+
+/* 顶栏里的那一问：细气泡，宽度让给它，过长截断（完整问句在 title 与会话历史里） */
+.lab-bar-ask {
+  flex: 1 1 140px;
+  min-width: 0;
+  overflow: hidden;
+  padding: var(--s-4) var(--s-16);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--hairline);
+  font-family: var(--font-display);
+  font-size: var(--t-15);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lab-bar-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-8);
+  margin-left: auto;
+}
+
+.lab-back-icon {
+  transform: rotate(180deg);
+}
+
+/* 窄桌面：前提标签让位给操作按钮，顶栏仍守一条 */
+@media (max-width: 1199px) {
+  .lab-bar .lab-tag.mode {
+    display: none;
+  }
+}
+
+/* 「在新窗口打开 / 挂到主题上」收进窗口脚注的文字链接，顶栏只留视图操作 */
+.lab-foot-open,
+.lab-foot-attach {
+  display: inline;
+  margin-left: var(--s-8);
+  white-space: nowrap;
+}
+
+.lab-foot-attach:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 入口页：历史按钮像关联探索那样立在页面右缘，与起手气泡同一行 */
+.lab > .lab-history-btn {
+  position: absolute;
+  top: calc(var(--s-64) + 8vh);
+  right: calc(50% - 50vw + var(--s-16));
+  z-index: 30;
+}
+
+/* 会话历史抽屉：与关联探索的历史同一套版式 */
+.lab-history {
+  position: fixed;
+  top: calc(var(--header-h) + 56px);
+  right: var(--s-16);
+  z-index: 40;
+  display: grid;
+  gap: var(--s-8);
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - var(--header-h) - var(--s-96));
+  padding: var(--s-16);
+  overflow: auto;
+  border-radius: var(--r-outer);
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--lift);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-3) transparent;
+}
+
+.lab-history-head {
+  font-weight: 600;
+}
+
+.lab-history-head span {
+  margin-left: var(--s-8);
+  font-size: var(--t-13);
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.lab-history ul {
+  display: grid;
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lab-history li {
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-inner);
+}
+
+.lab-history li.on,
+.lab-history li:hover {
+  background: var(--fill-strong);
+}
+
+.lab-history li > button:first-child {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: var(--s-8) var(--s-12);
+  border: 0;
+  background: none;
+  color: var(--ink);
   text-align: left;
   cursor: pointer;
 }
 
-.lab-presets button:hover {
+.lab-history li strong {
+  overflow: hidden;
+  font-size: var(--t-15);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lab-history li span {
+  font-size: var(--t-13);
+  color: var(--ink-3);
+}
+
+.lab-history-del {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.lab-history-del:hover {
   background: var(--fill);
-  color: var(--ink);
+  color: var(--danger);
+}
+
+.lab-history-del .icon {
+  width: 14px;
+  height: 14px;
 }
 
 /* 结果窗口 */
@@ -185,7 +377,7 @@
   display: grid;
   align-content: start;
   gap: var(--s-16);
-  padding: var(--s-24);
+  padding: var(--s-16);
   border-radius: var(--r-outer);
   background: var(--surface);
   box-shadow: 0 0 0 1px var(--hairline);
@@ -228,6 +420,122 @@
   color: var(--ink-2);
 }
 
+/* 预置可视化页：窗口高度跟着视口走，页内单屏自适应，不靠外层滚动 */
+.lab-frame {
+  display: block;
+  width: 100%;
+  height: clamp(420px, calc(100dvh - 310px), 1600px);
+  border: 0;
+  border-radius: var(--r-inner);
+  background: var(--bg);
+}
+
+.lab-frame-fallback {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--s-16);
+  padding: var(--s-24);
+  text-align: center;
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.lab-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-8) var(--s-16);
+}
+
+.lab-foot .lab-caption {
+  flex: 1 1 320px;
+}
+
+/* ---------- 结果页：整屏工作区，四周不留背景 ---------- */
+
+/* 装饰图版只服务于入口页；结果页是一整张工作台，把它撤掉 */
+.shell:has(.lab-full) .plate-backdrop {
+  display: none;
+}
+
+.lab-full {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-height: calc(100dvh - var(--header-h));
+  background: var(--bg);
+}
+
+/* 带实验窗口的结果：锁成一屏，高度全部让给窗口，滚动只在窗口内部发生 */
+.lab-full:has(.lab-frame) {
+  height: calc(100dvh - var(--header-h));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lab-full .lab-bar {
+  flex: none;
+}
+
+.lab-full .lab-results {
+  width: 100%;
+  padding: var(--s-16);
+  animation: none;
+}
+
+.lab-full:has(.lab-frame) .lab-results {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  padding: 0;
+}
+
+.lab-full:has(.lab-frame) .lab-window {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+  padding: var(--s-8) var(--s-16);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.lab-full:has(.lab-frame) .lab-foot {
+  flex: none;
+}
+
+.lab-full:has(.lab-frame) .lab-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+.lab-full .lab-note,
+.lab-full .lab-notice {
+  margin: var(--s-16);
+}
+
+/* 站内实验（正交投影）：工作面铺满整页，内容仍守一个可读宽度 */
+.lab-full:not(:has(.lab-frame)) .lab-results {
+  width: min(100%, 1000px);
+  margin: 0 auto;
+}
+
+.lab-full .lab-note {
+  justify-self: stretch;
+  max-width: none;
+}
+
 .lab-story {
   display: grid;
   gap: var(--s-8);
@@ -263,6 +571,115 @@
   color: var(--accent);
   font: inherit;
   cursor: pointer;
+}
+
+.lab-note-asks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-12);
+  margin: var(--s-8) 0;
+}
+
+.lab-note-asks .lab-link {
+  margin-left: 0;
+}
+
+.lab-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-12);
+}
+
+.lab-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-8);
+  padding: var(--s-12) var(--s-16);
+  border-radius: var(--r-inner);
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: var(--t-15);
+}
+
+.lab-notice .lab-link {
+  margin-left: 0;
+}
+
+/* 「挂到主题上」：这一屏就是写入前的预览，确认后才写 maps/mind.json */
+.viz-attach-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: var(--s-16);
+  background: rgb(14 23 38 / 0.28);
+}
+
+.viz-attach {
+  display: grid;
+  gap: var(--s-16);
+  width: min(560px, 92vw);
+  max-height: 86vh;
+  overflow: auto;
+  padding: var(--s-24);
+  border-radius: var(--r-outer);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--hairline), var(--lift);
+}
+
+.viz-attach header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-12);
+}
+
+.viz-attach h2 {
+  font-size: var(--t-17);
+  font-weight: 600;
+}
+
+.viz-attach-note {
+  color: var(--ink-2);
+  font-size: var(--t-15);
+  line-height: 1.7;
+}
+
+.viz-attach-note code {
+  font-family: var(--font-math);
+  font-size: 0.95em;
+}
+
+.viz-attach-list {
+  display: grid;
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.viz-attach-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-12);
+}
+
+.viz-attach-topic {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--t-15);
+}
+
+.viz-attach-topic.on {
+  font-weight: 600;
 }
 
 /* 交互实验 */
@@ -386,9 +803,51 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .lab {
+  .lab:not(.lab-full) {
     width: calc(100% - 32px);
     padding-top: var(--s-40);
+  }
+
+  .lab > .lab-history-btn {
+    top: var(--s-16);
+  }
+
+  .lab-full .lab-bar {
+    gap: var(--s-4) var(--s-8);
+    padding: var(--s-4) var(--s-8);
+  }
+
+  .lab-full .lab-bar-name {
+    font-size: var(--t-15);
+  }
+
+  .lab-full .lab-bar-ask {
+    flex: 1 1 120px;
+    order: 9;
+  }
+
+  /* 窄屏折叠右栏会藏掉整列阐释；新窗口 / 挂载在脚注文字链接里 */
+  .lab-rail-btn {
+    display: none;
+  }
+
+  .lab-full:has(.lab-frame) .lab-window {
+    gap: var(--s-4);
+    padding: var(--s-4) var(--s-8) var(--s-8);
+  }
+
+  .lab-full .lab-results {
+    padding: var(--s-12);
+  }
+
+  .lab-full .lab-foot {
+    gap: var(--s-4) var(--s-12);
+  }
+
+  .lab-full .lab-foot .lab-caption {
+    flex: 1 1 100%;
+    font-size: var(--t-13);
+    line-height: 1.6;
   }
 
   .lab-results {
@@ -414,58 +873,120 @@
   isolation: isolate;
 }
 
-.lab-sky {
-  position: absolute;
-  inset: 0 calc(50% - 50vw);
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
+
+/* ---------- 现场生成（GenPanel） ---------- */
+
+.lab-gen-stage {
+  display: flex;
+  align-items: center;
+  gap: var(--s-12);
+  margin: var(--s-24) auto;
+  color: var(--ink-2);
+  font-size: var(--t-15);
 }
 
-.lab-floor {
-  position: absolute;
-  left: -20%;
-  right: -20%;
-  top: 34%;
-  height: 90%;
-  background-image: linear-gradient(var(--hairline) 1px, transparent 1px), linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
-  background-size: 56px 56px;
-  transform: perspective(700px) rotateX(64deg);
-  transform-origin: top center;
-  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.9), transparent 70%);
-  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.9), transparent 70%);
+.lab-gen-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-lab);
+  animation: lab-gen-pulse 1.2s var(--ease) infinite alternate;
 }
 
-.lab-orbits {
-  position: absolute;
-  left: 50%;
-  top: -40px;
-  width: min(1100px, 120vw);
-  transform: translateX(-50%);
-  overflow: visible;
-}
-
-.lab-orbits {
-  opacity: 0.7;
-}
-
-.lab-orbits ellipse {
-  fill: none;
-  stroke: var(--hairline);
-  stroke-width: 1;
-}
-
-.lab-orbits ellipse:nth-child(2) {
-  stroke: var(--accent-soft);
-  stroke-width: 1.5;
-}
-
-.lab-sat {
-  fill: var(--accent);
+@keyframes lab-gen-pulse {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lab-sat {
-    display: none;
-  }
+  .lab-gen-dot { animation: none; }
 }
+
+/* 用户点名的工具用不了、换了别的：说明放在最上面，一行 */
+.lab-gen-sub {
+  flex: none;
+  padding: var(--s-8) var(--s-12);
+  border-left: 3px solid var(--c-lab);
+  background: var(--fill);
+  font-size: var(--t-13);
+}
+
+/* PhET 嵌入与本地代码：左边主体，右边阐释 */
+.lab-gen-embed {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--s-16);
+}
+
+.lab-gen-explain {
+  overflow: auto;
+  padding: var(--s-16);
+  border-radius: var(--r-inner);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--hairline);
+  font-size: var(--t-15);
+  line-height: 1.7;
+}
+
+.lab-gen-explain h3 { font-size: var(--t-17); margin-bottom: var(--s-8); }
+.lab-gen-explain h4 { margin: var(--s-16) 0 var(--s-4); font-size: var(--t-15); }
+.lab-gen-explain p + p { margin-top: var(--s-8); }
+.lab-gen-explain ul,
+.lab-gen-explain ol { padding-left: 1.2em; }
+
+.lab-gen-code {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+}
+
+.lab-gen-local { font-size: var(--t-15); }
+
+.lab-gen-code-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+}
+
+.lab-gen-pre {
+  flex: 1 1 auto;
+  min-height: 240px;
+  max-height: 70vh;
+  overflow: auto;
+  margin: 0;
+  padding: var(--s-16);
+  border-radius: var(--r-inner);
+  background: var(--fill-strong);
+  font: 13px/1.6 var(--font-mono);
+  tab-size: 4;
+}
+
+.lab-gen-failed {
+  flex: none;
+  padding: var(--s-12) var(--s-16);
+  border-left: 3px solid var(--danger);
+  background: var(--fill);
+  font-size: var(--t-13);
+}
+
+.lab-gen-failed ul { margin: var(--s-8) 0; padding-left: 1.2em; }
+
+.lab-gen-facts {
+  flex: 1 1 100%;
+  font-size: var(--t-13);
+  color: var(--ink-2);
+}
+
+.lab-gen-facts summary { cursor: pointer; }
+.lab-gen-facts ul { margin: var(--s-8) 0; padding-left: 1.2em; }
+.lab-gen-src { color: var(--vein); }
+
+@media (max-width: 899px) {
+  .lab-gen-embed { grid-template-columns: 1fr; }
+}
+
+.lab-gen-failed.warn { border-left-color: var(--c-lab); }
+.lab-gen-failed.warn summary { cursor: pointer; }

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" width="760" height="320" font-family="'Times New Roman','Songti SC','Noto Serif SC',SimSun,serif" font-size="15">
+  <title>三个最短距离问题的统一投影模型</title>
+  <desc>给定点 d 到仿射子空间 a 加 M 的列空间，最近点是 p，残差 e 垂直于方向空间。参数空间中的核方向不改变 p，因此点可以唯一而参数不唯一。</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#355c72"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L10 5 L0 9 z" fill="#b5661f"/></marker>
+  </defs>
+  <rect x="12" y="12" width="450" height="290" rx="10" fill="#f7fafc" stroke="#c7d6df"/>
+  <text x="28" y="38" fill="#355c72">数据空间：点到仿射子空间的距离</text>
+  <polygon points="64,223 266,248 420,113 218,88" fill="#dfeef7" stroke="#6e9db7" stroke-width="1.4"/>
+  <text x="282" y="204" fill="#355c72">a + Col(M)</text>
+  <line x1="218" y1="88" x2="236" y2="41" stroke="#355c72" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="266" y1="248" x2="392" y2="278" stroke="#355c72" stroke-width="1.5" marker-end="url(#a)"/>
+  <circle cx="235" cy="146" r="5" fill="#b5661f"/>
+  <circle cx="236" cy="48" r="5" fill="#355c72"/>
+  <line x1="236" y1="54" x2="235" y2="140" stroke="#b5661f" stroke-width="1.7" stroke-dasharray="6 4" marker-end="url(#b)"/>
+  <polyline points="224,123 236,131 248,121" fill="none" stroke="#b5661f" stroke-width="1.4"/>
+  <text x="244" y="49" fill="#355c72" font-style="italic">d</text><text x="245" y="142" fill="#8e4e17" font-style="italic">p = a + Mz*</text>
+  <text x="252" y="102" fill="#8e4e17" font-style="italic">e</text>
+  <text x="34" y="276" fill="#173f56">min ‖d − Mz‖²  ⇔  Mᵀ(d − Mz) = 0</text>
+
+  <line x1="470" y1="148" x2="515" y2="148" stroke="#355c72" stroke-width="1.6" marker-end="url(#a)"/>
+  <rect x="522" y="12" width="226" height="290" rx="10" fill="#eef6fa" stroke="#9fc3d5"/>
+  <text x="538" y="38" fill="#355c72">参数空间：z* + ker(M)</text>
+  <line x1="544" y1="247" x2="722" y2="247" stroke="#81939d" marker-end="url(#a)"/>
+  <line x1="544" y1="247" x2="544" y2="67" stroke="#81939d" marker-end="url(#a)"/>
+  <line x1="574" y1="217" x2="706" y2="89" stroke="#b5661f" stroke-width="2" stroke-dasharray="7 5"/>
+  <circle cx="624" cy="167" r="5" fill="#b5661f"/>
+  <text x="634" y="163" fill="#8e4e17">z*</text>
+  <text x="579" y="88" fill="#8e4e17">ker(M)</text>
+  <text x="538" y="277" fill="#5c6f7a" font-size="13">M 把整条直线送到同一个 p。</text>
+</svg>

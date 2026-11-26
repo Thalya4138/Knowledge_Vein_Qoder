@@ -20,6 +20,10 @@ import { readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
+/** 标题 slug，与 apps/web/src/content/anchors.ts 的 slugify 保持一致 */
+const anchorSlug = (t) =>
+  t.normalize('NFKC').trim().toLowerCase().replace(/\s+/gu, '-').replace(/[^\p{L}\p{N}\p{M}_-]/gu, '').replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
+
 const ROOT = path.resolve(process.cwd(), 'content/demo');
 const EPISTEMIC = new Set([
   'source-backed', 'logically-derived', 'pedagogical-inference',
@@ -250,8 +254,15 @@ async function main() {
     // ---- 图谱落地：noteAnchor / sourceSpanIds / evidenceIds ----
     for (const n of graph.nodes ?? []) {
       if (n.noteAnchor) {
-        const file = n.noteAnchor.split('#')[0];
-        if (!existsSync(path.join(dir, file))) fail(`${kb}: 节点 ${n.id} 的 noteAnchor 指向不存在的讲义 ${file}`);
+        const [file, heading] = n.noteAnchor.split('#');
+        const full = path.join(dir, file);
+        if (!existsSync(full)) fail(`${kb}: 节点 ${n.id} 的 noteAnchor 指向不存在的讲义 ${file}`);
+        else if (heading) {
+          // 标题改名后锚点会悬空：图谱「打开讲义对应处」就落不到位置。与 content/anchors.ts 的 slugify 同一规则。
+          const heads = (await readFile(full, 'utf8')).split(/\r?\n/).map((l) => /^#{1,6}\s+(.+?)\s*$/.exec(l)?.[1]).filter(Boolean);
+          if (!heads.some((h) => anchorSlug(h) === anchorSlug(heading)))
+            fail(`${kb}: 节点 ${n.id} 的 noteAnchor 指向讲义里不存在的标题「${heading}」（${file}）`);
+        }
       }
       for (const sid of n.sourceSpanIds ?? []) {
         if (!spanById.has(sid)) fail(`${kb}: 节点 ${n.id} 引用不存在的 span ${sid}`);

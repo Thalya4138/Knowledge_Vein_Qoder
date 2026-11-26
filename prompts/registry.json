@@ -26,24 +26,24 @@
     },
     "connection.fragments": {
       "where": "知识关联探索 · 碎片串联",
-      "prompt": "CONNECTION_EXPLORER.md#3",
-      "input": "零散的知识、题目、方法、网页、截图",
-      "output": "讲透的回答 + 对应表 + 差异与边界 + 反例 + 候选关系（ExploreResult）",
-      "status": "示例模式"
+      "prompt": "CONNECTION_EXPLORER.md + EXPLORE_FRAGMENTS.md",
+      "input": "零散的知识、题目、方法 + 附件（文本原文 / 截图 / 网页）+ 工作区节点与相关笔记片段 + 此前对话",
+      "output": "直接的回答（共同结构与统一模型 → 完整证明 → 统一求解、唯一性、边界与迁移）+ 关联图块（每条边是带理由的候选关系）",
+      "status": "已接入（BYOK；2026-11-24 v7）：三种模式是三种任务，不共用骨架。碎片串联自下而上形式化共同模型，补足核心结论的必要性与充分性，再回到每一样东西上验证；不强制对应表、不套讲义栏目；输出 Markdown + vein-graph 图块，经确定性核对；示例工作区有人工核对的示例（示例是规范，不是模板）。真实模型质量未实测"
     },
     "connection.meta": {
       "where": "知识关联探索 · 学科元思考",
-      "prompt": "CONNECTION_EXPLORER.md#4",
+      "prompt": "CONNECTION_EXPLORER.md + EXPLORE_META.md",
       "input": "一门课或一个学科",
-      "output": "学科元结构长文 + 结构图",
-      "status": "未接入"
+      "output": "长文（几类对象 × 几个反复出现的动作，各节交织成网，4–8 节）+ 学科结构图",
+      "status": "已接入（BYOK；2026-11-24 v6）：三种模式是三种任务，不共用骨架。学科元思考（v5）找这门学科的几类对象与反复出现的动作，用它安放各章；分清依赖、等价、推广、动机四种联系；逐条核对结论的成立条件；收尾检验生成能力并写明管不到的地方；分步写作（目录 → 逐节 → 收尾）；输出 Markdown + vein-graph 图块，经确定性核对；示例工作区有人工核对的示例（示例是规范，不是模板）。真实模型质量未实测"
     },
     "connection.cross": {
       "where": "知识关联探索 · 跨学科并联",
-      "prompt": "CONNECTION_EXPLORER.md#5",
+      "prompt": "CONNECTION_EXPLORER.md + EXPLORE_CROSS.md",
       "input": "两个或多个领域",
-      "output": "区分 C1 真实交集与 C2 视角启发的教案级文档",
-      "status": "未接入"
+      "output": "探索文档（从两门学科自身的问题出发，双向/多向迁移，差异启发，必要时给出最小验证或实验；允许多路径生长）+ 关联图；边标 C1 有依据的交集 / C2 视角启发",
+      "status": "已接入（BYOK；2026-11-24 v7 / 模式 v5.1）：三种模式是三种任务，不共用骨架。跨学科并联从单一数学接口扩展为知识、机制、能力、思维、方法与创造的相互作用，逐条标明证据与边界；分步写作（开头与可分叉的目录 → 逐节 → 收尾）；新联系接入工作区已有讲义与关系；输出 Markdown + vein-graph 图块，经确定性核对；示例工作区有人工核对的示例（示例是规范，不是模板）。真实模型质量未实测"
     },
     "atlas.assist": {
       "where": "认知与记忆图谱 · 悬浮输入条：提问、代为编辑",
@@ -57,7 +57,7 @@
       "prompt": "MINDMAP.md",
       "input": "讲义原文片段 + 图谱节点与关系（含前提）+ 用户当前的导图（更新时）",
       "output": "MDoc（树、公式、出处、角标、笔记）；更新时为 ProposedChange 列表",
-      "status": "未接入（示例导图由知识库确定性生成）"
+      "status": "已接入生成（BYOK；2026-11-20）：新工作区的第一张导图，输出逐项核对后预览确认再写 maps/mind.json；更新（ProposedChange）未接入；真实模型质量与跨域未实测。示例导图仍由知识库确定性生成"
     },
     "atlas.quiz": {
       "where": "认知与记忆图谱 · 智能挖空与出题",
@@ -68,17 +68,17 @@
     },
     "lab.visualize": {
       "where": "可视化实验室 · 对话气泡",
-      "prompt": null,
-      "input": "想看见的内容 + 指定工具（可选）",
-      "output": "若干可视化窗口：工具、参数、预期现象、与讲义的回链",
-      "status": "未写（下一版起草 prompts/VISUALIZE.md）"
+      "prompt": "VISUALIZE.md",
+      "input": "想看懂的内容 + 指定工具（可选）+ 工作区讲义片段",
+      "output": "三步：计划 JSON（工具、要让人看见什么、控件、步骤、事实与出处、阐释）→ 单文件 HTML（浏览器工具）/ 可运行脚本（本地工具）/ PhET 清单 id → 沙箱报错时修复一次",
+      "status": "已接入（BYOK；2026-11-26 v1.0）：从可视化训练成果 v3.0 蒸馏。工具按 features/lab/toolCaps.ts 分四类（网页内运行 / 嵌入 PhET / 本地代码 / 要授权的换替代）；页面以 data: 地址在沙箱 iframe 里运行，隔离已用攻击页验收；8 个浏览器库的真实加载已在沙箱实测（e2e-lab-gen.mjs）。真实模型的生成质量未实测"
     },
     "report.write": {
       "where": "关联探索与图谱 · 导出成文件",
       "prompt": "REPORT_WRITER.md",
       "input": "回答或图谱",
       "output": "Markdown / PDF；Word、PPT 待批准新依赖",
-      "status": "未接入"
+      "status": "关联探索已可导出 Markdown / Word / PPT（pptxgenjs）/ PDF（打印）/ PNG / SVG，可存进工作区或接到讲义末尾（确定性导出，不调模型）；REPORT_WRITER.md 未接入"
     }
   }
 }

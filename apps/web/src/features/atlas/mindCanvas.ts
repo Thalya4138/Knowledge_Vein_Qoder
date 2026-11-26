@@ -11,14 +11,12 @@ import {
   indexDoc,
   insertParent,
   isDescendant,
-  MIND_DOC_KEY,
   moveNode,
   moveSibling,
   parseImported,
   parseOutline,
   pasteBranches,
   removeNode,
-  seedDoc,
   serialize,
   toMarkdown,
   toOutline,
@@ -35,6 +33,21 @@ import {
  * 用命令式 DOM 写，是因为一次编辑要先量出每个节点的真实尺寸（公式、换行）再排版，
  * 放进 React 的渲染周期会多出一轮重排。React 只负责外框（MindEditor.tsx）。
  */
+
+/** 导图存到哪里由外面决定（工作区的 maps/mind.json）；画布只管什么时候存。 */
+export interface CanvasIO {
+  persist(json: string): Promise<void>;
+  /** 这张图是第一次打开（工作区里还没有存过） */
+  fresh: boolean;
+  /** 已保存时状态栏显示的话，如「已保存到 maps/mind.json」 */
+  savedLabel: string;
+  /** 「恢复示例」用；没有示例的工作区不提供 */
+  seed?: () => MDoc;
+  /** 主题上挂着实验时给出「去可视化」：把 viz id 映射成实验室深链（TASK_R2_LINKAGE L5） */
+  vizOf?: (vizId: string, nodeId: string) => { name: string; href: string } | null;
+  /** 主题去别的板块的入口（讲义对应处、拿去探索；TASK_R2_LINKAGE L4 / L6）。地址由外面拼，画布只负责摆 */
+  goOf?: (topic: { id: string; ref?: string; text: string; neighbors: string[] }) => { label: string; href: string; hint: string }[];
+}
 
 export interface CanvasEls {
   root: HTMLElement;
@@ -167,6 +180,9 @@ export class MindCanvas {
   private drag: Drag | null = null;
   private pendingSnap = false;
   private saveTimer = 0;
+  private saveRev = 0;
+  private saving: Promise<void> = Promise.resolve();
+  private dead = false;
   private toastTimer = 0;
   private off: (() => void)[] = [];
 
@@ -176,11 +192,12 @@ export class MindCanvas {
     doc: MDoc,
     private onToast: (msg: string) => void,
     private onSheet: () => void,
+    private io: CanvasIO,
   ) {
     this.doc = doc;
     this.sel = doc.root.id;
     this.bind();
-    if (doc.view.level === null && !globalThis.localStorage?.getItem(MIND_DOC_KEY)) foldToLevel(this.doc, 99);
+    if (doc.view.level === null && io.fresh) foldToLevel(this.doc, 99);
     this.render();
     this.firstView();
     void document.fonts?.ready.then(() => {
@@ -213,7 +230,8 @@ export class MindCanvas {
     this.off.forEach((f) => f());
     window.clearTimeout(this.saveTimer);
     window.clearTimeout(this.toastTimer);
-    this.flushSave();
+    if (!this.saved) this.flushSave();
+    this.dead = true;
   }
 
   /* ---------- 历史与存储 ---------- */
@@ -250,6 +268,7 @@ export class MindCanvas {
     if (!this.sel || !this.ix.byId.has(this.sel)) this.sel = this.doc.root.id;
     if (this.selLink?.kind === 'p' && !this.doc.links.some((l) => l.id === this.selLink?.id)) this.selLink = null;
     this.render();
+    this.save();
     this.toast(msg);
   }
   private save() {
@@ -258,13 +277,24 @@ export class MindCanvas {
     this.saveTimer = window.setTimeout(() => this.flushSave(), 300);
   }
   private flushSave() {
-    try {
-      localStorage.setItem(MIND_DOC_KEY, serialize(this.doc));
-      this.saved = true;
-    } catch {
-      this.toast('浏览器存储已满，请导出 JSON 备份');
-    }
-    this.renderStatus();
+    const rev = ++this.saveRev;
+    const json = serialize(this.doc);
+    // 串行写：本地文件夹的写入是异步的，后一次必须等前一次写完，免得旧版本后落盘
+    this.saving = this.saving
+      .then(() => this.io.persist(json))
+      .then(
+        () => {
+          if (rev === this.saveRev) this.saved = true;
+        },
+        (e: Error) => this.toast('没有保存成功：' + e.message + '。请先导出 JSON 备份'),
+      )
+      .then(() => {
+        if (!this.dead) this.renderStatus();
+      });
+  }
+  /** 是否有一个可以「恢复示例」的种子 */
+  hasSeed() {
+    return Boolean(this.io.seed);
   }
   private toast(msg: string) {
     this.onToast(msg);
@@ -585,6 +615,16 @@ export class MindCanvas {
     this.e.zoomVal.textContent = Math.round(this.cam.k * 100) + '%';
     if (this.editing) this.positionEditor();
   }
+  /** 选中一个主题：参数是主题 id（实验室传回），或知识点 id（讲义「在导图里看」）。找不到返回 false，不动画布。 */
+  focusRef(ref: string): boolean {
+    let id: string | undefined = this.ix.byId.has(ref) ? ref : undefined;
+    if (!id) for (const [k, n] of this.ix.byId) if (n.ref === ref) { id = k; break; }
+    if (!id) return false;
+    this.unfoldTo(id);
+    this.select(id);
+    this.reveal(id, true);
+    return true;
+  }
   fit() {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const g of this.geo.values()) {
@@ -805,16 +845,35 @@ export class MindCanvas {
       this.selLink = null;
       this.render();
       this.fit();
+      this.save();
       this.toast('已导入 ' + file.name + '，Ctrl+Z 可以撤回');
     });
   }
-  reset() {
+  /** 当前导图的一份深拷贝（交给 AI 读，不让它碰到画布正在用的对象） */
+  docCopy(): MDoc {
+    return JSON.parse(serialize(this.doc)) as MDoc;
+  }
+  /**
+   * 应用一份整图修改（AI 修改、按资料更新）：作为**一步**记进历史，Ctrl+Z 一下整体撤回。
+   * 只换树、连线与标题；视图设置是用户的，不跟着变。
+   */
+  applyDoc(next: MDoc, msg: string) {
     this.snapshot();
-    this.doc = seedDoc();
+    this.doc.root = next.root;
+    this.doc.links = next.links;
+    this.doc.title = next.title;
+    this.doc.seq = Math.max(this.doc.seq, next.seq);
+    this.afterHistory(msg);
+  }
+  reset() {
+    if (!this.io.seed) return;
+    this.snapshot();
+    this.doc = this.io.seed();
     this.sel = this.doc.root.id;
     this.selLink = null;
     this.render();
     this.fit();
+    this.save();
     this.toast('已恢复示例，Ctrl+Z 可以撤回');
   }
 
@@ -882,6 +941,10 @@ export class MindCanvas {
     const meta = [info?.kind, n.src].filter(Boolean).map((x) => esc(String(x)));
     if (meta.length) h += '<p class="me-ref">' + meta.join('，') + '</p>';
     if (info && info.title !== plain(n.text)) h += '<p class="me-ref">知识库里叫「' + esc(info.title) + '」' + (info.aliases.length ? '，又叫' + esc(info.aliases.join('、')) : '') + '</p>';
+    const go = this.io.goOf?.({ id: n.id, ref: n.ref, text: plain(n.text), neighbors: n.ref ? this.relationsOf(n).map((r) => this.otherTitle(r, n.ref!)) : [] }) ?? [];
+    if (go.length) {
+      h += '<p class="me-go">' + go.map((g) => '<a class="me-go-link" data-nav href="' + esc(g.href) + '" title="' + esc(g.hint) + '">' + esc(g.label) + '</a>').join('') + '</p>';
+    }
     if (n.f?.length) h += '<div class="me-sec"><h3>公式</h3><div class="me-fx">' + n.f.map((k) => tex(k, true)).join('') + '</div></div>';
     if (n.tag) h += '<div class="me-sec"><h3>角标</h3><div class="me-callout tag"><b>' + esc(n.tag) + '</b>' + rich(n.tagNote) + '</div></div>';
     if (n.ref) {
@@ -894,6 +957,14 @@ export class MindCanvas {
     if (n.phen) h += '<div class="me-sec"><h3>把它逼出来的现象</h3><div class="me-callout phen">' + rich(n.phen) + '</div></div>';
     if (n.contrast) h += '<div class="me-sec"><h3>容易混淆</h3><div class="me-callout con">' + rich(n.contrast) + '</div></div>';
     if (n.notes) h += '<div class="me-sec"><h3>推导与动机</h3><div class="me-notes">' + notesHTML(n.notes) + '</div></div>';
+    if (n.viz) {
+      const v = this.io.vizOf?.(n.viz, n.id) ?? null;
+      h += '<div class="me-sec"><h3>可视化</h3><p class="me-viz">' +
+        (v
+          ? '<a class="me-viz-link" data-nav href="' + esc(v.href) + '">' + esc(v.name) + ' · 去可视化</a>'
+          : '挂载的实验 <code>' + esc(n.viz) + '</code> 不在实验室的注册表里。') +
+        '</p><button class="key small" data-act="unviz">取消挂载</button></div>';
+    }
     const rels = this.relationsOf(n);
     if (rels.length) {
       h += '<div class="me-sec"><h3>知识关系</h3><div class="me-list">' +
@@ -981,7 +1052,7 @@ export class MindCanvas {
     else if (this.sel) list = [['Tab', '子主题'], ['Enter', '同级主题'], ['Shift+Tab', '父主题'], ['F2', '编辑'], ['Delete', '删除'], ['Ctrl+/', '收起'], ['Alt+↑', '上移'], ['Ctrl+K', '画连线'], ['F1', '全部快捷键']];
     else list = [['拖动', '空白处平移'], ['滚轮', '缩放'], ['Ctrl+0', '适应窗口'], ['F1', '全部快捷键']];
     this.e.hints.innerHTML = list.map(([k, t]) => '<span>' + (/^[一-龥]/.test(k) ? '<b>' + k + '</b>' : K(k)) + t + '</span>').join('');
-    this.e.meta.innerHTML = '<span>' + (this.ix?.byId.size ?? 0) + ' 个主题</span><span>' + (this.saved ? '已保存在本机' : '正在保存') + '</span>';
+    this.e.meta.innerHTML = '<span>' + (this.ix?.byId.size ?? 0) + ' 个主题</span><span>' + (this.saved ? this.io.savedLabel : '正在保存') + '</span>';
     this.e.root.dispatchEvent(new CustomEvent('me-state'));
   }
   private renderTools() {
@@ -1378,6 +1449,17 @@ export class MindCanvas {
           this.render();
         },
         delLink: () => this.delLink(),
+        unviz: () => {
+          const n = this.node(this.sel);
+          if (!n?.viz) return;
+          this.snapshot();
+          delete n.viz;
+          this.renderMap();
+          this.renderInspector();
+          this.renderStatus();
+          this.save();
+          this.toast('已取消挂载，Ctrl+Z 撤销');
+        },
         prevHit: () => this.nextHit(-1),
         nextHit: () => this.nextHit(1),
       };

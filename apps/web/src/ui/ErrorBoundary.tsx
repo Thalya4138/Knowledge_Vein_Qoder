@@ -30,22 +30,24 @@ export class ErrorBoundary extends Component<Props, State> {
     const { error } = this.state;
     if (!error) return this.props.children;
     const chunk = isChunkLoadError(error);
+    const en = localStorage.getItem('vein.lang') === 'en';
+    const t = (zh: string, e: string) => (en ? e : zh);
     return (
       <div className="plain-page" role="alert">
-        <h1 className="display">{chunk ? '这一页没能载入' : '这一页出了问题'}</h1>
+        <h1 className="display">{chunk ? t('这一页没能载入', 'This page did not load') : t('这一页出了问题', 'Something went wrong on this page')}</h1>
         <p>
           {chunk
-            ? '网站刚更新过，浏览器里还是旧版本。刷新一次即可，已有内容不会丢。'
-            : '其他页面不受影响。先重试；还不行就刷新，或从页眉换一个板块。'}
+            ? t('网站刚更新过，浏览器里还是旧版本。刷新一次即可，已有内容不会丢。', 'The site was just updated and this browser still has the old version. Reload once; nothing you made will be lost.')
+            : t('其他页面不受影响。先重试；还不行就刷新，或从页眉换一个板块。', 'Other pages are unaffected. Try again; if that fails, reload or switch spaces from the header.')}
         </p>
         <pre>{error.message}</pre>
         {chunk ? (
           <button type="button" className="btn primary" onClick={() => window.location.reload()}>
-            刷新页面
+            {t('刷新页面', 'Reload')}
           </button>
         ) : (
           <button type="button" className="btn primary" onClick={() => this.setState({ error: null })}>
-            重试
+            {t('重试', 'Try again')}
           </button>
         )}
       </div>

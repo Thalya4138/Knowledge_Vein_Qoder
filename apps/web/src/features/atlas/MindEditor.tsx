@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 // 公式排版所需的样式与字体；字体由构建打成静态资源，按需加载
 import 'katex/dist/katex.min.css';
-import { MindCanvas, SHEET, type CanvasEls } from './mindCanvas';
-import { demoKnowledge, loadDoc } from './mindDoc';
+import { MindCanvas, SHEET, type CanvasEls, type CanvasIO } from './mindCanvas';
+import type { KnowledgeContext, MDoc } from './mindDoc';
 
 /**
  * 可编辑思维导图的外框：工具条、大纲、画板、详情栏、底栏与快捷键表。
@@ -33,7 +34,23 @@ function Keys({ k }: { k: string }) {
   );
 }
 
-export function MindEditor() {
+export interface MindEditorProps extends CanvasIO {
+  /** 打开时的导图（来自工作区的 maps/mind.json） */
+  doc: MDoc;
+  /** 工作区 graph.json 的只读知识关系 */
+  knowledge: KnowledgeContext;
+  /** 把画布交给外面（AI 对话框要读当前导图、整图应用修改） */
+  onCanvas?: (c: MindCanvas | null) => void;
+  /** 打开后选中挂着这个知识点的主题（地址里的 ?focus=） */
+  focus?: string | null;
+}
+
+/** 父组件用 `key={工作区 id}` 挂载：换工作区就换一块画布。 */
+export function MindEditor({ doc, knowledge, persist, fresh, savedLabel, seed, vizOf, goOf, onCanvas, focus }: MindEditorProps) {
+  const navigate = useNavigate();
+  // 画布只建一次；去处要读最新的工作区，所以经 ref 转一手
+  const goRef = useRef(goOf);
+  goRef.current = goOf;
   const rootRef = useRef<HTMLDivElement>(null);
   const canvas = useRef<MindCanvas | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -65,29 +82,47 @@ export function MindEditor() {
     let timer = 0;
     const c = new MindCanvas(
       els,
-      demoKnowledge(),
-      loadDoc(),
+      knowledge,
+      doc,
       (msg) => {
         setToast(msg);
         window.clearTimeout(timer);
         timer = window.setTimeout(() => setToast(null), 1800);
       },
       () => setSheet(true),
+      { persist, fresh, savedLabel, seed, vizOf, goOf: (t) => goRef.current?.(t) ?? [] },
     );
     canvas.current = c;
+    onCanvas?.(c);
     setTitle(c.title());
     const onState = () => setTick((t) => t + 1);
     root.addEventListener('me-state', onState);
     const onShow = (e: Event) => ((e as CustomEvent<string>).detail === 'outline' ? setOutline(true) : setInsp(true));
     root.addEventListener('me-show', onShow);
+    // 详情栏里的去处是普通链接（可在新标签打开）；普通点击改走站内路由，不整页刷新
+    const onNav = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-nav]');
+      if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const url = new URL(a.href);
+      if (url.origin !== window.location.origin) return;
+      e.preventDefault();
+      navigate(url.pathname + url.search + url.hash);
+    };
+    root.addEventListener('click', onNav);
     return () => {
+      root.removeEventListener('click', onNav);
       root.removeEventListener('me-state', onState);
       root.removeEventListener('me-show', onShow);
       window.clearTimeout(timer);
       c.destroy();
       canvas.current = null;
+      onCanvas?.(null);
     };
   }, []);
+
+  useEffect(() => {
+    if (focus && canvas.current && !canvas.current.focusRef(focus)) setToast('导图里还没有挂着这个知识点的主题');
+  }, [focus]);
 
   useEffect(() => {
     if (!sheet) return;
@@ -252,9 +287,11 @@ export function MindEditor() {
                 <button type="button" className="key small" onClick={fileAct((x) => x.exportMD())}>
                   导出 Markdown
                 </button>
-                <button type="button" className="key small" onClick={fileAct((x) => x.reset())}>
-                  恢复示例
-                </button>
+                {seed && (
+                  <button type="button" className="key small" onClick={fileAct((x) => x.reset())}>
+                    恢复示例
+                  </button>
+                )}
               </div>
               <button type="button" className="key small" autoFocus onClick={() => setSheet(false)}>
                 关闭

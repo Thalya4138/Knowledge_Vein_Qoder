@@ -34,3 +34,11 @@ export async function unregisterWorkspace(id: string): Promise<void> {
   if (id === DEMO_WORKSPACE.id) throw new Error('示例工作区不能移除');
   await idbDeleteWorkspace(id);
 }
+
+/** 改名只改知脉里显示的名字；本地文件夹在硬盘上的名字不动。 */
+export async function renameWorkspace(workspace: Workspace, name: string): Promise<Workspace> {
+  if (workspace.origin === 'demo') throw new Error('示例工作区不能改名');
+  const renamed = namedWorkspace(workspace, name);
+  await registerWorkspace(renamed);
+  return renamed;
+}

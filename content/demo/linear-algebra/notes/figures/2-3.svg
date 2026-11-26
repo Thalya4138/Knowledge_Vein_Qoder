@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 150" width="190" height="150">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 150" width="190" height="150" role="img" aria-labelledby="title desc">
+  <title id="title">最小二乘直线与三个残差</title>
+  <desc id="desc">橙色直线 b 等于三分之二加二分之一 t 最接近三个数据点，紫色竖虚线表示各数据点到直线的残差。</desc>
           <g stroke="#9bb" stroke-width="1"><line x1="20" y1="135" x2="185" y2="135"/><line x1="20" y1="135" x2="20" y2="8"/></g>
           <g font-size="10" fill="#567" font-family="serif"><text x="60" y="148">1</text><text x="105" y="148">2</text><text x="150" y="148">3</text><text x="180" y="148">t</text><text x="8" y="14">b</text></g>
           <!-- b = 2/3 + t/2 ; y_px = 135 - 40*b ; x_px = 20 + 45*t -->
