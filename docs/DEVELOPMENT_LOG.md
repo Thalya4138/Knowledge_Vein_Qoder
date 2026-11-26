@@ -5,6 +5,57 @@
 
 ---
 
+## 2026-11-26（夜二）· QoderWang2 · R3e：重跑字体子集修「一行两字体」
+
+**用户指令**：两张截图（入门大标题「知脉 · 入门文档」、正文「切换到英文界面」）指出「这里的字体不一好丑」，改完提交、更新、部署。
+
+**根因**：标题 / 正文用子集字体（站酷小薇 / 霞鹜文楷 / Noto Sans SC，见 `styles/fonts/NOTICE.md`），子集自首个提交 `1c89f23` 后没重跑。R3 起新增的界面字不在子集里：`vein-title` 缺「入门文档英换」等 6 字、`vein-text` / `vein-display` 缺「英」，这些字回落系统黑体，与其余楷体 / 小薇混排成一行两字体。
+
+**改动**
+
+- `scripts/fonts/build_fonts.py`：标题子集字符集从手工 `TITLE_TEXT` 清单改为 `collect_with_content()`（界面源码 + 示例 kb/graph 现取），与 display/text 同口径，手工清单漏字的缺陷类不再复发；`TITLE_TEXT` 保留作兜底注释。
+- 重跑三个子集（源字体为 OFL：站酷小薇、霞鹜文楷 v1.530、Noto Sans SC VF，下载到临时目录、不入库）：`vein-title.woff` 1147 字 / 441 KB、`vein-text.woff` 1147 字 / 290 KB、`vein-display.woff` 1127 字 / 193 KB。cmap 复核「知脉入门文档英文界面换到需要你点一下授权这个工作区打不开」缺字 0（标题个别数学符号 ⊥⇔ 小薇本就没有，回落属预期）。
+
+**验证**
+
+- 四道门：`verify:content` ✓、`typecheck` ✓、26 文件 / 256 tests ✓、`build` ✓。
+- `e2e-tour.mjs` 16 项全过。
+- 无头截图两张目检：`docs/evidence/r3e-guide-{top,lang}.png`——大标题整行站酷小薇、正文「英文」回霞鹜文楷，`document.fonts` 三套均 loaded。
+
+**已知缺陷 / 未验证**
+
+- 子集变大（标题 57→441 KB）：换来全覆盖不再漏字；首屏多约 0.5 MB 字体，属可接受代价。
+- 源字体文件不入库（OFL 允许子集再分发，子集 woff 已带许可声明）；下次改界面文案仍须重跑脚本。
+
+---
+
+## 2026-11-26（夜）· QoderWang2 · R3d：封面导览按钮改磨砂玻璃归位四签之下、入门标题与目录艺术化、拓印装饰
+
+**用户指令**：两张截图（入门目录栏、入门页首）＋四条——①「第一次来跟着导览走」放回四大按钮下面，按键要苹果式半透明磨砂感；②目录栏目做得艺术一点；③大标题就写「知脉 · 入门文档」；④入门页加拓印装饰。**本轮未获 commit / push / 部署授权**，收尾时询问。
+
+**范围**：同一本地分支 `task/R3-QoderWang2`（HEAD `cf01e8b`）。**不做**：改导览站点内容、动九节结构、合并 main、部署。
+
+**改动**
+
+- **封面导览按钮**（`app/CoverPage.tsx`、`styles/cover.css`）：DOM 移回四张标本签 `</nav>` 之后；样式改磨砂玻璃胶囊——半透明纸色底（surface 52%）+ `backdrop-filter: var(--blur)`（saturate 180% blur 20px）+ 内侧高光 + 发丝描边，hover 提亮微浮、箭头右移；删掉 R3c 的宽屏 fixed 底部吊舱媒体块（用户改主意，不再要页面中心）。
+- **入门标题对调**（`app/GuidePage.tsx`）：h1 = 「知脉 · 入门文档 / Vein · Field guide」，朱砂 overline = 「从一节讲义开始 / Start from one lesson」。
+- **目录艺术化**（`styles/guide.css`）：目录做成标本签纸卡——双细框（外 1px 墨 70% + inset 4px/5px 发丝线）、3px 直角圆角、半透明纸底；「入门」标题改朱印小签（seal 底、纸色字、0.18em 字距）；编号改等宽字体，hover 朱砂 + 右移 2px；卡右下角压一枚叶脉拓片（opacity .45）。
+- **拓印装饰**（`app/GuidePage.tsx`、`styles/guide.css`）：页首右上角大蛛网拓片（200px、tilt 12、opacity .3、absolute、pointer-events none，窄屏 ≤899px 隐藏防横向溢出）；四个工作空间 dt 右侧各带本板块标本小拓片（40px，feather/nautilus/web/leaf，dt 改 flex 仅作用于 data-space，FAQ 不受影响）。
+
+**验证**
+
+- 四道门：`verify:content` ✓、`typecheck` ✓、26 文件 / 256 tests ✓、`build` ✓。
+- `e2e-tour.mjs` 16 项全过（入门九节、英文汉字 5、窄屏 overflowX 0、控制台无错误）。
+- 无头 Chrome 截图四张目检：`docs/evidence/r3d-{cover-glass,guide-top,guide-spaces,guide-narrow}.png`。结构检查：按钮在 nav 之下、backdrop-filter 生效、圆角 999px；h1/overline 文案对调正确；目录卡 1px 边框 3px 圆角、hero/toc 拓片在位、四枚 space 拓片；1440 与 390 两档 overflowX 均 0，窄屏 hero 拓片 display none。
+
+**已知缺陷 / 未验证**
+
+- 磨砂玻璃依赖 `backdrop-filter`；不支持的旧浏览器回落为半透明纸色底（仍可读，无白屏风险）。
+- 本轮改动已随 `3539516` 提交、push `task/R3-QoderWang2`、部署公网（见接龙 #73 与 R3e 验证段）；main 仍 `68b280b`，合并由用户定。
+- 沿用缺口：工作区导出缺失（#68）、真实模型 / 真实仓库未实测（#69）。
+
+---
+
 ## 2026-11-26（晚）· QoderWang2 · R3c：导览递归修复、力学样例下沉、封面导览入口与入门文档视觉重做
 
 **用户指令**：五张截图反馈——①导览第 10/22、11/22 两站把整站递归套进实验室 iframe；②力学思维导图应作为记忆图谱「选一个工作区」层的样例、右上角标 demo，而不是现在的地图类型签形式；③封面导览入口不显眼，做成好看按钮，随后追加「能不能更醒目？比如放在页面中心」；④入门文档太单调，参考整站风格重做美工（装饰、板块、按钮）；⑤问最新是否合并 main（答：没有）。开工时未获 commit / push / 部署授权；收尾时用户勾选授权三项，均已执行（见验证段与接龙 #71）。
