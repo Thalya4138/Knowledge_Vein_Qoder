@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../ui/Icon';
 import type { DrawerModel } from './resources';
 
@@ -36,7 +37,8 @@ export function ResourceDrawer({ model, onClose }: { model: DrawerModel; onClose
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  return (
+  // 挂到 body：.main 的 z-index:1 堆叠上下文会把抽屉压到页眉（z300）之下，顶部被盖住
+  return createPortal(
     <>
       <div className="nr-scrim" onClick={onClose} aria-hidden="true" />
       <aside ref={drawerRef} className="nr-drawer" role="dialog" aria-modal="true" aria-label={`资源：${model.title}`}>
@@ -88,6 +90,7 @@ export function ResourceDrawer({ model, onClose }: { model: DrawerModel; onClose
           </section>
         )}
       </aside>
-    </>
+    </>,
+    document.body,
   );
 }

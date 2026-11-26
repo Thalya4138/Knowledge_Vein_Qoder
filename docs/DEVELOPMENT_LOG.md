@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-11-26（夜八）· QoderWang2 · 资源抽屉被页眉遮挡修复（#87）
+
+**用户指令**：截图指工作台左侧资源抽屉（定位／原文片段）「页眉挡住了这个」——关闭按钮、类型签与标题上半被页眉盖住。
+
+**根因**：`shell.css` 的 `.main{position:relative;z-index:1}` 形成堆叠上下文，页眉 sticky z300 在其外；抽屉（fixed z410）与遮罩（z400）渲染在 `.main` 内（[NoteReader.tsx:488](apps/web/src/reader/NoteReader.tsx)），z-index 出不了 `.main` 的上下文，于是整条页眉压在抽屉顶部约 56px 上。与 #83 预览出屏同族（祖先堆叠/包含块陷阱），但这次是纯堆叠上下文、非 backdrop-filter。
+
+**修法**：[ResourceDrawer.tsx](apps/web/src/reader/ResourceDrawer.tsx) 改 `createPortal(…, document.body)`，恢复「遮罩盖全 viewport、抽屉模态在上」的本意（scrim inset:0 z400、抽屉 z410 均高于页眉 300）。焦点管理、Esc／点遮罩关闭、窄屏全宽均不变。不碰 `shell.css`（用户自修过）；无新增界面文案，字体子集不需重跑。
+
+**验证**：
+- **四道门**：`verify:content` ✓ ／ `typecheck` ✓ ／ `test` **341 passed**（37 files）✓ ／ `build` ✓。
+- **e2e `scripts/e2e-fix87.mjs` 12/12**（headless Chrome 1366×800 与 420×800）：抽屉贴 viewport 左上通到底；关闭按钮可见可点（top=10）；标题完整（top=54）；遮罩盖住页眉右段、抽屉压在页眉左段之上；打开后焦点在关闭按钮；抽屉与遮罩 parentElement 为 body；Esc 关闭；窄屏全宽无横向溢出；控制台无应用级错误。
+- **截图**：`docs/evidence/fix87-drawer-{1366,420}.png` 目检——PDF 签、关闭 ✕、完整标题都在页眉之上。
+
+**已知缺陷 / 下一步**：无新增；博查真实 key／真实模型质量仍待用户。**提交/推送/部署待用户授权**。
+
+---
+
 ## 2026-11-26（夜七）· QoderWang2 · 验收修复五项交付（#83）
 
 **用户指令**：验收单「主流程能跑通，但发布前要修：1 写入后撤销消失（严重，违 AGENTS.md §1 第 4 条）、2 预览操作栏在屏幕外（1366 宽笔记本 footer top 839px vs 可视约 800px）」；建议修「3 实验室讲解栏公式不渲染、5 示例工作区写入后文件栏看不到新文件」；第 4 条用户拍板「让 Qoder 按原决定接入博查」（搜索 key 可选、博查为默认），并指出此前「搜索引擎跨域被拦」的说法与其实测相反。6（GitHub 无令牌额度）/7（逐节重发提示词）本轮不做。用户自己修了 `styles/shell.css`（设置关闭 ✕），本轮不碰。
