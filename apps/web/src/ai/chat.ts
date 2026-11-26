@@ -50,8 +50,13 @@ export interface StreamProgress {
 }
 
 /**
- * 传了 onDelta 就流式请求：模型每写出一段就回调一次，界面能显示进度（长输出要几分钟，不流式时这段时间什么都看不到）。
- * 不传时与原来一样一次拿全。
+ * 一律流式请求（服务不理会 stream 参数、照样回 JSON 时也能用）：输出上限可以放得很高而不怕请求超时，
+ * 传了 onDelta 还能把进度显示给人看（长输出要几分钟）。
+ *
+ * maxTokens 是调用方对「这一步大概要写多长」的估计，只作下限：实际请求的上限取 OUTPUT_CEILING 与它的较大者，
+ * 因为思考型模型（DeepSeek、通义的思考模式、Claude 新模型）的思考也计入 max_tokens，按正文长度给上限，
+ * 正文常常还没写就被思考挤掉。上限只是天花板，没写出来的 token 不计费。
+ * 某家服务嫌上限太高（HTTP 400）时，按它报的数字或调用方原值重试，并记住这个模型的上限。
  */
 export async function chat(
   m: ModelConfig,
@@ -60,18 +65,27 @@ export async function chat(
   maxTokens = 8192,
   onDelta?: (p: StreamProgress) => void,
 ): Promise<string> {
-  // 回答被输出上限截断时接着写：把已写的部分作为 assistant 消息带回去，让模型从断点续上。
-  // 很多服务单次输出有上限（常见 8K token），而一篇关联探索的完整回答可以超过它。
+  // 回答被输出上限截断时接着写：把已写的部分作为 assistant 消息带回去，再追加一条 user 消息让模型从断点续上。
+  // 最后一条是 user 消息，不是「预填」，所以 Anthropic 新模型（不接受预填）也能这样续写。
   let text = '';
+  let want = maxTokens;
   for (let round = 0; round <= MAX_CONTINUE; round += 1) {
     const before = text;
-    const part = await once(m, messages, text, signal, maxTokens, onDelta && ((p) => onDelta({ text: before + p.text, thinking: p.thinking })));
+    const part = await once(m, messages, text, signal, want, maxTokens, (p) => onDelta?.({ text: before + p.text, thinking: p.thinking }));
     text += part.text;
     if (!part.cut) {
       if (!text.trim()) throw new ModelError('模型返回了空回答。');
       return text;
     }
-    if (m.provider === 'anthropic') break; // Anthropic 接口的新模型思考常开，不接受预填续写；上限已取 16000
+    if (!part.text.trim()) {
+      // 一个字正文都没写就到了上限：额度全被思考用掉了。续写没有意义（没有断点），只能把上限再放大重来。
+      if (part.sent >= capOf(m)) {
+        throw new ModelError(
+          `模型把整个输出上限（${part.sent} token）都用在了思考上，没写出正文。可以在服务那边关掉或调低思考，换一个输出上限更高的模型，或把问题拆小一些再试。`,
+        );
+      }
+      want = part.sent * 2;
+    }
   }
   throw new ModelError('模型的回答太长，续写几次后仍未写完。可以换一个输出上限更高的模型，或把问题拆小一些再试。');
 }
@@ -79,14 +93,35 @@ export async function chat(
 const MAX_CONTINUE = 3;
 const CONTINUE = '继续。从上一条回答停下的地方接着写，第一个字紧接断点，不重复已经写过的内容，不加任何说明。';
 
+/**
+ * 默认请求的输出上限。Claude 现行模型单次最多 64K–128K；OpenAI 兼容的各家差别大（DeepSeek 非思考 8K、思考 64K，
+ * 通义、Kimi 各有不同），取 32K，超了由服务报 400、再按它给的数字回退（见 learnedCap）。
+ */
+const OUTPUT_CEILING = { anthropic: 64000, 'openai-compatible': 32768 } as const;
+
+/** 服务报过「上限太高」的模型，记住它真正接受的上限，本页面后续请求不再试错。 */
+const learnedCap = new Map<string, number>();
+const capKey = (m: ModelConfig) => `${m.provider}|${m.baseUrl.replace(/\/+$/, '')}|${m.model}`;
+const capOf = (m: ModelConfig) => learnedCap.get(capKey(m)) ?? Number.POSITIVE_INFINITY;
+
+/** 400 的正文在说输出上限（max_tokens）不对，而不是别的参数 */
+const TOKEN_LIMIT = /max[_\s-]*(completion[_\s-]*|output[_\s-]*)?tokens|maximum[^.\n]{0,40}tokens|tokens?[^.\n]{0,20}(limit|range)|输出长度|最大.{0,6}token/i;
+
+/** 从报错正文里找服务接受的上限：小于这次请求值的最大整数；找不到返回 null */
+function limitFrom(body: string, sent: number): number | null {
+  const nums = (body.match(/\d{3,7}/g) ?? []).map(Number).filter((n) => n >= 256 && n < sent);
+  return nums.length ? Math.max(...nums) : null;
+}
+
 async function once(
   m: ModelConfig,
   messages: ChatMessage[],
   soFar: string,
   signal: AbortSignal | undefined,
-  maxTokens: number,
-  onPart?: (p: StreamProgress) => void,
-): Promise<{ text: string; cut: boolean }> {
+  want: number,
+  fallback: number,
+  onPart: (p: StreamProgress) => void,
+): Promise<{ text: string; cut: boolean; sent: number }> {
   const base = m.baseUrl.replace(/\/+$/, '');
   const anthropic = m.provider === 'anthropic';
   const system = messages.filter((x) => x.role === 'system').map((x) => asText(x.content)).join('\n\n');
@@ -103,24 +138,33 @@ async function once(
         'anthropic-dangerous-direct-browser-access': 'true',
       }
     : { 'content-type': 'application/json', authorization: `Bearer ${m.apiKey}` };
-  const body = {
-    ...(anthropic
-      ? // Anthropic 接口的新模型思考常开且计入 max_tokens：上限太低时回答会被思考挤掉，取 16000 作底
-        { model: m.model, max_tokens: Math.max(maxTokens, 16000), system, messages: user }
-      : { model: m.model, temperature: 0.2, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, ...user] }),
-    ...(onPart ? { stream: true } : {}),
-  };
+  const payload = (maxTokens: number) =>
+    JSON.stringify({
+      ...(anthropic
+        ? { model: m.model, max_tokens: maxTokens, system, messages: user }
+        : { model: m.model, temperature: 0.2, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, ...user] }),
+      stream: true,
+    });
 
+  // 先试较高的上限；服务说太高，就试它报的数字，再不行退回调用方原来给的值
+  let sent = Math.min(Math.max(want, OUTPUT_CEILING[m.provider]), capOf(m));
   let res: Response;
-  try {
-    res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal });
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') throw e;
-    throw new ModelError('浏览器连不上这个模型服务。' + networkHint(m.baseUrl));
+  for (;;) {
+    try {
+      res = await fetch(url, { method: 'POST', headers, body: payload(sent), signal });
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') throw e;
+      throw new ModelError('浏览器连不上这个模型服务。' + networkHint(m.baseUrl));
+    }
+    if (res.ok) break;
+    const body = await res.text().catch(() => '');
+    const next = res.status === 400 && TOKEN_LIMIT.test(body) && sent > fallback ? Math.max(limitFrom(body, sent) ?? fallback, fallback) : null;
+    if (next == null || next >= sent) throw new ModelError(explain(res.status, body, m.model));
+    learnedCap.set(capKey(m), next);
+    sent = next;
   }
-  if (!res.ok) throw new ModelError(explain(res.status, await res.text().catch(() => ''), m.model));
   // 有的服务不理会 stream 参数、照样一次返回 JSON：按响应类型分流，而不是按请求时的意图
-  if (onPart && res.body && (res.headers.get('content-type') ?? '').includes('event-stream')) return readStream(res.body, anthropic, onPart);
+  if (res.body && (res.headers.get('content-type') ?? '').includes('event-stream')) return { ...(await readStream(res.body, anthropic, onPart)), sent };
   const data = (await res.json()) as {
     choices?: { message?: { content?: string }; finish_reason?: string }[];
     content?: { type: string; text?: string }[];
@@ -131,7 +175,7 @@ async function once(
     : data.choices?.[0]?.message?.content ?? '';
   if (anthropic && data.stop_reason === 'refusal') throw new ModelError('模型出于安全策略拒绝回答这次请求。换个问法，或换一个模型再试。');
   const cut = anthropic ? data.stop_reason === 'max_tokens' : data.choices?.[0]?.finish_reason === 'length';
-  return { text, cut };
+  return { text, cut, sent };
 }
 
 /**
