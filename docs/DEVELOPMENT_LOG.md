@@ -5,6 +5,50 @@
 
 ---
 
+## 2026-11-26（夜七）· QoderWang2 · 验收修复五项交付（#83）
+
+**用户指令**：验收单「主流程能跑通，但发布前要修：1 写入后撤销消失（严重，违 AGENTS.md §1 第 4 条）、2 预览操作栏在屏幕外（1366 宽笔记本 footer top 839px vs 可视约 800px）」；建议修「3 实验室讲解栏公式不渲染、5 示例工作区写入后文件栏看不到新文件」；第 4 条用户拍板「让 Qoder 按原决定接入博查」（搜索 key 可选、博查为默认），并指出此前「搜索引擎跨域被拦」的说法与其实测相反。6（GitHub 无令牌额度）/7（逐节重发提示词）本轮不做。用户自己修了 `styles/shell.css`（设置关闭 ✕），本轮不碰。
+
+**根因与修法**：
+1. **撤销消失**：`applyChanges → onWorkspace(replace) → ws 换新对象 → AiDock 的 store effect（deps 含 ws）重建 store → ChangePreview 检测到 store 变化重置回待确认**。`openStore` 只用 `ws.id/origin`，故 effect 改按 `[open, ws.id, ws.origin, tr, onStatus]` 重建（[AiDock.tsx](apps/web/src/features/workspace/AiDock.tsx)）；`filePath` 移入 `workspaceData.ts` 共用。
+2. **操作栏出屏**：两层根因。CSS 层：grid 子项 `min-height:auto` 撑破 `max-height:84vh`，补 `min-height:0`＋`.chg-body{flex:1;min-height:0}`；**真根因**：预览遮罩 `position:fixed` 渲染在带 `backdrop-filter` 的 AI 坞里，磨砂祖先把 fixed 的包含块变成坞自己的盒子，遮罩随之出屏——`ChangePreview` 改 `createPortal(…, document.body)`（[ChangePreview.tsx](apps/web/src/features/workspace/ChangePreview.tsx)）。实测 1366×800 与 420×800 底栏均在可视区内。
+3. **公式不渲染**：模板壳只转义文本。`shell.ts` 新增 `mathHtml`：`$…$`/`$$…$$` 在**组装时**经既有 katex 依赖 `renderToString`，界定符内侧要求非空白（避免「5$ 和 6$」误判），不成对原样保留；讲解、事实、see 三处接入（[shell.ts](apps/web/src/features/lab/shell.ts)）。
+4. **博查接入**：先按 SYNC_AND_API §4.1 实测——**环境代理会同时干扰 curl 与无头 Chrome，须直连复测**（`--noproxy '*'` / `--no-proxy-server`），否则把「连不上」误判成「跨域被拦」；直连后无效 key 读到 HTTP 401、OPTIONS 回 `Access-Control-Allow-Origin: *`，跨域放行成立（用户的实测是对的）。新增 `ai/search.ts`（POST `/v1/web-search`，取 `data.webPages.value[]`）；prefs 增 `vein.search`（与模型 key 同一隐私规则：默认 sessionStorage、勾选才 localStorage、一键清除）；设置模型页独立搜索表单（无模型 key 也能保存）；`discoverResources` 三条路：有搜索 key→实时候选（license「待核对」、`Discovery.live`）／无搜索 key 有模型→模型候选／都无→样例；搜索失败或无命中如实说明后降级，不伪造结果。`SYNC_AND_API.md` §6 改写、`RESOURCE_DISCOVERY.md` 追加 §6。
+5. **示例文件栏**：`registry.mergeWorkspaces` 原先总返回静态 `DEMO_WORKSPACE`、`syncTree` 对 demo 早退、阅读器只 fetch 静态 URL。新增 `overlayEntries/withDemoOverlay/readDemoOverlay`（[demo.ts](apps/web/src/store/demo.ts)）：保留已发布目录、只增删 `browser:true` 覆盖层条目；`listWorkspaces` 刷新时重并覆盖层；`syncTree` demo 分支走覆盖层；`FileViewer` 阅读覆盖层优先。
+
+**边界**：`deskLesson.ts`/`LessonPanel.tsx` 含 #81 未提交在制品，只追加资源发现接线与标注，不重写逐节生成；不碰 `shell.css`；字体子集因新 UI 文案重跑（1184 字）。
+
+**验证**：
+- **四道门**：`verify:content` ✓ ／ `typecheck` ✓ ／ `test` **341 passed**（37 files：新增 search 4 项、发现三路径 4 项、shell KaTeX 1 项）✓ ／ `build` ✓。
+- **e2e `scripts/e2e-fix83.mjs` 13/13**（headless Chrome 1366×800，复现用户环境）：预览底栏桌面/窄屏均在可视区；示例与新建浏览器工作区「确认写入」后撤销仍在、未重置回待确认；示例写入后文件栏见新文件、撤销后移除；设置搜索表单保存→只存当前标签页→一键清除；无效搜索 key 找资源如实报「搜索 key 无效」并降级样例；壳组装页 KaTeX 4 处（含 display）无裸 `$…$`、GeoGebra 双纽线与滑块 a 同步画出；控制台无应用级错误。
+- **截图**：`docs/evidence/fix83-{preview-1366,preview-420,demo-after-write,browser-undo,settings-search,search-degrade,lab-math-1366,lab-math-420}.png`。
+
+**已知缺陷 / 下一步**：博查真实 key 的检索质量待用户实测；真实模型生成质量沿用 #82 待用户 key；#6/#7 未做。**提交/推送已获用户授权（2026-11-26，全提交）**：`deskLesson.ts`/`LessonPanel.tsx` 里 #81 已完成的逐节生成连同其测试与提示词随本笔落盘；他 session 的日志条与 `slim-atlas-*.png` 证据、用户自修的 `shell.css` 一并提交（日志条引用了这两张截图，拆开会造成证据断链）；push 仅 `task/R3-QoderWang2`，不碰 main、不部署。
+
+---
+
+## 2026-11-26（夜六）· QoderWang2 · 工作台讲义生成改「逐节有界请求＋程序组装」（#81）
+
+**用户指令**：「现在有两个并行会话在解决可视化、关联、图谱的 api-ai 接入，但是每次都是平地起高楼，导致又慢、输出上下文又不足、无法生成的问题。学习工作台应该面临的也有相同的挑战，尤其在生成整个讲义的时候，怎么解决」；担心「质量会不会保证，还是会变成一种模板化的死板的东西。不能调整接入 api 的输入输出上限吗」；认可方案「行，好」。
+
+**根因**：与 #77 实验室同源——`deskLesson.generateLesson` 单次请求要模型从零写整篇讲义（`chapter.goal` 塞全部小节、`existing_note` 塞整篇旧文、8192 输出上限），节一多就撞 `ai/chat.ts` 续写熔断。输出上限是模型硬顶，调高只是更慢更贵更漂移，真正的杠杆是把整篇拆成逐节。
+
+**范围**（只动 `deskLesson.ts`/`LessonPanel.tsx`＋其测试，NOTE_GENERATION 仅追加）：
+- 新增确定性骨架助手 `splitSections`（按二级标题切节、保留引子）、`ensureHeading`（节标题兜底，正文一字不动）、`firstSentence`（取首句散文做下一节摘要）、`assembleLesson`（程序拼装：章引子＋逐节正文＋目录未覆盖的旧节全文）。
+- `generateLesson` 改为按 `OrganizeLesson.sections` **逐节发请求**：每节只带「本节目标（`chapter.goal`）＋本节资源＋前序各节一句话摘要（`prior_chapters.takeaways`，至多 3 节）」，用契约已有字段，模型在 §3.5「固定骨架内容不固定」栏目里**自由写本节正文**（正文绝不模板化）。逐节进度回调 `onProgress`，`LessonPanel` 显示「正在写第 i/n 节：题名」。
+- **修订保真**：按节定位，只把该节旧文作为 `existing_note` 传给模型；目录未覆盖的旧节由程序原样保留；单节失败不拖垮整篇（保留旧节全文或标注待补，其余节照常）。回应 #78「existing_note 不截断／保真优先」与「§5 补丁 vs 全文输出不一致留 R4 统一」。
+- `prompts/NOTE_GENERATION.md` 追加 §5.5「逐节调用」说明（保留 #78 的 author 标记与 rubric 不动）。每节 maxTokens 仍 8192（逐节后单节输出体量小，无需改 `ai/chat.ts`）。
+
+**不做**：不碰 #77 的 `features/lab/`/`VISUALIZE.md`/`lab.css`/`ai/chat.ts`；不碰 #78 的图谱/关联瘦身（mindGen/exploreAi）；不 push main、不部署、不装付费 API、不改 content/demo 来源声明。
+
+**验证**：
+- **四道门**：`verify:content` ✓ ／ `typecheck` ✓ ／ `test` **332 passed**（35 files，含本轮新增 `splitSections`/`ensureHeading`/`firstSentence`/`assembleLesson` 4 项，重点覆盖修订保真：目录未覆盖的旧节全文保留）✓ ／ `build` ✓（926ms）。
+- **in-app Browser 无 key 冒烟**（localhost:5173/workspace，示例线性代数工作区）：打开 AI dock→「生成讲义」面板正常渲染（示例模式标注）→填题名「正交投影与最小二乘法」＋小节「正交投影,法方程与解的唯一性」→点生成→ChangePreview 出现「生成讲义与资源卡 / 新建 notes/正交投影与最小二乘法.md」＋「确认写入」按钮，「示例讲义」标注在位，**控制台 0 错误**。无 key 路径与 #79 已验证流程一致（逐节路径仅带 key 时启用）。
+
+**已知缺陷 / 下一步**：真实模型（用户 key）逐节生成质量、跨节承接（R2）与修订保真须实测；桌面＋窄屏截图仍待用户打开 Browser 面板（#14 遗留）。推送/部署待用户授权。
+
+---
+
 ## 2026-11-26（夜五）· QoderWang2 · 实验室生成重构：确定性模板壳＋模型只写核心（#77 交付）
 
 **用户指令**：公网用 DS 模型生成「双纽线」可视化、指定 GeoGebra，近 10 分钟无果，报「模型的回答太长，续写几次后仍未写完」；「这么简单的东西都生成不完吗？？？那其他的大的可视化任务怎么办」；指派「你来」。
@@ -40,7 +84,9 @@
 
 **不做**：不动 #77 实验室重构、不重写 #76 的 R4 文件（只定点小改）、不 push main、不部署、不覆盖并行会话未提交在制品。提示词的质量规则正文（rubric、版式、文风）不删——瘦身只去重复与无关材料，不降质量底线。
 
-（验证与交付证据完成后回填本条。）
+**验证**：四道门全绿（`verify:content` / `typecheck` / 35 文件 328 tests / `build`）。`e2e-connection-pan` 全过（四种探索模式＋工作区文件树＋讲义图与公式＋无控制台错误），证据截图重拍。图谱生成面板无头自点（一次性脚本，跑完已删）：新建浏览器工作区→写笔记→`/atlas` 生成面板，新文案「与图谱越相关越优先」在位、1440/390 两档 overflowX 0、无控制台错误；证据 `docs/evidence/slim-atlas-gen-1440.png` / `-390.png` 目检。新增测试：图谱相关度选取/单段截断/预算丢弃/更新路径（mindGen.test.ts 16 条）、摘要回传与附件总量上限（explore.test.ts 49 条）。
+
+**已知限制 / 下一步**：①讲义修订走全文重写，`existing_note` 不能截断（截断会丢旧讲义尾部）；`NOTE_GENERATION.md` §5「修订只输出补丁」与 `deskLesson` 的全文输出契约不一致，留给 R4 后续统一。②摘要回传后跨节引用（「用到前一节的结果」）的质量权衡须真实模型实测。③真实模型生成质量仍须用户 key 实测（沿用 #69）。
 
 ---
 

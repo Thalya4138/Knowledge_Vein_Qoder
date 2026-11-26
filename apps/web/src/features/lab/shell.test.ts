@@ -71,6 +71,20 @@ describe('assemblePage：程序生成整页，模型只写核心', () => {
     expect(evil).not.toContain('<img onerror');
     expect(evil).toContain('&lt;script&gt;');
   });
+  it('讲解与事实里的 $…$ / $$…$$ 渲染成 KaTeX，不成对的 $ 原样保留', () => {
+    const math = assemblePage(
+      { ...plan, explain: ['设 $b$ 为投影向量。', '$$P = A(A^T A)^{-1} A^T$$', '价格是 5$ 和 6$，不是公式'], facts: [{ claim: '乘积 $a^2$ 为定值', source: '' }] },
+      capOf('GeoGebra')!,
+      CORE,
+      'zh',
+    );
+    expect(math).toContain('class="katex"');
+    expect(math).toContain('katex-display');
+    expect(math).not.toContain('$b$');
+    expect(math).not.toContain('$$P');
+    expect(math).toContain('5$ 和 6$');
+    expect(math).toContain('设 ');
+  });
   it('没有控件时不渲染滑块，也不因找不到重置按钮而报错', () => {
     const noCtl = assemblePage({ ...plan, controls: [] }, capOf('GeoGebra')!, CORE, 'zh');
     expect(noCtl).not.toContain('type="range"');

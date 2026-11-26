@@ -538,3 +538,13 @@
 .settings-forget {
   margin-right: auto;
 }
+
+/* 设置的内容区会滚动：关闭按钮钉在右上角，不随内容滚出视野 */
+.settings-body > .settings-close {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  float: right;
+  margin: calc(var(--s-12) - var(--s-24)) calc(var(--s-12) - var(--s-24)) 0 0;
+  background: var(--surface);
+}

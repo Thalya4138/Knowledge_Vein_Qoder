@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Icon } from '../../ui/Icon';
-import { useT } from '../../ui/prefs';
+import { usePrefs, useT } from '../../ui/prefs';
 import type { ModelConfig } from '../../ui/prefs';
 import { readText } from '../../store/open';
 import type { Workspace, WorkspaceStore } from '../../store/types';
@@ -29,12 +29,14 @@ export function DeskLesson({
   onStatus: (s: string) => void;
 }) {
   const tr = useT();
+  const { searchKey } = usePrefs();
   const [idx, setIdx] = useState(0);
   const [manualTitle, setManualTitle] = useState('');
   const [manualSections, setManualSections] = useState('');
   const [discovery, setDiscovery] = useState<Discovery | null>(null);
   const [adopted, setAdopted] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<'find' | 'gen' | null>(null);
+  const [progress, setProgress] = useState('');
   const [preview, setPreview] = useState<ChangeSet | null>(null);
   const [genSample, setGenSample] = useState(false);
 
@@ -55,7 +57,7 @@ export function DeskLesson({
     setDiscovery(null);
     setAdopted(new Set());
     try {
-      const d = await discoverResources(model, ws, lesson, []);
+      const d = await discoverResources(model, ws, lesson, [], searchKey || undefined);
       setDiscovery(d);
     } catch (e) {
       onStatus((e as Error).message);
@@ -66,9 +68,12 @@ export function DeskLesson({
   const generate = async () => {
     if (busy || !store) return;
     setBusy('gen');
+    setProgress('');
     try {
       const existing = await readText(store, lesson.file);
-      const draft = await generateLesson(model, ws, lesson, adoptedCandidates, existing);
+      const draft = await generateLesson(model, ws, lesson, adoptedCandidates, existing, undefined, (done, total, section) =>
+        setProgress(section ? tr(`正在写第 ${done + 1}/${total} 节：${section}`, `Writing section ${done + 1}/${total}: ${section}`) : ''),
+      );
       setGenSample(draft.sample);
       if (draft.status !== 'ok') {
         onStatus(draft.unresolved.join('；') || tr('模型认为资料不足，没有写讲义。', 'The model found the material insufficient.'));
@@ -80,6 +85,7 @@ export function DeskLesson({
     } catch (e) {
       onStatus((e as Error).message);
     }
+    setProgress('');
     setBusy(null);
   };
 
@@ -88,7 +94,9 @@ export function DeskLesson({
       <p className="answer-foot dock-mode">
         {model
           ? tr('按目录逐节找公开资源、写成教材体讲义；资源只引用不复制，确认后才落盘。', 'Find public resources per section and write a textbook-style lesson. Resources are cited, not copied; nothing is written until you confirm.')
-          : tr('示例模式：讲义与资源卡取自预置样例。接入你自己的 API key 后，按你的目录生成。', 'Sample mode: lesson and resource cards are presets. Add your own API key to generate from your outline.')}
+          : searchKey
+            ? tr('未接模型：讲义为预置样例；「找资源」用联网检索候选（许可待核对）。', 'No model connected: the lesson is a preset; “Find resources” uses live web candidates (licenses unverified).')
+            : tr('示例模式：讲义与资源卡取自预置样例。接入你自己的 API key 后，按你的目录生成。', 'Sample mode: lesson and resource cards are presets. Add your own API key to generate from your outline.')}
       </p>
 
       {lessons.length > 0 ? (
@@ -120,6 +128,8 @@ export function DeskLesson({
         </button>
       </div>
 
+      {busy === 'gen' && progress && <p className="answer-foot" role="status">{progress}</p>}
+
       {discovery && (
         <div className="dock-answer">
           <p className="answer-where">{tr('候选资源（勾选采纳）', 'Candidate resources (check to adopt)')}</p>
@@ -149,6 +159,7 @@ export function DeskLesson({
           ))}
           {discovery.stillMissing.length > 0 && <p className="answer-foot">{tr('找不到：', 'Not found: ')}{discovery.stillMissing.join('；')}</p>}
           {discovery.sample && <p className="answer-foot">{tr('示例候选：预置公开来源，非针对本节实时检索。', 'Sample candidates: preset public sources, not a live search for this section.')}</p>}
+          {discovery.live && <p className="answer-foot">{tr('联网检索候选：实时搜索结果，许可待核对，采纳前请自行核对。', 'Web search candidates: live results, licenses unverified — check before adopting.')}</p>}
         </div>
       )}
 

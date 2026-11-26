@@ -991,6 +991,8 @@
 .chg-dialog {
   display: flex;
   flex-direction: column;
+  /* grid 子项默认 min-height:auto 会被内容撑到超过 max-height，底栏挤出屏幕（验收 #2） */
+  min-height: 0;
   width: min(760px, 100%);
   max-height: 84vh;
   border: 1px solid var(--hairline);
@@ -1016,6 +1018,8 @@
   gap: var(--s-12);
   padding: var(--s-16) var(--s-24);
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .chg-empty {

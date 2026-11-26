@@ -1,4 +1,6 @@
 import { DEMO_WORKSPACE } from '../features/workspace/workspaceData';
+import { browserStore } from './browser';
+import { overlayEntries, withDemoOverlay } from './demo';
 import { idbDeleteWorkspace, idbGet, idbGetAll, idbPut } from './idb';
 import type { Workspace } from './types';
 
@@ -8,7 +10,9 @@ export function mergeWorkspaces(records: readonly Workspace[]): Workspace[] {
     if (workspace.id !== DEMO_WORKSPACE.id && workspace.origin !== 'demo') byId.set(workspace.id, workspace);
   }
   const others = [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'zh'));
-  return [DEMO_WORKSPACE, ...others];
+  // 写入后的示例工作区带着覆盖层文件栏进来时要用它，不能被静态常量顶回去（验收 #5）
+  const demo = records.find((w) => w.origin === 'demo' && w.id === DEMO_WORKSPACE.id) ?? DEMO_WORKSPACE;
+  return [demo, ...others];
 }
 
 export function namedWorkspace(workspace: Workspace, name: string): Workspace {
@@ -18,7 +22,10 @@ export function namedWorkspace(workspace: Workspace, name: string): Workspace {
 }
 
 export async function listWorkspaces(): Promise<Workspace[]> {
-  return mergeWorkspaces(await idbGetAll<Workspace>('workspaces'));
+  const merged = mergeWorkspaces(await idbGetAll<Workspace>('workspaces'));
+  // 示例不注册进 idb：刷新后覆盖层文件栏从浏览器存储读回合并
+  const entries = overlayEntries(await browserStore(DEMO_WORKSPACE.id).list(''));
+  return merged.map((w) => (w.origin === 'demo' ? withDemoOverlay(w, entries) : w));
 }
 
 export async function getWorkspace(id: string): Promise<Workspace | undefined> {

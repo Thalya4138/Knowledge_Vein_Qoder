@@ -118,13 +118,25 @@ interface ModelProvider {
 
 ## 6. 联网找资料
 
-浏览器不能直接调用搜索引擎（跨域限制）。可选路线，按优先级：
+**博查 web-search 可浏览器直连**（2026-11-26 实测，方法同 §4.1：无头 Chrome 从页面里带无效 key
+`POST https://api.bochaai.com/v1/web-search`，读到 HTTP 401 `Invalid API KEY`；curl `OPTIONS` 预检回
+`Access-Control-Allow-Origin: *`、`Access-Control-Allow-Headers: *`）。
+复测注意：测量环境的代理会同时干扰 curl 与浏览器，须直连（curl `--noproxy '*'`、Chrome `--no-proxy-server`），
+否则会把「连不上」误判成「跨域被拦」。请求体 `{query, count, summary, freshness}`，响应取 `data.webPages.value[]`
+（`name / url / summary / snippet / siteName / dateLastCrawled`，兼容 Bing 格式）。
 
-1. 模型服务自带的联网搜索工具（部分服务提供，随用户的 key 走）；
-2. 用户自己的搜索 API key（**待实测**跨域）；
-3. 本地伴随程序：用户提供的 [guiless-search](https://github.com/wszqkzqk/guiless-search) 与
-   [qt-web-extractor](https://github.com/wszqkzqk/qt-web-extractor) 在本机运行，网页通过 `http://localhost` 调用。
-   **待实测**：Chrome 的私有网络访问限制可能要求本地服务返回额外的预检响应头。
+路线优先级（#83 用户拍板：搜索 key 可选，博查为默认）：
+
+1. 用户的博查搜索 key（设置 → 模型页 → 联网搜索；与模型 key 同一隐私规则：默认当前标签页、可选记住、一键清除）
+   → `ai/search.ts` 实时检索，候选许可标「待核对」、`Discovery.live=true`，界面标注「联网检索候选」；
+2. 无搜索 key、有模型 key → 模型提案候选（`prompts/RESOURCE_DISCOVERY.md`）；
+3. 都没有 → 预置样例，标注「示例」。
+
+搜索失败或无命中：如实说明后降级到下一条路，不伪造搜索结果。
+
+备用路线（未实现）：本地伴随程序，用户提供的 [guiless-search](https://github.com/wszqkzqk/guiless-search) 与
+[qt-web-extractor](https://github.com/wszqkzqk/qt-web-extractor) 在本机运行，网页通过 `http://localhost` 调用。
+**待实测**：Chrome 的私有网络访问限制可能要求本地服务返回额外的预检响应头。
 
 找到的资源一律进 `resources/manifest.json`，带出处与许可；讲义里只引用、不搬运。
 

@@ -74,6 +74,21 @@ function loadModel(): { model: ModelConfig; remembered: boolean } {
   return { model: EMPTY_MODEL, remembered: false };
 }
 
+const SEARCH_KEY = 'vein.search';
+
+/** 搜索 key 与模型 key 同一隐私规则：默认当前标签页，勾选才记在这台电脑。 */
+function loadSearch(): { key: string; remembered: boolean } {
+  try {
+    const kept = localStorage.getItem(SEARCH_KEY);
+    if (kept) return { key: kept, remembered: true };
+    const tab = sessionStorage.getItem(SEARCH_KEY);
+    if (tab) return { key: tab, remembered: false };
+  } catch {
+    /* 存储被禁用（隐私模式等）：退回只在内存 */
+  }
+  return { key: '', remembered: false };
+}
+
 interface Prefs {
   lang: Lang;
   setLang: (l: Lang) => void;
@@ -87,6 +102,10 @@ interface Prefs {
   modelRemembered: boolean;
   /** 清除这台电脑与当前标签页里保存的模型设置 */
   forgetModel: () => void;
+  searchKey: string;
+  setSearchKey: (key: string, remember: boolean) => void;
+  searchRemembered: boolean;
+  forgetSearchKey: () => void;
   settingsOpen: boolean;
   openSettings: (tab?: SettingsTab) => void;
   closeSettings: () => void;
@@ -124,6 +143,30 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     setModelState(EMPTY_MODEL);
     setRemembered(false);
   }, []);
+  const [searchInitial] = useState(loadSearch);
+  const [searchKey, setSearchKeyState] = useState(searchInitial.key);
+  const [searchRemembered, setSearchRemembered] = useState(searchInitial.remembered);
+  const setSearchKey = useCallback((key: string, remember: boolean) => {
+    try {
+      sessionStorage.setItem(SEARCH_KEY, key);
+      if (remember) localStorage.setItem(SEARCH_KEY, key);
+      else localStorage.removeItem(SEARCH_KEY);
+    } catch {
+      /* 存不进去就只在内存里 */
+    }
+    setSearchKeyState(key);
+    setSearchRemembered(remember);
+  }, []);
+  const forgetSearchKey = useCallback(() => {
+    try {
+      sessionStorage.removeItem(SEARCH_KEY);
+      localStorage.removeItem(SEARCH_KEY);
+    } catch {
+      /* 无存储可清 */
+    }
+    setSearchKeyState('');
+    setSearchRemembered(false);
+  }, []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('model');
   const [lang, setLangState] = useState<Lang>(savedLang);
@@ -160,6 +203,10 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       setModel,
       modelRemembered,
       forgetModel,
+      searchKey,
+      setSearchKey,
+      searchRemembered,
+      forgetSearchKey,
       settingsOpen,
       settingsTab,
       openSettings: (tab = 'model') => {
@@ -168,7 +215,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       },
       closeSettings: () => setSettingsOpen(false),
     }),
-    [lang, setLang, theme, setTheme, resolvedDark, model, setModel, modelRemembered, forgetModel, settingsOpen, settingsTab],
+    [lang, setLang, theme, setTheme, resolvedDark, model, setModel, modelRemembered, forgetModel, searchKey, setSearchKey, searchRemembered, forgetSearchKey, settingsOpen, settingsTab],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

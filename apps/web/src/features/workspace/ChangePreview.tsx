@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../../ui/Icon';
 import { useT } from '../../ui/prefs';
 import { readText } from '../../store/open';
@@ -98,7 +99,8 @@ export function ChangePreview({
     setBusy(false);
   };
 
-  return (
+  // 挂到 body：AI 坞的 backdrop-filter 会把 fixed 后代的包含块变成坞自己，遮罩随之出屏（验收 #2）
+  return createPortal(
     <div className="chg-overlay" role="dialog" aria-modal="true" aria-label={title}>
       <div className="chg-dialog">
         <header className="chg-head">
@@ -165,6 +167,7 @@ export function ChangePreview({
           )}
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

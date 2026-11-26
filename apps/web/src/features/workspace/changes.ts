@@ -1,4 +1,5 @@
 import { readText, writeText } from '../../store/open';
+import { overlayEntries, withDemoOverlay } from '../../store/demo';
 import { registerWorkspace } from '../../store/registry';
 import { placeBrowserFile, SKIP_DIR } from '../../store/tree';
 import type { Workspace, WorkspaceStore } from '../../store/types';
@@ -40,8 +41,9 @@ export function changeReason(c: FileChange): string {
   return c.reason;
 }
 
-/** 浏览器工作区：按当前存储重建文件栏（跳过隐藏目录与依赖），并登记。其它存储返回原工作区。 */
+/** 浏览器工作区：按当前存储重建文件栏（跳过隐藏目录与依赖），并登记。示例：合并覆盖层。其它存储返回原工作区。 */
 async function syncTree(store: WorkspaceStore, ws: Workspace): Promise<Workspace> {
+  if (ws.origin === 'demo') return withDemoOverlay(ws, overlayEntries(await store.list('')));
   if (ws.origin !== 'browser') return ws;
   const entries = (await store.list('')).filter((e) => !e.path.split('/').some((p) => p.startsWith('.') || SKIP_DIR.test(p)));
   let next: Workspace = { ...ws, folders: [] };

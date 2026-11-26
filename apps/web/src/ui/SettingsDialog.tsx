@@ -69,6 +69,9 @@ export function SettingsDialog() {
   const [testing, setTesting] = useState(false);
   const [modelIds, setModelIds] = useState<string[]>([]);
   const [remember, setRemember] = useState(p.modelRemembered);
+  const [searchDraft, setSearchDraft] = useState(p.searchKey);
+  const [searchRemember, setSearchRemember] = useState(p.searchRemembered);
+  const [searchResult, setSearchResult] = useState<string | null>(null);
   const resultRef = useRef<HTMLParagraphElement>(null);
 
   // 结果排在按钮下方，矮屏上可能落在可视区外：出了新结果就滚到能看见的位置（新版 Chrome 返回 Promise，别 return 它）
@@ -83,11 +86,14 @@ export function SettingsDialog() {
       setTab(p.settingsTab);
       setDraft(p.model);
       setRemember(p.modelRemembered);
+      setSearchDraft(p.searchKey);
+      setSearchRemember(p.searchRemembered);
+      setSearchResult(null);
       setResult(null);
       d.showModal();
     }
     if (!p.settingsOpen && d.open) d.close();
-  }, [p.settingsOpen, p.settingsTab, p.model, p.modelRemembered]);
+  }, [p.settingsOpen, p.settingsTab, p.model, p.modelRemembered, p.searchKey, p.searchRemembered]);
 
   const field = (k: keyof ModelConfig, v: string) => {
     setDraft((d) => ({ ...d, [k]: v }));
@@ -115,6 +121,7 @@ export function SettingsDialog() {
         </button>
 
         {tab === 'model' && (
+          <>
           <form
             className="settings-form"
             onSubmit={(e) => {
@@ -272,6 +279,65 @@ export function SettingsDialog() {
               )}
             </p>
           </form>
+          <form
+            className="settings-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              p.setSearchKey(searchDraft.trim(), searchRemember);
+              setSearchResult(
+                searchRemember
+                  ? t('已保存，并记在这台电脑的浏览器里。不用时点「清除已保存的搜索 key」。', 'Saved and remembered in this browser. Use “Clear saved search key” when you are done.')
+                  : t('已保存。刷新页面不会丢，关掉这个标签页就清除。', 'Saved. It survives a reload and is cleared when you close this tab.'),
+              );
+            }}
+          >
+            <h2>{t('联网搜索（可选）', 'Web search (optional)')}</h2>
+            <p className="settings-lede">
+              {t(
+                '填博查搜索 key 后，工作台「找资源」会实时联网检索，候选如实标注「待核对」。不填则降级为模型提案候选或预置样例。key 由浏览器直接发给博查，默认只存在当前标签页。',
+                'With a Bocha search key, “Find resources” on the desk searches the live web and marks candidates “unverified”. Without one, it falls back to model-proposed candidates or presets. The key goes straight from your browser to Bocha and lives only in this tab by default.',
+              )}
+            </p>
+            <label>
+              <span>{t('博查 API key', 'Bocha API key')}</span>
+              <input type="password" value={searchDraft} onChange={(e) => setSearchDraft(e.target.value)} autoComplete="off" placeholder="sk-…" />
+            </label>
+            <label className="settings-check">
+              <input type="checkbox" checked={searchRemember} onChange={(e) => setSearchRemember(e.target.checked)} />
+              <span>
+                {t('在这台电脑上记住', 'Remember on this computer')}
+                <small>{t('关掉浏览器也不用重填。公用电脑上不要勾。', 'No need to re-enter after closing the browser. Don’t tick this on a shared computer.')}</small>
+              </span>
+            </label>
+            <div className="settings-actions">
+              {(p.searchKey || p.searchRemembered) && (
+                <button
+                  type="button"
+                  className="btn quiet settings-forget"
+                  onClick={() => {
+                    p.forgetSearchKey();
+                    setSearchDraft('');
+                    setSearchRemember(false);
+                    setSearchResult(t('已清除这台电脑和这个标签页里保存的搜索 key。', 'Cleared the search key saved in this browser and tab.'));
+                  }}
+                >
+                  {t('清除已保存的搜索 key', 'Clear saved search key')}
+                </button>
+              )}
+              <button type="submit" className="btn primary" disabled={!searchDraft.trim()}>
+                {t('保存', 'Save')}
+              </button>
+            </div>
+            {searchResult && (
+              <p className="settings-result" role="status">
+                {searchResult}
+              </p>
+            )}
+            <p className="settings-hint">
+              {t('博查：2026-11 实测网页可直连。key 在 open.bochaai.com 获取。', 'Bocha: tested 2026-11, callable directly from the browser. Get a key at open.bochaai.com.')}
+            </p>
+          </form>
+          </>
         )}
 
         {tab === 'storage' && (

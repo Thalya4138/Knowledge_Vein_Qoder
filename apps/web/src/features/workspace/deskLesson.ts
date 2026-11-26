@@ -1,6 +1,7 @@
 import demoLesson from '../../../../../content/demo/linear-algebra/notes/2.1-列空间中的最近点.md?raw';
 import { chat, extractJson, ModelError, type ChatMessage } from '../../ai/chat';
 import { promptFor } from '../../ai/prompts';
+import { searchBocha } from '../../ai/search';
 import { openStore, readJson } from '../../store/open';
 import type { Workspace, WorkspaceStore } from '../../store/types';
 import type { ModelConfig } from '../../ui/prefs';
@@ -9,10 +10,10 @@ import type { OrganizeLesson } from './deskOrganize';
 
 /**
  * 步骤 2 · 逐节资源发现 + 教材体讲义生成（workspace.resources / note.generate）。
- * 资源发现是**建议**不是采集（RESOURCE_DISCOVERY.md）：模型提候选，status 永远是 candidate，
+ * 资源发现是**建议**不是采集（RESOURCE_DISCOVERY.md）：候选 status 永远是 candidate，
  * 采纳是读者的动作；候选登记进 resources/manifest.json，讲义只引用、不复制。
- * 浏览器直连搜索引擎受 CORS 限制（SYNC_AND_API.md §6），这里走「模型提案候选」路线，不实时抓取，不伪造搜索结果。
- * 无 key 时：候选与讲义都降级为预置样例并标注「示例」。
+ * 资源发现三条路（#83）：有搜索 key → 博查实时检索（2026-11-26 实测跨域可用，候选许可标「待核对」）；
+ * 无搜索 key 有模型 key → 模型提案候选；都没有 → 预置样例并标注「示例」。搜索失败不伪造结果，如实说明后降级。
  */
 
 export const MANIFEST_PATH = 'resources/manifest.json';
@@ -35,6 +36,8 @@ export interface Discovery {
   stillMissing: string[];
   recommendation: string;
   sample: boolean;
+  /** true = 博查实时检索结果（许可待核对） */
+  live?: boolean;
 }
 
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
@@ -160,9 +163,44 @@ export async function discoverResources(
   ws: Workspace,
   lesson: OrganizeLesson,
   gaps: string[],
+  searchKey?: string,
   signal?: AbortSignal,
 ): Promise<Discovery> {
-  if (!m) return sampleCandidates();
+  let searchNote = '';
+  if (searchKey) {
+    const query = [lesson.title, ...gaps].join(' ').slice(0, 120);
+    try {
+      const hits = await searchBocha(searchKey, query, signal);
+      if (hits.length) {
+        return {
+          sample: false,
+          live: true,
+          candidates: hits.map((h, i) => ({
+            id: `res.web.${i + 1}`,
+            kind: 'web',
+            title: h.title,
+            author: h.siteName,
+            license: '待核对',
+            uri: h.url,
+            trustWhy: `联网检索命中${h.siteName ? `（${h.siteName}）` : ''}${h.date ? `，${h.date.slice(0, 10)}` : ''}。`,
+            fillsGap: gaps.length ? gaps : ['本节无外部来源'],
+            limitations: '联网检索结果：内容与许可未核对，采纳前请自行核对；讲义只引用不复制。',
+            mappingHint: h.snippet.slice(0, 80),
+          })),
+          stillMissing: [],
+          recommendation: '以上为实时联网检索候选，许可待核对；采纳后讲义只引用不复制，不要因为补了来源就删掉自己的推导。',
+        };
+      }
+      searchNote = '联网检索没有找到相关网页。';
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      searchNote = `联网检索不可用（${(e as Error).message}）`;
+    }
+  }
+  if (!m) {
+    const s = sampleCandidates();
+    return searchNote ? { ...s, stillMissing: [`${searchNote}以下为预置样例候选。`, ...s.stillMissing] } : s;
+  }
   const opened = await openStore(ws);
   if (opened.status === 'auth') throw new ModelError('要先在左栏重新授权这个本地文件夹。');
   if (opened.status === 'missing') throw new ModelError(opened.message);
@@ -178,7 +216,7 @@ export async function discoverResources(
     { role: 'user', content: `## 输入\n${JSON.stringify(input, null, 2)}\n\n## 这一次要输出的\n只输出资源发现 JSON（status / candidates / stillMissing / recommendation）。每条候选必须有 uri 与 license，status 一律 candidate；找不到就如实写 stillMissing。` },
   ];
   const parsed = parseCandidates(extractJson(await chat(m, messages, signal, 4096)));
-  return { ...parsed, sample: false };
+  return { ...parsed, sample: false, recommendation: searchNote ? `${searchNote} ${parsed.recommendation}` : parsed.recommendation };
 }
 
 /* ---------- 讲义生成 ---------- */
@@ -201,6 +239,64 @@ export function sampleLesson(): string {
   return demoLesson.replace(/\r\n/g, '\n');
 }
 
+const norm = (s: string): string => s.replace(/[\s　]+/g, '');
+
+/** 把现有讲义按二级标题切节，保留首个二级标题前的引子（frontmatter / 章标题 / 导语）。 */
+export function splitSections(md: string | null): { preamble: string; sections: { heading: string; body: string }[] } {
+  if (!md) return { preamble: '', sections: [] };
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  const preamble: string[] = [];
+  const sections: { heading: string; body: string }[] = [];
+  let cur: { heading: string; body: string[] } | null = null;
+  for (const line of lines) {
+    const m = /^##\s+(.*)$/.exec(line);
+    if (m) {
+      if (cur) sections.push({ heading: cur.heading, body: cur.body.join('\n').trim() });
+      cur = { heading: m[1]!.trim(), body: [] };
+    } else if (cur) cur.body.push(line);
+    else preamble.push(line);
+  }
+  if (cur) sections.push({ heading: cur.heading, body: cur.body.join('\n').trim() });
+  return { preamble: preamble.join('\n').trim(), sections };
+}
+
+/** 骨架兜底：确保一节以二级标题开头。模型漏写或写成一级标题时程序补齐/降级，正文一字不动。 */
+export function ensureHeading(section: string, md: string): string {
+  const t = md.trim();
+  if (/^##\s/.test(t)) return t;
+  const lines = t.split('\n');
+  if (/^#\s/.test(lines[0]!)) {
+    lines[0] = '#' + lines[0];
+    return lines.join('\n');
+  }
+  return `## ${section}\n\n${t}`;
+}
+
+/** 取一节正文的第一句散文做摘要，供下一节承接——有界上下文，不重发前序全文。 */
+export function firstSentence(md: string): string {
+  const line = md
+    .split('\n')
+    .map((l) => l.trim())
+    .find((l) => l && !/^[#>|[-]/.test(l) && !l.startsWith('!') && !l.startsWith('^')) ?? '';
+  return line.length > 120 ? line.slice(0, 120) + '…' : line;
+}
+
+/** 程序拼装：章引子（修订时保留旧 frontmatter/标题）＋逐节正文＋目录未覆盖的旧节全文（保真，不丢内容）。 */
+export function assembleLesson(title: string, parts: string[], leftover: { heading: string; body: string }[], preamble = ''): string {
+  const head = preamble.trim() ? preamble.trim() : `# ${title}`;
+  const body = parts.filter((p) => p.trim()).join('\n\n');
+  const tail = leftover.map((s) => `## ${s.heading}\n\n${s.body}`).join('\n\n');
+  return [head, body, tail].filter((x) => x.trim()).join('\n\n') + '\n';
+}
+
+export type LessonProgress = (done: number, total: number, section: string) => void;
+
+/**
+ * 逐节生成：程序按目录搭轻骨架（节标题/栏目顺序由 §3.5 固定），模型在每节有界请求里自由写正文。
+ * 每节只带「全目录目标＋本节资源＋前序各节一句话摘要」，避免单次从零写整篇撞输出上限熔断。
+ * 修订按节定位：只把该节旧文作为 existing_note 传给模型，目录未覆盖的旧节由程序原样保留（保真优先）。
+ * 单节失败不拖垮整篇：保留旧节全文或标注待补，其余节照常生成。
+ */
 export async function generateLesson(
   m: ModelConfig | null,
   ws: Workspace,
@@ -208,28 +304,69 @@ export async function generateLesson(
   adopted: ResourceCandidate[],
   existingNote: string | null,
   signal?: AbortSignal,
+  onProgress?: LessonProgress,
 ): Promise<LessonDraft> {
   if (!m) return { status: 'ok', markdown: sampleLesson(), unresolved: ['示例讲义：取自示例知识库，不是针对你的资料生成。'], sample: true };
   const opened = await openStore(ws);
   if (opened.status === 'auth') throw new ModelError('要先在左栏重新授权这个本地文件夹。');
   if (opened.status === 'missing') throw new ModelError(opened.message);
   const prompt = await promptFor('note.generate', opened.store);
-  const request = {
-    task: existingNote ? 'revise' : 'create',
-    course: { title: ws.name, level: '本科' },
-    chapter: { title: lesson.title, goal: lesson.sections.join('；') },
-    sources: adopted.map((c) => ({ id: c.id, origin: 'discovered', kind: c.kind, title: c.title, license: c.license, uri: c.uri, permission: 'paraphrase-only' })),
-    user_context: { existing_note: existingNote, protect_anchors: [] },
-    depth: 'standard',
-    locale: 'zh-CN',
-  };
-  const messages: ChatMessage[] = [
-    { role: 'system', content: prompt.text },
-    { role: 'user', content: `## NoteRequest\n${JSON.stringify(request, null, 2)}\n\n## 这一次要输出的\n按输出契约返回 NoteDraft JSON（status / markdown / unresolved）。markdown 是完整教材体讲义（栏目、旁栏资源卡用 > [!res] span id、证据标注）；资源只引用不复制；没有来源的断言标 original-explanation 或 > [!unsourced]，不伪造出处。` },
-  ];
-  const draft = parseDraft(extractJson(await chat(m, messages, signal, 8192)));
-  if (draft.status === 'ok' && !draft.markdown.trim()) throw new ModelError('模型返回了空讲义。请把这一节拆小一些再试。');
-  return { ...draft, sample: false };
+  const sections = lesson.sections.length ? lesson.sections : [lesson.title];
+  const existing = splitSections(existingNote);
+  const sources = adopted.map((c) => ({ id: c.id, origin: 'discovered', kind: c.kind, title: c.title, license: c.license, uri: c.uri, permission: 'paraphrase-only' }));
+  const used = new Set<string>();
+  const parts: string[] = [];
+  const unresolved: string[] = [];
+  const prior: { title: string; takeaways: string[] }[] = [];
+  let okCount = 0;
+
+  for (let i = 0; i < sections.length; i++) {
+    const section = sections[i]!;
+    onProgress?.(i, sections.length, section);
+    const prev = existing.sections.find((s) => norm(s.heading) === norm(section));
+    if (prev) used.add(prev.heading);
+    const request = {
+      task: prev ? 'revise' : 'create',
+      course: { title: ws.name, level: '本科' },
+      chapter: { title: section, goal: section },
+      prior_chapters: prior.slice(-3),
+      sources,
+      user_context: { existing_note: prev?.body ?? null, protect_anchors: [] },
+      depth: 'standard',
+      locale: 'zh-CN',
+    };
+    const messages: ChatMessage[] = [
+      { role: 'system', content: prompt.text },
+      {
+        role: 'user',
+        content: `## NoteRequest\n${JSON.stringify(request, null, 2)}\n\n## 这一次要输出的\n只写「${section}」这一节，返回 NoteDraft JSON（status / markdown / unresolved）。markdown 以「## ${section}」开头，含本节栏目（问题探讨 / 本节聚焦 / 正文 / 思维训练 / 练习与应用）、资源卡（> [!res] span id）与证据标注；不要 frontmatter、不要章标题、不要写其他节。这是整篇讲义「${lesson.title}」的第 ${i + 1}/${sections.length} 节，前序各节摘要见 prior_chapters，正文开头要承接上一节留下的问题。资源只引用不复制；没有来源的断言标 original-explanation 或 > [!unsourced]，不伪造出处。`,
+      },
+    ];
+    let draft: ReturnType<typeof parseDraft>;
+    try {
+      draft = parseDraft(extractJson(await chat(m, messages, signal, 8192)));
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      unresolved.push(`「${section}」生成失败：${(e as Error).message}`);
+      parts.push(prev ? `## ${prev.heading}\n\n${prev.body}` : `## ${section}\n\n> [!unsourced] 本节生成失败，待重试。`);
+      continue;
+    }
+    if (draft.status === 'ok' && draft.markdown.trim()) {
+      const md = ensureHeading(section, draft.markdown);
+      parts.push(md);
+      okCount++;
+      const summary = firstSentence(md);
+      prior.push({ title: section, takeaways: summary ? [summary] : [] });
+      unresolved.push(...draft.unresolved);
+    } else {
+      unresolved.push(`「${section}」：${draft.unresolved.join('；') || '模型认为资料不足，没有写这一节。'}`);
+      parts.push(prev ? `## ${prev.heading}\n\n${prev.body}` : `## ${section}\n\n> [!unsourced] 本节资料不足，待补。`);
+    }
+  }
+  onProgress?.(sections.length, sections.length, '');
+  const leftover = existing.sections.filter((s) => !used.has(s.heading));
+  if (!okCount && !existing.sections.length) return { status: 'insufficient', markdown: '', unresolved, sample: false };
+  return { status: 'ok', markdown: assembleLesson(lesson.title, parts, leftover, existing.preamble), unresolved, sample: false };
 }
 
 /** 讲义 + 采纳的资源清单 → 一组提案（讲义新建或更新，清单合并），共用一道预览与撤销。 */

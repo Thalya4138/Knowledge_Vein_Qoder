@@ -12,6 +12,7 @@ import { DeskOrganize } from './OrganizePanel';
 import { deskAsk, type DeskAnswer, type DeskSource } from './deskAsk';
 import { loadDeskHistory, saveDeskHistory, upsertTurn, deskUid, type DeskTurn } from './deskHistory';
 import { buildPatchChanges } from './deskPatch';
+import { filePath } from './workspaceData';
 import type { OrganizeLesson } from './deskOrganize';
 
 /**
@@ -65,21 +66,6 @@ interface Turn {
 
 type Mode = 'ask' | 'organize' | 'lesson';
 
-/** 文件在存储里的路径：本地/浏览器文件自带 path；示例原件没有，从原文地址 `/demo/<ws>/…` 推出。 */
-function filePath(f: WsFile): string | null {
-  if (f.path) return f.path;
-  const src = f.sourceUrl ?? f.url;
-  if (!src) return null;
-  let decoded = src;
-  try {
-    decoded = decodeURI(src);
-  } catch {
-    /* 非法编码就按原文比 */
-  }
-  const m = decoded.match(/\/demo\/[^/]+\/(.+)$/);
-  return m ? m[1]! : null;
-}
-
 /** 从出处里挑一个能在当前工作区打开的目标，作为「补进笔记」的落点。 */
 function resolveTarget(sources: { fileId?: string; heading: string; label: string }[], files: WsFile[]): { path: string; anchor: string; label: string } | null {
   for (const s of sources) {
@@ -126,7 +112,9 @@ export function AiDock({
 
   useEffect(() => () => abort.current?.abort(), []);
 
-  // 打开对话框时接上工作区存储，并读回对话历史
+  // 打开对话框时接上工作区存储，并读回对话历史。
+  // openStore 只用 id/origin：写入后工作区刷新文件栏会换 ws 对象，但 store 不能跟着重建，
+  // 否则 ChangePreview 检测到 store 变化会重置成待确认、清掉撤销记录（验收 #1）。
   useEffect(() => {
     if (!open) return;
     let alive = true;
@@ -146,7 +134,7 @@ export function AiDock({
     return () => {
       alive = false;
     };
-  }, [open, ws, tr, onStatus]);
+  }, [open, ws.id, ws.origin, tr, onStatus]);
 
   const record = (turn: DeskTurn) => {
     setHistory((all) => {

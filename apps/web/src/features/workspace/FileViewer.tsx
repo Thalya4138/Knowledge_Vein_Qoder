@@ -6,7 +6,8 @@ import { NoteReader } from '../../reader/NoteReader';
 import { demoManifest } from '../../app/demo';
 import { localFileUrl, saveLocalText } from './localFolder';
 import { browserFileUrl, saveBrowserText } from '../../store/browser';
-import { DEMO_WORKSPACE, type WsFile } from './workspaceData';
+import { DEMO_WORKSPACE, filePath, type WsFile } from './workspaceData';
+import { readDemoOverlay } from '../../store/demo';
 import { useWorkspace } from '../../app/WorkspaceProvider';
 import { modelReady, usePrefs } from '../../ui/prefs';
 import { useHeadingLinks } from './headingLinks';
@@ -122,10 +123,22 @@ function NoteView({
     future.current = [];
     const saved = file.local || file.browser ? null : localStorage.getItem(draftKey(`${file.id}.md`));
     setDraft(saved !== null);
-    const load = saved !== null ? Promise.resolve(saved) : fetch(url).then((r) => {
-      if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
-      return r.text();
-    });
+    // 示例优先读覆盖层（AI 写入的那份），没有覆盖才回退发布原件
+    const load =
+      saved !== null
+        ? Promise.resolve(saved)
+        : (async () => {
+            if (ws.origin === 'demo') {
+              const p = filePath(file);
+              if (p) {
+                const over = await readDemoOverlay(ws.id, p);
+                if (over !== null) return over;
+              }
+            }
+            const r = await fetch(url);
+            if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
+            return r.text();
+          })();
     load
       .then(async (t) => {
         if (!alive) return t;
@@ -154,7 +167,7 @@ function NoteView({
     return () => {
       alive = false;
     };
-  }, [file, url, nonce, files]);
+  }, [file, url, nonce, files, ws]);
 
   useEffect(() => {
     let alive = true;
@@ -387,6 +400,8 @@ function SourceView({
   const [text, setText] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const { workspace } = useWorkspace();
+  const ws = workspace ?? DEMO_WORKSPACE;
   const local = Boolean(file.local);
   const browser = Boolean(file.browser);
   const persisted = local || browser;
@@ -401,11 +416,19 @@ function SourceView({
       setDraft(saved);
       return;
     }
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
-        return r.text();
-      })
+    const load = (async () => {
+      if (ws.origin === 'demo') {
+        const p = filePath(file);
+        if (p) {
+          const over = await readDemoOverlay(ws.id, p);
+          if (over !== null) return over;
+        }
+      }
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`读取失败（HTTP ${r.status}）`);
+      return r.text();
+    })();
+    load
       .then((t) => {
         if (!alive) return;
         const shown = file.lang === 'json' && !persisted ? JSON.stringify(JSON.parse(t), null, 2) : t;
@@ -416,7 +439,7 @@ function SourceView({
     return () => {
       alive = false;
     };
-  }, [url, file.id, file.lang, persisted]);
+  }, [url, file.id, file.lang, persisted, ws]);
 
   if (error) return <p className="viewer-state">{error}</p>;
   if (text === null) return <p className="viewer-state">正在读取…</p>;

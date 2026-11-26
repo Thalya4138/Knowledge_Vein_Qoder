@@ -1,3 +1,4 @@
+import katex from 'katex';
 import type { GenPlan } from './generate';
 import type { ToolCap } from './toolCaps';
 import { SHARED_LIBS } from './toolCaps';
@@ -45,6 +46,23 @@ export function slidersOf(controls: readonly ControlSpec[]): Slider[] {
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** 讲解文字：$…$ / $$…$$ 过 KaTeX，其余原样转义。开闭 $ 内侧须非空白，避免把「5$ 和 6$」当公式。 */
+const MATH_RE = /(\$\$[^$]+\$\$|\$(?!\s)[^$\n]*?(?<!\s)\$)/g;
+function mathHtml(s: string): string {
+  return s
+    .split(MATH_RE)
+    .map((seg, i) => {
+      if (i % 2 === 0) return esc(seg);
+      const display = seg.startsWith('$$');
+      try {
+        return katex.renderToString(display ? seg.slice(2, -2) : seg.slice(1, -1), { throwOnError: false, displayMode: display });
+      } catch {
+        return esc(seg);
+      }
+    })
+    .join('');
+}
 
 /** 核心代码运行前的确定性检查：只报真正会让页面跑不起来或越权的问题 */
 export function checkCore(core: string, cap: ToolCap): string[] {
@@ -126,10 +144,10 @@ export function assemblePage(plan: GenPlan, cap: ToolCap, core: string, lang: 'z
 <p class="v-stepwhat"><strong id="v-steptitle"></strong><span id="v-stepbody"></span></p></section>`
     : '';
 
-  const explainHtml = plan.explain.map((p, i) => `<p data-i="${i}">${esc(p)}</p>`).join('\n');
+  const explainHtml = plan.explain.map((p, i) => `<p data-i="${i}">${mathHtml(p)}</p>`).join('\n');
   const factsHtml = plan.facts.length
     ? `<details class="v-facts"><summary>${t.facts}（${plan.facts.length}）</summary><ul>${plan.facts
-        .map((f) => `<li>${esc(f.claim)} <span class="v-src">— ${esc(f.source || t.noSource)}</span></li>`)
+        .map((f) => `<li>${mathHtml(f.claim)} <span class="v-src">— ${esc(f.source || t.noSource)}</span></li>`)
         .join('')}</ul></details>`
     : '';
 
@@ -250,7 +268,7 @@ ${plan.caveat ? `<p class="v-caveat">${esc(plan.caveat)}</p>` : ''}
 </section>
 <aside class="v-side">
 <h1>${esc(plan.title)}</h1>
-<p class="v-see">${esc(plan.see)}</p>
+<p class="v-see">${mathHtml(plan.see)}</p>
 ${controlsHtml}
 ${stepsHtml}
 <div class="v-explain">
