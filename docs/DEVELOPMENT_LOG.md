@@ -18,7 +18,7 @@
 - **e2e `scripts/e2e-fix87.mjs` 12/12**（headless Chrome 1366×800 与 420×800）：抽屉贴 viewport 左上通到底；关闭按钮可见可点（top=10）；标题完整（top=54）；遮罩盖住页眉右段、抽屉压在页眉左段之上；打开后焦点在关闭按钮；抽屉与遮罩 parentElement 为 body；Esc 关闭；窄屏全宽无横向溢出；控制台无应用级错误。
 - **截图**：`docs/evidence/fix87-drawer-{1366,420}.png` 目检——PDF 签、关闭 ✕、完整标题都在页眉之上。
 
-**已知缺陷 / 下一步**：无新增；博查真实 key／真实模型质量仍待用户。**提交/推送/部署待用户授权**。
+**已知缺陷 / 下一步**：无新增；博查真实 key／真实模型质量仍待用户。**已获用户授权完成落盘与发布**：提交 `453131a`、push `task/R3-QoderWang2`（push 前用户选择跳过 L3）、发布公网个人版（action `ea610776`），匿名 bundle `index-Bu_7XwH7.js` 与本地一致、五深链 200。期间账号曾再次落回团队版导致 binding mismatch；用户切回个人版、get_context 核对后同一 action 恢复并发布。描述符恢复报 `sites_not_found`，但发布 committed/verified，预览面板情况见接龙 #89。
 
 ---
 
